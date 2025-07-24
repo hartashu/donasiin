@@ -19,11 +19,11 @@ export class PostModel {
     }
   }
 
-  static async getPostById(postId: ObjectId): Promise<WithId<IPost> | null> {
+  static async getPostBySlug(slug: string): Promise<WithId<IPost> | null> {
     try {
       const db = await connectToDb();
       const post = await db.collection<IPost>(POST_COLLECTION).findOne({
-        _id: postId,
+        slug,
       });
 
       return post;

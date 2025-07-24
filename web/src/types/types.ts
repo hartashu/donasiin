@@ -24,6 +24,7 @@ export interface IUser {
 export interface IPost {
   _id: ObjectId; // Unique post identifier.
   title: string; // The title of the post.
+  slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.
   imageUrls: string[]; // Array of additional image URLs.
   description: string; // Detailed description of the post's content.
