@@ -1,7 +1,7 @@
 import handleError from "@/errorHandler/errorHandler";
 import { PostModel } from "@/models/post";
 import { IJsonResponse, IPost } from "@/types/types";
-import { MongoServerError, ObjectId, WithId } from "mongodb";
+import { MongoServerError, WithId } from "mongodb";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -22,7 +22,7 @@ export async function GET(
       }
     );
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 }
 

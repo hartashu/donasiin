@@ -61,3 +61,5 @@ export interface IJsonResponse<T> {
   data?: T;
   error?: string;
 }
+
+export type IPostInput = Omit<IPost, "_id" | "createdAt" | "updatedAt">;
