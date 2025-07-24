@@ -1,0 +1,154 @@
+{
+  "items": [
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60201",
+      "title": "Vintage Fixed-Gear Bicycle",
+      "thumbnailUrl": "https://images.pexels.com/photos/276517/pexels-photo-276517.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/2194395/pexels-photo-2194395.jpeg"
+      ],
+      "description": "A well-kept fixed-gear bike with classic minimalist styling—perfect for urban commuting.",
+      "tags": ["bike", "vintage", "commute"],
+      "isAvailable": true,
+      "userId": "64c0a1f1a1b2c3d4e5f60101",
+      "aiAnalysis": "Estimated carbon savings: 120 kg CO₂/year compared to a car commute",
+      "createdAt": "2025-07-23T14:30:00Z",
+      "updatedAt": "2025-07-23T14:30:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60202",
+      "title": "Solid Oak Office Desk",
+      "thumbnailUrl": "https://images.pexels.com/photos/374074/pexels-photo-374074.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/974314/pexels-photo-974314.jpeg"
+      ],
+      "description": "Spacious oak desk with cable management—ideal for a home office setup.",
+      "tags": ["desk", "office", "wood"],
+      "isAvailable": true,
+      "userId": "64c0a1f1a1b2c3d4e5f60101",
+      "aiAnalysis": "Estimated carbon savings: 45 kg CO₂ by upcycling rather than buying new",
+      "createdAt": "2025-07-20T11:15:00Z",
+      "updatedAt": "2025-07-20T11:15:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60203",
+      "title": "Eco Yoga Mat",
+      "thumbnailUrl": "https://images.pexels.com/photos/3823035/pexels-photo-3823035.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/4050290/pexels-photo-4050290.jpeg"
+      ],
+      "description": "Non-slip cork yoga mat in excellent condition, lightly used.",
+      "tags": ["yoga", "fitness", "eco"],
+      "isAvailable": true,
+      "userId": "64c0a1f1a1b2c3d4e5f60101",
+      "aiAnalysis": "Estimated carbon savings: 10 kg CO₂ by reusing materials",
+      "createdAt": "2025-07-22T08:00:00Z",
+      "updatedAt": "2025-07-22T08:00:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60204",
+      "title": "Tournament-Grade Tennis Racket",
+      "thumbnailUrl": "https://images.pexels.com/photos/551395/pexels-photo-551395.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/1164089/pexels-photo-1164089.jpeg"
+      ],
+      "description": "High-tension strings, lightweight frame—perfect for advanced players.",
+      "tags": ["tennis", "sport", "racket"],
+      "isAvailable": false,
+      "userId": "64c0a1f1a1b2c3d4e5f60101",
+      "aiAnalysis": "Estimated carbon savings: 5 kg CO₂ by extending product lifecycle",
+      "createdAt": "2025-07-21T09:50:00Z",
+      "updatedAt": "2025-07-21T09:50:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60205",
+      "title": "Acoustic Guitar",
+      "thumbnailUrl": "https://images.pexels.com/photos/1648534/pexels-photo-1648534.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/925823/pexels-photo-925823.jpeg"
+      ],
+      "description": "Full-size dreadnought in great shape, comes with soft gig bag.",
+      "tags": ["music", "guitar", "instrument"],
+      "isAvailable": true,
+      "userId": "64c0a1f1a1b2c3d4e5f60102",
+      "aiAnalysis": "Estimated carbon savings: 30 kg CO₂ by gifting instead of discarding",
+      "createdAt": "2025-07-19T13:25:00Z",
+      "updatedAt": "2025-07-19T13:25:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60206",
+      "title": "Vintage Table Lamp",
+      "thumbnailUrl": "https://images.pexels.com/photos/196668/pexels-photo-196668.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg"
+      ],
+      "description": "Brass and glass lamp—adds a warm glow to any living room.",
+      "tags": ["lamp", "vintage", "decor"],
+      "isAvailable": true,
+      "userId": "64c0a1f1a1b2c3d4e5f60102",
+      "aiAnalysis": "Estimated carbon savings: 8 kg CO₂ by reusing antique fixtures",
+      "createdAt": "2025-07-18T17:40:00Z",
+      "updatedAt": "2025-07-18T17:40:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60207",
+      "title": "Denim Jacket",
+      "thumbnailUrl": "https://images.pexels.com/photos/3616748/pexels-photo-3616748.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/428340/pexels-photo-428340.jpeg"
+      ],
+      "description": "Light-wash denim jacket, unisex, size M.",
+      "tags": ["clothing", "fashion", "denim"],
+      "isAvailable": true,
+      "userId": "64c0a1f1a1b2c3d4e5f60102",
+      "aiAnalysis": "Estimated carbon savings: 3 kg CO₂ by passing on wearable clothing",
+      "createdAt": "2025-07-17T12:00:00Z",
+      "updatedAt": "2025-07-17T12:00:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60208",
+      "title": "Stack of Novels",
+      "thumbnailUrl": "https://images.pexels.com/photos/462353/pexels-photo-462353.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/590493/pexels-photo-590493.jpeg"
+      ],
+      "description": "Assorted bestsellers—perfect for summer reading.",
+      "tags": ["books", "reading", "leisure"],
+      "isAvailable": true,
+      "userId": "64c0a1f1a1b2c3d4e5f60103",
+      "aiAnalysis": "Estimated carbon savings: 1 kg CO₂ by sharing books",
+      "createdAt": "2025-07-15T15:10:00Z",
+      "updatedAt": "2025-07-15T15:10:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f60209",
+      "title": "Ceramic Coffee Mug",
+      "thumbnailUrl": "https://images.pexels.com/photos/414103/pexels-photo-414103.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/257893/coffee-cup-wood-drink.jpg"
+      ],
+      "description": "Hand-painted ceramic mug—holds 350 ml.",
+      "tags": ["kitchen", "mug", "ceramic"],
+      "isAvailable": true,
+      "userId": "64c0a1f1a1b2c3d4e5f60103",
+      "aiAnalysis": "Estimated carbon savings: 0.5 kg CO₂ by reusing dishware",
+      "createdAt": "2025-07-14T08:30:00Z",
+      "updatedAt": "2025-07-14T08:30:00Z"
+    },
+    {
+      "id": "64c0a2f2a1b2c3d4e5f6020a",
+      "title": "Leather Backpack",
+      "thumbnailUrl": "https://images.pexels.com/photos/275360/pexels-photo-275360.jpeg",
+      "imageUrls": [
+        "https://images.pexels.com/photos/948084/pexels-photo-948084.jpeg"
+      ],
+      "description": "Genuine leather, 20 L capacity, laptop compartment included.",
+      "tags": ["bag", "travel", "leather"],
+      "isAvailable": false,
+      "userId": "64c0a1f1a1b2c3d4e5f60103",
+      "aiAnalysis": "Estimated carbon savings: 25 kg CO₂ by extending product use",
+      "createdAt": "2025-07-13T10:55:00Z",
+      "updatedAt": "2025-07-13T10:55:00Z"
+    }
+  ]
+}

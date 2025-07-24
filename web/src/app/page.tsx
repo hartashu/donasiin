@@ -1,7 +1,25 @@
+"use client";
 import PostCards from "@/components/PostCards";
+import { IPost } from "@/types/types";
 import { Search, SlidersHorizontal } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [data, setData] = useState<IPost[]>([]);
+
+  const fetchData = async () => {
+    const res = await fetch("http://localhost:3001/items", {
+      method: "GET",
+      cache: "no-store",
+    });
+    const dataJson = await res.json();
+    setData(dataJson);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
     <div className="p-16 pt-4">
       <div className="text-5xl font-black text-black flex gap-3 justify-center pt-4">
@@ -63,7 +81,7 @@ export default function Home() {
         </div>
 
         <div className="border border-black m-6 rounded-lg">
-          <PostCards />
+          <PostCards data={data} />
         </div>
       </div>
     </div>
