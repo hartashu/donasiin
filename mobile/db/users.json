@@ -1,0 +1,41 @@
+[
+  {
+    "_id": { "$oid": "64c0a1f1a1b2c3d4e5f60101" },
+    "avatarUrl": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
+    "username": "johndoe",
+    "fullName": "John Doe",
+    "email": "john.doe@example.com",
+    "isEmailVerified": true,
+    "password": "$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36XY1BV6bOI1R7dE.W8fPqK",
+    "address": "123 Elm Street, Springfield, IL",
+    "dailyLimit": 5,
+    "createdAt": "2025-07-24T08:00:00Z",
+    "updatedAt": "2025-07-24T08:00:00Z"
+  },
+  {
+    "_id": { "$oid": "64c0a1f1a1b2c3d4e5f60102" },
+    "avatarUrl": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg",
+    "username": "janesmith",
+    "fullName": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "isEmailVerified": false,
+    "password": "$2b$10$7QmH1vZz6R9.KzZpFv1XeOqL1bYq8g7uV9Hz3j0Pdu8Yh5jX9lG2e",
+    "address": "456 Oak Avenue, Centerville, OH",
+    "dailyLimit": 5,
+    "createdAt": "2025-07-23T16:45:00Z",
+    "updatedAt": "2025-07-23T16:45:00Z"
+  },
+  {
+    "_id": { "$oid": "64c0a1f1a1b2c3d4e5f60103" },
+    "avatarUrl": "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg",
+    "username": "bobwilliams",
+    "fullName": "Bob Williams",
+    "email": "bob.williams@example.com",
+    "isEmailVerified": true,
+    "password": "$2b$10$8fR0sK1mZaPjQ3Ly7dNw5uOxTz1YpK2qU7rCj9BlVg4Hn2XyQeShO",
+    "address": "789 Pine Road, Lakewood, CO",
+    "dailyLimit": 5,
+    "createdAt": "2025-07-22T09:20:00Z",
+    "updatedAt": "2025-07-22T09:20:00Z"
+  }
+]

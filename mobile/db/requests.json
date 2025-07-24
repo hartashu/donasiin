@@ -1,0 +1,29 @@
+[
+  {
+    "_id": { "$oid": "64c0a3f3a1b2c3d4e5f60301" },
+    "userId": { "$oid": "64c0a1f1a1b2c3d4e5f60102" },
+    "postId": { "$oid": "64c0a2f2a1b2c3d4e5f60201" },
+    "status": "PENDING",
+    "trackingCode": null,
+    "createdAt": "2025-07-24T09:00:00Z",
+    "updatedAt": "2025-07-24T09:00:00Z"
+  },
+  {
+    "_id": { "$oid": "64c0a3f3a1b2c3d4e5f60302" },
+    "userId": { "$oid": "64c0a1f1a1b2c3d4e5f60103" },
+    "postId": { "$oid": "64c0a2f2a1b2c3d4e5f60205" },
+    "status": "ACCEPTED",
+    "trackingCode": null,
+    "createdAt": "2025-07-23T11:20:00Z",
+    "updatedAt": "2025-07-23T11:20:00Z"
+  },
+  {
+    "_id": { "$oid": "64c0a3f3a1b2c3d4e5f60303" },
+    "userId": { "$oid": "64c0a1f1a1b2c3d4e5f60101" },
+    "postId": { "$oid": "64c0a2f2a1b2c3d4e5f6020a" },
+    "status": "SHIPPED",
+    "trackingCode": "TRK123456789",
+    "createdAt": "2025-07-22T14:45:00Z",
+    "updatedAt": "2025-07-23T07:30:00Z"
+  }
+]
