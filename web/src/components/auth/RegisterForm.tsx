@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterSchema, type RegisterInput } from "@/lib/schemas/auth.schema";
@@ -10,7 +9,6 @@ import Link from "next/link";
 import { Lock, Mail, Pencil, UserRound } from "lucide-react";
 
 export function RegisterForm() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -19,6 +17,7 @@ export function RegisterForm() {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
   });
@@ -30,11 +29,10 @@ export function RegisterForm() {
     startTransition(async () => {
       const result = await registerUser(data);
       setError(result.error || null);
+      setSuccess(result.success || null);
 
       if (result.success) {
-        router.push(
-          `/auth/verify-email?email=${encodeURIComponent(data.email)}`
-        );
+        reset();
       }
     });
   };
@@ -53,6 +51,11 @@ export function RegisterForm() {
           {error && (
             <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">
               {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-50 text-green-600 p-3 rounded-md text-sm border border-green-200">
+              {success}
             </div>
           )}
 
