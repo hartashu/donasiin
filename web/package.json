@@ -13,9 +13,11 @@
     "@hookform/resolvers": "^3.9.0",
     "@mongodb-js/zstd": "^2.0.1",
     "@types/nodemailer": "^6.4.17",
+    "@types/uuid": "^10.0.0",
     "aws4": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "kerberos": "^2.2.2",
+    "lucide-react": "^0.525.0",
     "mongodb": "^6.8.0",
     "mongodb-client-encryption": "^6.4.0",
     "next": "15.4.3",
@@ -25,6 +27,7 @@
     "react-dom": "19.1.0",
     "react-hook-form": "^7.52.1",
     "socks": "^2.8.6",
+    "uuid": "^11.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

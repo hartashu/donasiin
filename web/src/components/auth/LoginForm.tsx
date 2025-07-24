@@ -1,21 +1,21 @@
-'use client'
+'use client';
 
-import { useState, useTransition } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { LoginSchema, type LoginInput } from '@/lib/schemas/auth.schema'
-import { login } from '@/lib/actions/auth.actions'
-import { signIn } from 'next-auth/react'
-import Link from 'next/link'
+import { useState, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { LoginSchema, type LoginInput } from '@/lib/schemas/auth.schema';
+import { login } from '@/lib/actions/auth.actions';
+import { signIn } from 'next-auth/react';
+import Link from 'next/link';
 
 export function LoginForm() {
-    const searchParams = useSearchParams()
-    const callbackUrl = searchParams.get('callbackUrl') || '/'
-    const message = searchParams.get('message')
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get('callbackUrl') || '/';
+    const message = searchParams.get('message');
 
-    const [error, setError] = useState<string | null>(null)
-    const [isPending, startTransition] = useTransition()
+    const [error, setError] = useState<string | null>(null);
+    const [isPending, startTransition] = useTransition();
 
     const {
         register,
@@ -23,21 +23,21 @@ export function LoginForm() {
         formState: { errors },
     } = useForm<LoginInput>({
         resolver: zodResolver(LoginSchema),
-    })
+    });
 
     const onSubmit = (data: LoginInput) => {
-        setError(null)
+        setError(null);
         startTransition(async () => {
-            const result = await login(data)
+            const result = await login(data);
             if (result?.error) {
-                setError(result.error)
+                setError(result.error);
             }
-        })
-    }
+        });
+    };
 
     const handleGoogleSignIn = () => {
-        signIn('google', { callbackUrl })
-    }
+        signIn('google', { callbackUrl });
+    };
 
     return (
         <div className="max-w-md w-full">
@@ -58,7 +58,13 @@ export function LoginForm() {
                     </div>
 
                     <div className="space-y-2">
-                        <label htmlFor="password" className="font-medium text-sm">Password</label>
+                        <div className="flex items-center justify-between">
+                            <label htmlFor="password" className="font-medium text-sm">Password</label>
+                            {/* ## TOMBOL LUPA PASSWORD DITAMBAHKAN DI SINI ## */}
+                            <Link href="/auth/forgot-password" className="text-sm font-medium text-blue-600 hover:underline">
+                                Forgot Password?
+                            </Link>
+                        </div>
                         <input id="password" type="password" {...register('password')} disabled={isPending} className="w-full px-4 py-2 border border-gray-300 rounded-md" />
                         {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
                     </div>
