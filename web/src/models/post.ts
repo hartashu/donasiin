@@ -31,4 +31,11 @@ export class PostModel {
       throw error;
     }
   }
+
+  static async addPost() {
+    try {
+    } catch (error) {
+      throw error;
+    }
+  }
 }

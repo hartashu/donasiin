@@ -22,7 +22,12 @@ export async function GET(_request: Request) {
   }
 }
 
-export async function POST(request: Request) {}
+export async function POST(request: Request) {
+  try {
+  } catch (error) {
+    handleError(error);
+  }
+}
 
 export async function PUT(request: Request) {}
 
