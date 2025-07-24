@@ -53,3 +53,10 @@ export interface IMessage {
   createdAt: Date; // Creation timestamp.
   updatedAt: Date; // Last update timestamp.
 }
+
+export interface IJsonResponse<T> {
+  statusCode: number;
+  message?: string;
+  data?: T;
+  error?: string;
+}
