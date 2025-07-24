@@ -22,7 +22,7 @@ export async function GET(
       }
     );
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 }
 
