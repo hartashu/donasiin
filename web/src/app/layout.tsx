@@ -27,6 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
       >
         <main className="bg-white text-black">
           <nav className="border-b border-b-gray-300 border-bol flex justify-between items-center p-3 pl-8 pr-8">
