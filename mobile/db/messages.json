@@ -1,0 +1,26 @@
+[
+  {
+    "_id": { "$oid": "64c0a4f4a1b2c3d4e5f60401" },
+    "senderId": { "$oid": "64c0a1f1a1b2c3d4e5f60101" },
+    "recipientId": { "$oid": "64c0a1f1a1b2c3d4e5f60102" },
+    "messageText": "Hi Jane, is the oak desk still available? I’d love to come see it.",
+    "createdAt": "2025-07-24T09:05:00Z",
+    "updatedAt": "2025-07-24T09:05:00Z"
+  },
+  {
+    "_id": { "$oid": "64c0a4f4a1b2c3d4e5f60402" },
+    "senderId": { "$oid": "64c0a1f1a1b2c3d4e5f60102" },
+    "recipientId": { "$oid": "64c0a1f1a1b2c3d4e5f60103" },
+    "messageText": "Hey Bob, thanks for accepting—when can I pick up the guitar?",
+    "createdAt": "2025-07-23T12:00:00Z",
+    "updatedAt": "2025-07-23T12:00:00Z"
+  },
+  {
+    "_id": { "$oid": "64c0a4f4a1b2c3d4e5f60403" },
+    "senderId": { "$oid": "64c0a1f1a1b2c3d4e5f60103" },
+    "recipientId": { "$oid": "64c0a1f1a1b2c3d4e5f60101" },
+    "messageText": "John, I got the backpack yesterday and it’s perfect—thank you!",
+    "createdAt": "2025-07-22T15:00:00Z",
+    "updatedAt": "2025-07-22T15:00:00Z"
+  }
+]
