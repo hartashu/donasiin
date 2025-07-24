@@ -22,7 +22,7 @@ export interface IUser {
 }
 
 export interface IPost {
-  _id: ObjectId; // Unique post identifier.
+  id: ObjectId; // Unique post identifier. //ObjectId
   title: string; // The title of the post.
   slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.

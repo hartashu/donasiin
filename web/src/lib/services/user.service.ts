@@ -1,5 +1,4 @@
 // File: src/lib/services/user.service.ts
-
 import { v4 as uuidv4 } from 'uuid';
 import clientPromise from '@/lib/db';
 import { hash, compare } from 'bcryptjs';
@@ -28,6 +27,13 @@ interface PendingRegistrationDocument {
     expires: Date;
 }
 
+interface PasswordResetTokenDocument {
+    _id: ObjectId;
+    email: string;
+    token: string;
+    expires: Date;
+}
+
 const getDb = async () => {
     const client = await clientPromise;
     return client.db("donation_sharing");
@@ -41,6 +47,11 @@ const getUsersCollection = async (): Promise<Collection<UserDocument>> => {
 const getPendingRegistrationsCollection = async (): Promise<Collection<PendingRegistrationDocument>> => {
     const db = await getDb();
     return db.collection<PendingRegistrationDocument>('pending_registrations');
+};
+
+const getPasswordResetTokensCollection = async (): Promise<Collection<PasswordResetTokenDocument>> => {
+    const db = await getDb();
+    return db.collection<PasswordResetTokenDocument>('password_reset_tokens');
 };
 
 export const getUserByEmail = async (email: string): Promise<WithId<UserDocument> | null> => {
@@ -96,4 +107,35 @@ export const getPendingRegistrationByToken = async (token: string): Promise<With
 export const deletePendingRegistration = async (email: string) => {
     const pendingCollection = await getPendingRegistrationsCollection();
     await pendingCollection.deleteOne({ email });
+};
+
+export const createPasswordResetToken = async (email: string): Promise<string | null> => {
+    const user = await getUserByEmail(email);
+    if (!user) return null;
+
+    const token = uuidv4();
+    const expires = new Date(new Date().getTime() + 3600 * 1000);
+    const tokensCollection = await getPasswordResetTokensCollection();
+    const newResetToken = { email, token, expires };
+
+    await tokensCollection.deleteMany({ email });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await tokensCollection.insertOne(newResetToken as any);
+    return token;
+};
+
+export const getPasswordResetToken = async (token: string): Promise<WithId<PasswordResetTokenDocument> | null> => {
+    const tokensCollection = await getPasswordResetTokensCollection();
+    return tokensCollection.findOne({ token, expires: { $gt: new Date() } });
+};
+
+export const deletePasswordResetToken = async (token: string): Promise<void> => {
+    const tokensCollection = await getPasswordResetTokensCollection();
+    await tokensCollection.deleteOne({ token });
+};
+
+export const updateUserPassword = async (email: string, newPassword: string): Promise<void> => {
+    const usersCollection = await getUsersCollection();
+    const hashedPassword = await hash(newPassword, 12);
+    await usersCollection.updateOne({ email }, { $set: { password: hashedPassword, updatedAt: new Date() } });
 };

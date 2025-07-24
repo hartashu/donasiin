@@ -20,7 +20,7 @@ export function ForgotPasswordForm() {
         setMessage(null);
         startTransition(async () => {
             const result = await generatePasswordResetLink(data);
-            setMessage(result.success || result.error);
+            setMessage(result.success || result.error || null);
         });
     };
 
