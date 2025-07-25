@@ -66,18 +66,16 @@ export async function registerUser(values: z.infer<typeof RegisterSchema>) {
     }
 }
 
-export async function finalizeRegistration(token: string) {
+export async function finalizeRegistration(token: string, from?: string | null) {
     const pendingUser = await getPendingRegistrationByToken(token);
     if (!pendingUser) {
         redirect('/auth/register?error=invalid_token');
-        return;
     }
 
     const existingUser = await getUserByEmail(pendingUser.email);
     if (existingUser) {
         await deletePendingRegistration(pendingUser.email);
         redirect('/auth/login?message=account_already_exists');
-        return;
     }
 
     await createUser({
@@ -92,10 +90,12 @@ export async function finalizeRegistration(token: string) {
 
     await deletePendingRegistration(pendingUser.email);
 
-    redirect('/auth/login?message=registration_successful');
+    if (from !== 'native') {
+        redirect('/auth/login?message=registration_successful');
+    }
 }
 
-export async function generatePasswordResetLink(values: z.infer<typeof ForgotPasswordSchema>) {
+export async function generatePasswordResetLink(values: z.infer<typeof ForgotPasswordSchema>, source?: string) {
     const validatedFields = ForgotPasswordSchema.safeParse(values);
     if (!validatedFields.success) return { error: 'Invalid email.' };
 
@@ -106,7 +106,7 @@ export async function generatePasswordResetLink(values: z.infer<typeof ForgotPas
         return { success: 'If an account with this email exists, a reset link has been sent.' };
     }
 
-    await sendPasswordResetEmail(email, resetToken);
+    await sendPasswordResetEmail(email, resetToken, source);
     return { success: 'If an account with this email exists, a reset link has been sent.' };
 }
 

@@ -1,15 +1,15 @@
 import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
 
 interface ResetPasswordPageProps {
-    params: {
+    params: Promise<{
         token: string;
-    };
+    }>;
 }
 
-export default function ResetPasswordPage({ params }: ResetPasswordPageProps) {
+export default async function ResetPasswordPage({ params }: ResetPasswordPageProps) {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <ResetPasswordForm token={params.token} />
+            <ResetPasswordForm token={(await params).token} />
         </div>
     );
 }
