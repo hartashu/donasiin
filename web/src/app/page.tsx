@@ -12,8 +12,8 @@ export default function Home() {
   const [data, setData] = useState<IPost[]>([]);
 
   const fetchData = async () => {
-    const posts = await getPosts();
-    setData(posts);
+    const dataJson = await getPosts();
+    setData(dataJson);
   };
 
   useEffect(() => {
