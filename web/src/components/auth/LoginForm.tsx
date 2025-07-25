@@ -86,7 +86,6 @@ export function LoginForm() {
                             <label htmlFor="password" className="font-medium text-sm">
                                 Password
                             </label>
-                            {/* Link "Forgot Password?" ditambahkan kembali di sini */}
                             <Link
                                 href="/auth/forgot-password"
                                 className="text-sm font-semibold text-green-800/80 hover:underline"
@@ -145,7 +144,7 @@ export function LoginForm() {
                 </button>
             </div>
             <p className="text-center text-sm text-gray-600 mt-6">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link
                     href="/auth/register"
                     className="font-semibold text-green-800/80 hover:underline"

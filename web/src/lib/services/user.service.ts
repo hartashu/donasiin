@@ -1,3 +1,4 @@
+// File: src/lib/services/user.service.ts
 import { v4 as uuidv4 } from 'uuid';
 import clientPromise from '@/lib/db';
 import { hash, compare } from 'bcryptjs';
@@ -8,26 +9,27 @@ export interface UserDocument {
     fullName?: string | null;
     username?: string | null;
     email: string;
-    emailVerified?: Date | null;
     password?: string | null;
     address?: string | null;
     avatarUrl?: string | null;
-    isEmailVerified: boolean;
     dailyLimit: number;
     createdAt: Date;
     updatedAt: Date;
 }
 
-interface PasswordResetTokenDocument {
+interface PendingRegistrationDocument {
     _id: ObjectId;
     email: string;
+    password?: string;
+    fullName?: string;
+    username?: string;
     token: string;
     expires: Date;
 }
 
-interface VerificationTokenDocument {
+interface PasswordResetTokenDocument {
     _id: ObjectId;
-    identifier: string;
+    email: string;
     token: string;
     expires: Date;
 }
@@ -42,14 +44,14 @@ const getUsersCollection = async (): Promise<Collection<UserDocument>> => {
     return db.collection<UserDocument>('users');
 };
 
+const getPendingRegistrationsCollection = async (): Promise<Collection<PendingRegistrationDocument>> => {
+    const db = await getDb();
+    return db.collection<PendingRegistrationDocument>('pending_registrations');
+};
+
 const getPasswordResetTokensCollection = async (): Promise<Collection<PasswordResetTokenDocument>> => {
     const db = await getDb();
     return db.collection<PasswordResetTokenDocument>('password_reset_tokens');
-};
-
-const getVerificationTokensCollection = async (): Promise<Collection<VerificationTokenDocument>> => {
-    const db = await getDb();
-    return db.collection<VerificationTokenDocument>('verification_tokens');
 };
 
 export const getUserByEmail = async (email: string): Promise<WithId<UserDocument> | null> => {
@@ -66,59 +68,45 @@ export const verifyUserPassword = async (password: string, hashedPassword: strin
     return compare(password, hashedPassword);
 };
 
-export const createUser = async (data: Omit<UserDocument, '_id' | 'createdAt' | 'updatedAt' | 'isEmailVerified' | 'dailyLimit' | 'emailVerified'> & { password: string }) => {
+export const createUser = async (data: Omit<UserDocument, '_id' | 'createdAt' | 'updatedAt'>) => {
     const usersCollection = await getUsersCollection();
-    const hashedPassword = await hash(data.password, 12);
-
     const newUser = {
         ...data,
-        password: hashedPassword,
-        isEmailVerified: false,
-        emailVerified: null,
-        dailyLimit: 5,
         createdAt: new Date(),
         updatedAt: new Date(),
     };
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await usersCollection.insertOne(newUser as any);
     return result.insertedId;
 };
 
-export const createVerificationToken = async (email: string): Promise<string> => {
-    const tokensCollection = await getVerificationTokensCollection();
-    const token = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date(new Date().getTime() + 15 * 60 * 1000);
+export const createPendingRegistration = async (data: Omit<PendingRegistrationDocument, '_id' | 'token' | 'expires' | 'password'> & { password?: string }) => {
+    const pendingCollection = await getPendingRegistrationsCollection();
+    const hashedPassword = data.password ? await hash(data.password, 12) : undefined;
+    const token = uuidv4();
+    const expires = new Date(new Date().getTime() + 24 * 3600 * 1000);
 
-    await tokensCollection.deleteMany({ identifier: email });
+    await pendingCollection.deleteMany({ email: data.email });
 
-    const newVerificationToken = {
-        identifier: email,
+    const newPendingUser = {
+        ...data,
+        password: hashedPassword,
         token,
         expires,
     };
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await tokensCollection.insertOne(newVerificationToken as any);
+    await pendingCollection.insertOne(newPendingUser as any);
     return token;
 };
 
-export const verifyEmailAndActivateUser = async (email: string, token: string): Promise<boolean> => {
-    const tokensCollection = await getVerificationTokensCollection();
-    const usersCollection = await getUsersCollection();
-    const verificationToken = await tokensCollection.findOne({
-        identifier: email,
-        token,
-        expires: { $gt: new Date() }
-    });
-    if (!verificationToken) return false;
+export const getPendingRegistrationByToken = async (token: string): Promise<WithId<PendingRegistrationDocument> | null> => {
+    const pendingCollection = await getPendingRegistrationsCollection();
+    return await pendingCollection.findOne({ token, expires: { $gt: new Date() } });
+};
 
-    await usersCollection.updateOne(
-        { email },
-        { $set: { emailVerified: new Date(), isEmailVerified: true, updatedAt: new Date() } }
-    );
-    await tokensCollection.deleteOne({ _id: verificationToken._id });
-    return true;
+export const deletePendingRegistration = async (email: string) => {
+    const pendingCollection = await getPendingRegistrationsCollection();
+    await pendingCollection.deleteOne({ email });
 };
 
 export const createPasswordResetToken = async (email: string): Promise<string | null> => {
