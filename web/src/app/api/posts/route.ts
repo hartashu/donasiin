@@ -6,10 +6,6 @@ import { postSchema } from "@/utils/validations/post";
 import { ObjectId, WithId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 
-// async function getSession() {
-//   return { user: { id: "66a07e8a3b3e4f1a2c3d4e51" } };
-// }
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;

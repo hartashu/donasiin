@@ -3,8 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ForgotPasswordSchema, type ForgotPasswordInput } from '@/lib/schemas/auth.schema';
-import { generatePasswordResetLink } from '@/lib/actions/auth.actions';
+import { ForgotPasswordSchema, type ForgotPasswordInput } from '@/utils/validations/auth';
 import Link from 'next/link';
 
 export function ForgotPasswordForm() {
@@ -19,8 +18,18 @@ export function ForgotPasswordForm() {
     const onSubmit = (data: ForgotPasswordInput) => {
         setMessage(null);
         startTransition(async () => {
-            const result = await generatePasswordResetLink(data);
-            setMessage(result.success || result.error || null);
+            try {
+                const response = await fetch('/api/account/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Failed to send link.");
+                setMessage(result.message);
+            } catch (err: unknown) {
+                setMessage((err instanceof Error) ? err.message : 'An unknown error occurred.');
+            }
         });
     };
 

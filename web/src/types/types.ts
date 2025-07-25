@@ -14,8 +14,8 @@ export interface IUser {
   username: string; // Unique public username.
   fullName: string; // User's full name.
   email: string; // User's primary email address.
-  isEmailVerified: boolean; // Indicates if the user's email has been verified.
-  password: string; // Securely hashed password.
+  // isEmailVerified: boolean; // Indicates if the user's email has been verified.
+  password?: string | null; // Securely hashed password.
   address: string; // User's primary address.
   location?: {
     type: "Point";
@@ -27,7 +27,7 @@ export interface IUser {
 }
 
 export interface IPost {
-  id?: ObjectId; // Unique post identifier. //ObjectId
+  _id: ObjectId; // Unique post identifier. //ObjectId
   title: string; // The title of the post.
   slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.
@@ -53,11 +53,12 @@ export interface IRequest {
 
 export interface IMessage {
   _id?: ObjectId; // Unique message identifier.
+  conversationId: string;
   senderId: ObjectId; // ID of the user who sent the message.
-  recipientId: ObjectId; // ID of the message recipient.
-  messageText: string; // The text content of the message.
+  receiverId: ObjectId; // ID of the message recipient.
+  text: string; // The text content of the message.
   createdAt: Date; // Creation timestamp.
-  updatedAt: Date; // Last update timestamp.
+  // updatedAt: Date; // Last update timestamp.
 }
 
 export interface IJsonResponse<T> {
@@ -65,4 +66,40 @@ export interface IJsonResponse<T> {
   message?: string;
   data?: T;
   error?: string;
+}
+
+export interface IConversationInboxItem {
+  conversationId: string;
+  lastMessageText: string;
+  lastMessageAt: Date;
+  otherUser: {
+    _id: string;
+    fullName: string;
+    username: string;
+    avatarUrl?: string;
+  };
+}
+
+export interface IPendingRegistration {
+  _id: ObjectId;
+  email: string;
+  password?: string;
+  fullName?: string;
+  username?: string;
+  token: string;
+  expires: Date;
+}
+
+export interface IPasswordResetToken {
+  _id: ObjectId;
+  email: string;
+  token: string;
+  expires: Date;
+}
+
+export interface IVerificationToken {
+  _id: ObjectId;
+  identifier: string;
+  token: string;
+  expires: Date;
 }

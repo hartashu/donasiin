@@ -1,13 +1,10 @@
 import handleError from "@/errorHandler/errorHandler";
 import { PostModel } from "@/models/post";
 import { IJsonResponse, IPost } from "@/types/types";
+import { getSession } from "@/utils/getSession";
 import { updatePostSchema } from "@/utils/validations/post";
-import { MongoServerError, WithId } from "mongodb";
+import { WithId } from "mongodb";
 import { NextResponse } from "next/server";
-
-async function getSession() {
-  return { user: { id: "66a07e8a3b3e4f1a2c3d4e51" } };
-}
 
 export async function GET(
   _request: Request,

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
 import { RequestModel } from "@/models/request";
 import { PostModel } from "@/models/post";
 import handleError from "@/errorHandler/errorHandler";
 import { RequestStatus } from "@/types/types";
-import { ObjectId } from "mongodb";
 import { getSession } from "@/utils/getSession";
 import { updateRequestStatusSchema } from "@/utils/validations/request";
 
