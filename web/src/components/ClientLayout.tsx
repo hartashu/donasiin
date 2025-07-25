@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { User, Plus, MessageCircle, House } from "lucide-react";
+import { User, Plus, MessageCircle, House, Send } from "lucide-react";
 
 export default function ClientLayout({
   children,
@@ -31,7 +31,7 @@ export default function ClientLayout({
               <div>Messages</div>
             </div>
 
-            <div className="bg-green-800/80 px-2 py-1 rounded-md">
+            <div style={{ background: " #2a9d8f" }}>
               <div className="flex gap-2 cursor-pointer">
                 <div className="text-white font-bold">
                   <Plus className="w-4" />
@@ -46,7 +46,27 @@ export default function ClientLayout({
           </div>
         </nav>
       )}
-      <section className="min-h-screen">{children}</section>
+      <section className="">{children}</section>
+
+      {!isAuthRoute && (
+        <footer className="h-50 bg-gray-800/90">
+          <div className="text-white p-16 pt-8">
+            <p className="font-light text-md mb-2">
+              Berlanggang email newslatter kami
+            </p>
+            <div className="flex items-center">
+              <input
+                type="email"
+                placeholder="Email"
+                className="border border-black/50 rounded-l-md px-3 py-2 text-white bg-black/50 w-xs "
+              />
+              <button className="rounded-r-md bg-green-700/80 px-3 py-2 border border-green-700/80">
+                <Send className="w-3" />
+              </button>
+            </div>
+          </div>
+        </footer>
+      )}
     </main>
   );
 }

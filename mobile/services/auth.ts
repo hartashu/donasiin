@@ -13,8 +13,8 @@ export class AuthService {
   }
 
   static async login(email: string, password: string): Promise<User> {
-    console.log('[AuthService] login() called with', { email, password });  
-    const response = await fetch(`${API_BASE_URL}/auth/login-native`, {
+    console.log('[AuthService] login() called with', { email, password });
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,15 +22,15 @@ export class AuthService {
       body: JSON.stringify({ email, password }),
     });
 
-    console.log(`⚠️ data`, response )
+    console.log(`⚠️ data`, response)
     const data = await response.json();
-    console.log(`⚠️ data`, data )
+    console.log(`⚠️ data`, data)
     if (!response.ok) {
       throw new Error(data.error || 'An unknown error occurred during login.');
     }
 
     const { token, user } = data;
-    
+
     if (!token || !user) {
       throw new Error('Invalid response from server.');
     }

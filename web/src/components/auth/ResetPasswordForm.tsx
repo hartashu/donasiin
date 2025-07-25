@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ResetPasswordSchema, type ResetPasswordInput } from '@/lib/schemas/auth.schema';
-import { resetPassword } from '@/lib/actions/auth.actions';
+import { ResetPasswordSchema, type ResetPasswordInput } from '@/utils/validations/auth';
 import Link from 'next/link';
 
 interface ResetPasswordFormProps {
@@ -12,6 +12,8 @@ interface ResetPasswordFormProps {
 }
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+    const searchParams = useSearchParams();
+    const source = searchParams.get('from');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -25,9 +27,18 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         setError(null);
         setSuccess(null);
         startTransition(async () => {
-            const result = await resetPassword(data, token);
-            setError(result.error || null);
-            setSuccess(result.success || null);
+            try {
+                const response = await fetch('/api/account/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...data, token }),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error);
+                setSuccess(result.message);
+            } catch (err: unknown) {
+                setError((err instanceof Error) ? err.message : 'An unknown error occurred.');
+            }
         });
     };
 
@@ -59,11 +70,12 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                     )}
                 </form>
             </div>
-            {success && (
+            {success && source === 'native' && (
+                <p className="text-center text-sm text-gray-600 mt-6">Password updated! You can now return to the app.</p>
+            )}
+            {success && source !== 'native' && (
                 <p className="text-center text-sm text-gray-600 mt-6">
-                    <Link href="/auth/login" className="font-semibold text-blue-600 hover:underline">
-                        Click here to login
-                    </Link>
+                    <Link href="/auth/login" className="font-semibold text-blue-600 hover:underline">Click here to login</Link>
                 </p>
             )}
         </div>

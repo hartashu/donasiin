@@ -1,4 +1,5 @@
 import 'next-auth';
+import 'next-auth/jwt';
 import type { DefaultSession } from 'next-auth';
 
 declare module 'next-auth' {
@@ -6,11 +7,14 @@ declare module 'next-auth' {
         user: {
             id: string;
             username: string | null;
+            isEmailVerified: boolean;
         } & DefaultSession['user'];
     }
+}
 
-    interface User {
-        username?: string | null;
+declare module 'next-auth/jwt' {
+    interface JWT {
+        isEmailVerified?: boolean;
     }
 }
 

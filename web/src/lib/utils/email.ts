@@ -30,8 +30,12 @@ export const sendFinalizeRegistrationEmail = async (to: string, token: string) =
   await transporter.sendMail(mailOptions);
 };
 
-export const sendPasswordResetEmail = async (to: string, token: string) => {
-  const resetLink = `${process.env.AUTH_URL}/auth/reset-password/${token}`;
+export async function sendPasswordResetEmail(to: string, token: string, source?: string) {
+  let resetLink = `${process.env.AUTH_URL}/auth/reset-password/${token}`;
+
+  if (source === 'native') {
+    resetLink += '?from=native';
+  }
 
   const mailOptions = {
     from: process.env.EMAIL_FROM,
