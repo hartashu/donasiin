@@ -16,16 +16,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json<IJsonResponse<null>>({ statusCode: 409, error: "Email or username is already taken." }, { status: 409 });
         }
 
-        const newUser = {
-            email, password, fullName, username,
-            isEmailVerified: false, dailyLimit: 5, address: '', avatarUrl: '',
-        };
-
-        const createdUser = await UserModel.createUser(newUser);
-        const verificationToken = await UserModel.createVerificationToken(email);
+        const verificationToken = await UserModel.createPendingRegistration({ email, password, fullName, username });
         await sendFinalizeRegistrationEmail(email, verificationToken);
 
-        return NextResponse.json<IJsonResponse<{ userId: string }>>({ statusCode: 201, message: "User registered. Please check your email to verify.", data: { userId: createdUser.toString() } });
+        return NextResponse.json<IJsonResponse<null>>({ statusCode: 200, message: "Verification email sent! Please check your inbox to complete registration." });
     } catch (error) {
         return handleError(error);
     }

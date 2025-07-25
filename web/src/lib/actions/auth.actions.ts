@@ -2,16 +2,33 @@
 
 import { redirect } from 'next/navigation';
 import { UserModel } from '@/models/user.model';
-import { signOut } from '@/lib/auth';
 
-export async function finalizeRegistration(token: string) {
-    const user = await UserModel.verifyEmailToken(token);
-
-    if (!user) {
+export async function finalizeRegistration(token: string, from?: string | null) {
+    const pendingUser = await UserModel.getPendingRegistrationByToken(token);
+    if (!pendingUser) {
         return redirect('/auth/register?error=invalid_token');
     }
 
-    await signOut({ redirect: false });
+    const existingUser = await UserModel.getUserByEmail(pendingUser.email);
+    if (existingUser) {
+        await UserModel.deletePendingRegistration(pendingUser.email);
+        return redirect('/auth/login?message=account_already_exists');
+    }
 
-    return redirect('/auth/login?message=verification_successful');
+    await UserModel.createUser({
+        email: pendingUser.email,
+        password: pendingUser.password,
+        fullName: pendingUser.fullName ?? '',
+        username: pendingUser.username ?? '',
+        dailyLimit: 5,
+        address: '',
+        avatarUrl: '',
+        location: undefined,
+    });
+
+    await UserModel.deletePendingRegistration(pendingUser.email);
+
+    if (from !== 'native') {
+        redirect('/auth/login?message=registration_successful');
+    }
 }

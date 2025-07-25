@@ -14,7 +14,7 @@ export interface IUser {
   username: string; // Unique public username.
   fullName: string; // User's full name.
   email: string; // User's primary email address.
-  isEmailVerified: boolean; // Indicates if the user's email has been verified.
+  // isEmailVerified: boolean; // Indicates if the user's email has been verified.
   password?: string | null; // Securely hashed password.
   address: string; // User's primary address.
   location?: {
