@@ -24,7 +24,7 @@ export type Conversation = {
 
 const getDb = async () => {
     const client = await clientPromise;
-    return client.db("donation_sharing");
+    return client.db("donasiin");
 };
 
 const getMessagesCollection = async (): Promise<Collection<MessageDocument>> => {
