@@ -15,7 +15,7 @@ export interface IUser {
   fullName: string; // User's full name.
   email: string; // User's primary email address.
   isEmailVerified: boolean; // Indicates if the user's email has been verified.
-  password: string; // Securely hashed password.
+  password?: string | null; // Securely hashed password.
   address: string; // User's primary address.
   location?: {
     type: "Point";
@@ -53,11 +53,12 @@ export interface IRequest {
 
 export interface IMessage {
   _id?: ObjectId; // Unique message identifier.
+  conversationId: string;
   senderId: ObjectId; // ID of the user who sent the message.
-  recipientId: ObjectId; // ID of the message recipient.
-  messageText: string; // The text content of the message.
+  receiverId: ObjectId; // ID of the message recipient.
+  text: string; // The text content of the message.
   createdAt: Date; // Creation timestamp.
-  updatedAt: Date; // Last update timestamp.
+  // updatedAt: Date; // Last update timestamp.
 }
 
 export interface IJsonResponse<T> {
@@ -65,4 +66,41 @@ export interface IJsonResponse<T> {
   message?: string;
   data?: T;
   error?: string;
+}
+
+
+export interface IConversationInboxItem {
+  conversationId: string;
+  lastMessageText: string;
+  lastMessageAt: Date;
+  otherUser: {
+    _id: string;
+    fullName: string;
+    username: string;
+    avatarUrl?: string;
+  };
+}
+
+export interface IPendingRegistration {
+  _id: ObjectId;
+  email: string;
+  password?: string;
+  fullName?: string;
+  username?: string;
+  token: string;
+  expires: Date;
+}
+
+export interface IPasswordResetToken {
+  _id: ObjectId;
+  email: string;
+  token: string;
+  expires: Date;
+}
+
+export interface IVerificationToken {
+  _id: ObjectId;
+  identifier: string;
+  token: string;
+  expires: Date;
 }
