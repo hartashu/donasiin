@@ -17,7 +17,7 @@ export default function Banner() {
           alt="Donation Background"
           className="w-full h-full object-cover object-center scale-105 brightness-75 transition-transform duration-[4000ms] ease-out hover:scale-110"
         />
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
       </div>
 
       {/* Content */}
@@ -25,7 +25,7 @@ export default function Banner() {
         {/* Animated Heading */}
         <motion.h1
           ref={ref}
-          className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight max-w-5xl tracking-tight"
+          className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight max-w-6xl tracking-tight"
           initial={{ opacity: 0, y: 60 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 1 }}
