@@ -62,7 +62,7 @@ export default function PostCards({ data }: { data: IPost[] }) {
                         key={idx}
                         className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full"
                       >
-                        {tag}
+                        {tag[0].toUpperCase() + tag.slice(1)}
                       </span>
                     ))}
                     {d.tags?.length > 3 && (

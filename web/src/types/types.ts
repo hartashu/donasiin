@@ -8,7 +8,7 @@ export enum RequestStatus {
 }
 
 export interface IUser {
-  _id: ObjectId; // Unique user identifier.
+  _id?: ObjectId; // Unique user identifier.
   avatarUrl: string; // URL for the user's profile picture.
   username: string; // Unique public username.
   fullName: string; // User's full name.
@@ -22,7 +22,7 @@ export interface IUser {
 }
 
 export interface IPost {
-  id: ObjectId; // Unique post identifier. //ObjectId
+  id?: ObjectId; // Unique post identifier. //ObjectId
   title: string; // The title of the post.
   slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.
@@ -37,7 +37,7 @@ export interface IPost {
 }
 
 export interface IRequest {
-  _id: ObjectId; // Unique request identifier.
+  _id?: ObjectId; // Unique request identifier.
   userId: ObjectId; // ID of the user making the request.
   postId: ObjectId; // ID of the related post.
   status: RequestStatus; // Status of the request from the enum.
@@ -47,7 +47,7 @@ export interface IRequest {
 }
 
 export interface IMessage {
-  _id: ObjectId; // Unique message identifier.
+  _id?: ObjectId; // Unique message identifier.
   senderId: ObjectId; // ID of the user who sent the message.
   recipientId: ObjectId; // ID of the message recipient.
   messageText: string; // The text content of the message.
