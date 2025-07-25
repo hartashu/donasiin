@@ -7,6 +7,7 @@ export const getPosts = async (): Promise<IPost[]> => {
     cache: "no-store",
   });
   const dataJson = await res.json();
+  console.log(dataJson);
 
   return dataJson.data.posts;
 };
