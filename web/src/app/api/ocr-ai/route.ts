@@ -1,4 +1,3 @@
-// /app/api/ocr-ai/route.ts
 import {
   extractTrackingNumber,
   recognizeTextFromImage,

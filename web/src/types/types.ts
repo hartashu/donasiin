@@ -27,7 +27,7 @@ export interface IUser {
 }
 
 export interface IPost {
-  id?: ObjectId; // Unique post identifier. //ObjectId
+  _id: ObjectId; // Unique post identifier. //ObjectId
   title: string; // The title of the post.
   slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.
@@ -67,7 +67,6 @@ export interface IJsonResponse<T> {
   data?: T;
   error?: string;
 }
-
 
 export interface IConversationInboxItem {
   conversationId: string;
