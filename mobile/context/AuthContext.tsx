@@ -30,8 +30,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      // The login service now handles storing the token and user data securely
       const user = await AuthService.login(email, password);
-      await AuthService.generateToken(user);
       setUser(user);
     } catch (error) {
       console.error('Login failed:', error);
@@ -64,7 +64,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const verifyEmail = async (code: string) => {
     if (!user) throw new Error('No user to verify');
-    
     const isValid = await AuthService.verifyEmail(user.email, code);
     if (!isValid) {
       throw new Error('Invalid verification code');
@@ -80,16 +79,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     verifyEmail,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
