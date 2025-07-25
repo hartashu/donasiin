@@ -36,7 +36,7 @@ Membuat akun pengguna baru dan mengirimkan email verifikasi.
 
 Endpoint ini digunakan oleh **web dan native** untuk login via email & password dan mendapatkan token sesi.
 
-- **URL:** `/api/account/login`
+- **URL:** `/api/auth/login`
 - **Method:** `POST`
 - **Body Request:**
   ```json
