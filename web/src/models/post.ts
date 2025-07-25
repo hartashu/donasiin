@@ -52,14 +52,27 @@ export class PostModel {
         // 5. Pilih field yang ingin ditampilkan (buang data sensitif user)
         {
           $project: {
+            // Semua field dari Post
+            _id: 1,
             title: 1,
             slug: 1,
             thumbnailUrl: 1,
+            imageUrls: 1,
+            description: 1,
             category: 1,
+            isAvailable: 1,
+            userId: 1,
+            aiAnalysis: 1,
             createdAt: 1,
+            updatedAt: 1,
+
+            // Field dari Author (User) yang Anda inginkan
             "author._id": 1,
-            "author.username": 1,
             "author.avatarUrl": 1,
+            "author.username": 1,
+            "author.fullName": 1,
+            "author.email": 1,
+            "author.address": 1,
           },
         },
         // 6. Lakukan paginasi dan hitung total dalam satu query
