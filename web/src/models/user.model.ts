@@ -9,6 +9,13 @@ const PENDING_REGISTRATIONS_COLLECTION = "pending_registrations";
 const PASSWORD_RESET_TOKENS_COLLECTION = "password_reset_tokens";
 
 export class UserModel {
+    // Tambahkan ini di dalam class UserModel
+    static async getUserById(id: string): Promise<WithId<IUser> | null> {
+        if (!ObjectId.isValid(id)) return null;
+        const usersCollection = await this.getUsersCollection();
+        return usersCollection.findOne({ _id: new ObjectId(id) });
+    }
+
     static async getUsersCollection(): Promise<Collection<IUser>> {
         const db = await connectToDb();
         return db.collection<IUser>(USERS_COLLECTION);

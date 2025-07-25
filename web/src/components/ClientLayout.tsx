@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { User, Plus, MessageCircle, House, Send } from "lucide-react";
+import { User, Plus, MessageCircle, House, Send, Gift } from "lucide-react";
+import Link from "next/link";
 
 export default function ClientLayout({
   children,
@@ -15,55 +16,56 @@ export default function ClientLayout({
     <main className="bg-white text-black">
       {!isAuthRoute && (
         <nav className="border-b border-b-gray-300 flex justify-between items-center p-3 pl-16 pr-16">
-          <div className="text-2xl font-bold cursor-pointer">Donasiin</div>
-          <div className="flex gap-2 items-center cursor-pointer ml-50">
-            <div>
-              <House className="w-5" />
-            </div>
+          <Link href="/" className="text-2xl font-bold">
+            Donasiin
+          </Link>
+
+          <Link href="/" className="flex gap-2 items-center">
+            <House className="w-5" />
             <div className="text-md">Discover</div>
-          </div>
+          </Link>
 
-          <div className="flex gap-8 items-center cursor-pointer">
-            <div className="flex gap-2">
-              <div>
-                <MessageCircle className="w-5" />
-              </div>
+          <div className="flex gap-8 items-center">
+            <Link href="/donations" className="flex gap-2 items-center">
+              <Gift className="w-5" />
+              <div>Donations</div>
+            </Link>
+
+            <Link href="/chat" className="flex gap-2 items-center">
+              <MessageCircle className="w-5" />
               <div>Messages</div>
-            </div>
+            </Link>
 
-            <div style={{ background: " #2a9d8f" }}>
-              <div className="flex gap-2 cursor-pointer">
-                <div className="text-white font-bold">
-                  <Plus className="w-4" />
-                </div>
-                <div className="text-white font-semibold">Share Item</div>
-              </div>
-            </div>
+            <Link href="/create-post" className="bg-[#2a9d8f] text-white flex items-center gap-2 px-4 py-2 rounded-md font-semibold hover:opacity-90">
+              <Plus className="w-4" />
+              <div>Share Item</div>
+            </Link>
 
-            <div className="cursor-pointer">
+            <Link href="/profile">
               <User className="w-6" />
-            </div>
+            </Link>
           </div>
         </nav>
       )}
-      <section className="">{children}</section>
+      <section>{children}</section>
 
       {!isAuthRoute && (
         <footer className="h-50 bg-gray-800/90">
           <div className="text-white p-16 pt-8">
             <p className="font-light text-md mb-2">
-              Berlanggang email newslatter kami
+              Berlangganan email newsletter kami
             </p>
-            <div className="flex items-center">
+            <form className="flex items-center">
               <input
                 type="email"
                 placeholder="Email"
-                className="border border-black/50 rounded-l-md px-3 py-2 text-white bg-black/50 w-xs "
+                className="border border-black/50 rounded-l-md px-3 py-2 text-white bg-black/50 w-xs"
+                aria-label="Email for newsletter"
               />
-              <button className="rounded-r-md bg-green-700/80 px-3 py-2 border border-green-700/80">
-                <Send className="w-3" />
+              <button type="submit" className="rounded-r-md bg-green-700/80 px-3 py-2 border border-green-700/80">
+                <Send className="w-5 h-5 text-white" />
               </button>
-            </div>
+            </form>
           </div>
         </footer>
       )}
