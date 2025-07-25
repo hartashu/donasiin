@@ -1,4 +1,3 @@
-// File: src/lib/services/user.service.ts
 import { v4 as uuidv4 } from 'uuid';
 import clientPromise from '@/lib/db';
 import { hash, compare } from 'bcryptjs';

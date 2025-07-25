@@ -1,10 +1,11 @@
 import { ObjectId } from "mongodb";
 
 export enum RequestStatus {
-  PENDING = "PENDING",
-  ACCEPTED = "ACCEPTED",
-  REJECTED = "REJECTED",
-  SHIPPED = "SHIPPED",
+  PENDING = "PENDING", // Saat permintaan pertama kali dibuat oleh penerima
+  ACCEPTED = "ACCEPTED", // Saat donatur menyetujui permintaan
+  REJECTED = "REJECTED", // Saat donatur menolak permintaan
+  SHIPPED = "SHIPPED", // Saat donatur sudah mengirim barang
+  COMPLETED = "COMPLETED", // Saat penerima sudah mengkonfirmasi penerimaan barang
 }
 
 export interface IUser {
@@ -16,6 +17,10 @@ export interface IUser {
   isEmailVerified: boolean; // Indicates if the user's email has been verified.
   password: string; // Securely hashed password.
   address: string; // User's primary address.
+  location?: {
+    type: "Point";
+    coordinates: [number, number]; // [longitude, latitude]
+  };
   dailyLimit: number; // Max daily requests (default: 5).
   createdAt: Date; // Creation timestamp.
   updatedAt: Date; // Last update timestamp.
@@ -26,14 +31,14 @@ export interface IPost {
   title: string; // The title of the post.
   slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.
-  imageUrls: string[]; // Array of additional image URLs.
+  imageUrls?: string[]; // Array of additional image URLs.
   description: string; // Detailed description of the post's content.
-  tags: string[]; // Array of tags for categorization.
+  category: string; // A single category used for filtering, searching, and classification.
   isAvailable: boolean; // Availability status of the item.
   userId: ObjectId; // Reference to the author's user ID.
-  aiAnalysis: string; // AI-generated carbon savings analysis.
-  createdAt: Date; // Creation timestamp.
-  updatedAt: Date; // Last update timestamp.
+  aiAnalysis?: string; // AI-generated carbon savings analysis.
+  createdAt?: Date; // Creation timestamp.
+  updatedAt?: Date; // Last update timestamp.
 }
 
 export interface IRequest {

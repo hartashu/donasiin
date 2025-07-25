@@ -1,5 +1,3 @@
-// File: auth.d.ts
-
 import 'next-auth';
 import type { DefaultSession } from 'next-auth';
 

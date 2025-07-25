@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordSchema, type ResetPasswordInput } from '@/lib/schemas/auth.schema';
@@ -12,6 +13,9 @@ interface ResetPasswordFormProps {
 }
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+    const searchParams = useSearchParams();
+    const source = searchParams.get('from');
+
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -40,6 +44,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">{error}</div>}
                     {success && <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm">{success}</div>}
+
                     {!success && (
                         <>
                             <div className="space-y-2">
@@ -59,7 +64,14 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                     )}
                 </form>
             </div>
-            {success && (
+
+            {success && source === 'native' && (
+                <p className="text-center text-sm text-gray-600 mt-6">
+                    Password updated successfully! You can now return to the app.
+                </p>
+            )}
+
+            {success && source !== 'native' && (
                 <p className="text-center text-sm text-gray-600 mt-6">
                     <Link href="/auth/login" className="font-semibold text-blue-600 hover:underline">
                         Click here to login
