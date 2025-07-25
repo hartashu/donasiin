@@ -1,8 +1,13 @@
 import handleError from "@/errorHandler/errorHandler";
 import { PostModel } from "@/models/post";
 import { IJsonResponse, IPost } from "@/types/types";
-import { MongoServerError, ObjectId, WithId } from "mongodb";
+import { updatePostSchema } from "@/utils/validations/post";
+import { MongoServerError, WithId } from "mongodb";
 import { NextResponse } from "next/server";
+
+async function getSession() {
+  return { user: { id: "66a07e8a3b3e4f1a2c3d4e51" } };
+}
 
 export async function GET(
   _request: Request,
@@ -12,24 +17,103 @@ export async function GET(
     const { slug } = await params;
     const post = await PostModel.getPostBySlug(slug);
 
-    return NextResponse.json<IJsonResponse<WithId<IPost> | null>>(
-      {
-        statusCode: 200,
-        data: post,
-      },
-      {
-        status: 200,
-      }
+    if (!post) {
+      return NextResponse.json<IJsonResponse<null>>(
+        { statusCode: 404, error: "Post not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json<IJsonResponse<WithId<IPost>>>(
+      { statusCode: 200, data: post },
+      { status: 200 }
     );
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 }
 
-export async function POST(request: Request) {}
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const { slug } = await params;
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { statusCode: 401, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-export async function PUT(request: Request) {}
+    const post = await PostModel.getPostBySlug(slug);
+    if (!post) {
+      return NextResponse.json(
+        { statusCode: 404, error: "Post not found" },
+        { status: 404 }
+      );
+    }
 
-export async function DELETE(request: Request) {}
+    if (post.userId.toString() !== session.user.id) {
+      return NextResponse.json(
+        { statusCode: 403, error: "Forbidden" },
+        { status: 403 }
+      );
+    }
 
-export async function PATCH(request: Request) {}
+    const body = await request.json();
+    const validatedData = updatePostSchema.parse(body);
+
+    const isUpdated = await PostModel.updatePost(slug, validatedData);
+    if (!isUpdated) throw new Error("Update failed or no changes were made");
+
+    return NextResponse.json({
+      statusCode: 200,
+      message: "Post updated successfully",
+    });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const { slug } = await params;
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { statusCode: 401, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const post = await PostModel.getPostBySlug(slug);
+    if (!post) {
+      return NextResponse.json(
+        { statusCode: 404, error: "Post not found" },
+        { status: 404 }
+      );
+    }
+
+    if (post.userId.toString() !== session.user.id) {
+      return NextResponse.json(
+        { statusCode: 403, error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
+    const isDeleted = await PostModel.deletePost(slug);
+    if (!isDeleted) throw new Error("Delete failed");
+
+    return NextResponse.json({
+      statusCode: 200,
+      message: "Post deleted successfully",
+    });
+  } catch (error) {
+    return handleError(error);
+  }
+}
