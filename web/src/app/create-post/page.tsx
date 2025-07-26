@@ -24,7 +24,9 @@ export default function CreatePost() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -126,13 +128,29 @@ export default function CreatePost() {
 
         <div>
           <label className="block text-sm font-medium">Category</label>
-          <input
+          <select
             required
             name="category"
             value={formData.category}
             onChange={handleChange}
-            className="border border-gray-300 w-full px-3 py-2 rounded"
-          />
+            className="border border-gray-300 w-full px-3 py-2 rounded bg-white"
+          >
+            <option value="" disabled>
+              -- Select a Category --
+            </option>
+            <option value="elektronik">Elektronik</option>
+            <option value="fashion">Fashion & Pakaian</option>
+            <option value="rumah-dapur">Rumah & Dapur</option>
+            <option value="kesehatan-kecantikan">Kesehatan & Kecantikan</option>
+            <option value="olahraga-luar">Olahraga & Luar Ruangan</option>
+            <option value="bayi-anak">Bayi & Anak</option>
+            <option value="otomotif-peralatan">Otomotif & Peralatan</option>
+            <option value="buku-musik-media">Buku, Musik & Media</option>
+            <option value="hewan">Perlengkapan Hewan Peliharaan</option>
+            <option value="kantor-alat-tulis">
+              Perlengkapan Kantor & Alat Tulis
+            </option>
+          </select>
         </div>
 
         <div>
