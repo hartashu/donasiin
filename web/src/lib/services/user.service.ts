@@ -35,7 +35,7 @@ interface PasswordResetTokenDocument {
 
 const getDb = async () => {
     const client = await clientPromise;
-    return client.db("donation_sharing");
+    return client.db("donasiin");
 };
 
 const getUsersCollection = async (): Promise<Collection<UserDocument>> => {
