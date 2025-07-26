@@ -63,6 +63,14 @@ export interface IMessage {
   // updatedAt: Date; // Last update timestamp.
 }
 
+export interface ICarbonFootprint {
+  _id: ObjectId; // ID unik dari MongoDB
+  itemName: string; // Kata kunci utama (e.g., "cotton t-shirt")
+  aliases: string[]; // Nama lain untuk item yang sama (e.g., ["kaos", "t-shirt"])
+  carbonKg: number; // Estimasi jejak karbon dalam Kg CO2
+  displayMessage: string; // Pesan yang akan ditampilkan ke pengguna
+}
+
 export interface IJsonResponse<T> {
   statusCode: number;
   message?: string;

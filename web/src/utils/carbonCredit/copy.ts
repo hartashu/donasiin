@@ -1,9 +1,8 @@
 // lib/carbonAnalysisService.ts
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-// 🔽 'generateObject' dan 'generateText' sama-sama ada di 'ai'
-import { generateObject, generateText } from "ai";
-import { z } from "zod";
 import { CarbonFootprintModel } from "@/models/carbonFootprint";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { generateObject } from "ai";
+import { z } from "zod";
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_API_KEY,
@@ -25,6 +24,7 @@ export async function identifyItemFromImage(
         itemName: z.string(),
         quantity: z.number(),
       }),
+      // 👇 Gunakan 'messages' untuk input kompleks (teks + gambar)
       messages: [
         {
           role: "user",
@@ -50,34 +50,24 @@ export async function identifyItemFromImage(
 }
 
 /**
- * Mengestimasi jejak karbon: Coba database dulu, jika gagal baru pakai AI.
+ * Mengestimasi jejak karbon dari nama barang.
  */
 export async function getCarbonFootprintForItem(
   itemName: string
 ): Promise<number | null> {
-  // 1. Coba cari di database lokal terlebih dahulu
-  // const dbResult = await CarbonFootprintModel.findByItemName(itemName);
-
-  // if (dbResult) {
-  //   console.log(`✅ Carbon data found in local DB for: ${itemName}`);
-  //   return dbResult.carbonKg;
-  // }
-
-  // // 2. JIKA TIDAK DITEMUKAN, baru gunakan AI sebagai cadangan
-  // console.warn(
-  //   `⚠️ Carbon data not in DB for: ${itemName}. Falling back to AI estimation.`
-  // );
   try {
-    // 🔽 Gunakan 'generateText' untuk prompt teks sederhana
-    const { text } = await generateText({
+    const { object } = await generateObject({
       model,
-      prompt: `What is the estimated carbon footprint in kg of CO2 to produce one new "${itemName}"? Answer with only a single number.`,
+      schema: z.object({
+        carbonKg: z.number(),
+      }),
+      // 👇 Untuk teks saja, 'prompt' sudah benar
+      prompt: `What is the estimated carbon footprint in kg of CO2 to produce one new "${itemName}"?`,
     });
 
-    const carbonKg = parseFloat(text);
-    return isNaN(carbonKg) ? null : carbonKg;
+    return object.carbonKg;
   } catch (error) {
-    console.error("Carbon footprint AI estimation error:", error);
+    console.error("Carbon footprint estimation error:", error);
     return null;
   }
 }
