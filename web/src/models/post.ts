@@ -16,7 +16,7 @@ export class PostModel {
   static async getAllPosts({
     page = 1,
     limit = 10,
-    category, // Mengganti 'tag' menjadi 'category' agar sesuai skema
+    category,
     search,
   }: IGetAllPostsParams): Promise<{ posts: any[]; total: number }> {
     // Tipe 'posts' diubah ke any[] untuk mengakomodasi data user
@@ -196,5 +196,85 @@ export class PostModel {
     } catch (error) {
       throw error;
     }
+  }
+
+  static async findUserPostsWithRequesters(userId: ObjectId): Promise<any[]> {
+    const db = await connectToDb();
+    const pipeline = [
+      // 1. Cari semua post yang dibuat oleh user ini
+      { $match: { userId: userId } },
+      // 2. Urutkan berdasarkan post terbaru
+      { $sort: { createdAt: -1 } },
+      // 3. Gabungkan dengan 'requests' untuk mendapatkan semua permintaan terkait post ini
+      {
+        $lookup: {
+          from: "requests",
+          localField: "_id",
+          foreignField: "postId",
+          as: "requests", // Simpan semua request dalam array bernama 'requests'
+        },
+      },
+      // 4. (Opsional tapi direkomendasikan) Gabungkan request dengan data requester-nya
+      {
+        $lookup: {
+          from: "users",
+          localField: "requests.userId", // 'userId' dari dalam array 'requests'
+          foreignField: "_id",
+          as: "requesterDetails",
+        },
+      },
+      // 5. Bentuk ulang data agar rapi
+      {
+        $addFields: {
+          requests: {
+            $map: {
+              input: "$requests",
+              as: "req",
+              in: {
+                $mergeObjects: [
+                  "$$req",
+                  {
+                    requester: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$requesterDetails",
+                            as: "userDetail",
+                            cond: { $eq: ["$$userDetail._id", "$$req.userId"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      // 6. Pilih field akhir yang ingin ditampilkan
+      {
+        $project: {
+          // Ambil semua field dari post
+          title: 1,
+          slug: 1,
+          thumbnailUrl: 1,
+          category: 1,
+          isAvailable: 1,
+          createdAt: 1,
+          // Pilih field dari request dan requester-nya
+          "requests._id": 1,
+          "requests.status": 1,
+          "requests.createdAt": 1,
+          "requests.requester._id": 1,
+          "requests.requester.username": 1,
+          "requests.requester.avatarUrl": 1,
+          "requests.requester.fullName": 1,
+        },
+      },
+    ];
+
+    return db.collection("posts").aggregate(pipeline).toArray();
   }
 }

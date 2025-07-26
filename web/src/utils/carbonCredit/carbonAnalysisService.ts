@@ -1,0 +1,83 @@
+// lib/carbonAnalysisService.ts
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+// 🔽 'generateObject' dan 'generateText' sama-sama ada di 'ai'
+import { generateObject, generateText } from "ai";
+import { z } from "zod";
+import { CarbonFootprintModel } from "@/models/carbonFootprint";
+
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_API_KEY,
+});
+
+const model = google("models/gemini-1.5-flash-latest");
+
+/**
+ * Mengidentifikasi item dan jumlahnya dari gambar.
+ */
+export async function identifyItemFromImage(
+  imageBuffer: Buffer,
+  mimeType: string
+) {
+  try {
+    const { object } = await generateObject({
+      model,
+      schema: z.object({
+        itemName: z.string(),
+        quantity: z.number(),
+      }),
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `From the provided image, identify the main, identical objects and count them.`,
+            },
+            {
+              type: "image",
+              image: imageBuffer,
+              mimeType,
+            },
+          ],
+        },
+      ],
+    });
+    return object;
+  } catch (error) {
+    console.error("AI item identification error:", error);
+    return null;
+  }
+}
+
+/**
+ * Mengestimasi jejak karbon: Coba database dulu, jika gagal baru pakai AI.
+ */
+export async function getCarbonFootprintForItem(
+  itemName: string
+): Promise<number | null> {
+  // 1. Coba cari di database lokal terlebih dahulu
+  // const dbResult = await CarbonFootprintModel.findByItemName(itemName);
+
+  // if (dbResult) {
+  //   console.log(`✅ Carbon data found in local DB for: ${itemName}`);
+  //   return dbResult.carbonKg;
+  // }
+
+  // // 2. JIKA TIDAK DITEMUKAN, baru gunakan AI sebagai cadangan
+  // console.warn(
+  //   `⚠️ Carbon data not in DB for: ${itemName}. Falling back to AI estimation.`
+  // );
+  try {
+    // 🔽 Gunakan 'generateText' untuk prompt teks sederhana
+    const { text } = await generateText({
+      model,
+      prompt: `What is the estimated carbon footprint in kg of CO2 to produce one new "${itemName}"? Answer with only a single number.`,
+    });
+
+    const carbonKg = parseFloat(text);
+    return isNaN(carbonKg) ? null : carbonKg;
+  } catch (error) {
+    console.error("Carbon footprint AI estimation error:", error);
+    return null;
+  }
+}

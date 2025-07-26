@@ -85,4 +85,34 @@ export class RequestModel {
       .updateOne({ _id: requestId }, { $set: updateData });
     return result.modifiedCount > 0;
   }
+
+  static async findUserRequests(userId: ObjectId): Promise<any[]> {
+    const db = await connectToDb();
+    const pipeline = [
+      // 1. Cari semua request dari user ini
+      { $match: { userId: userId } },
+
+      // 2. Gabungkan dengan data post terkait
+      {
+        $lookup: {
+          from: "posts",
+          localField: "postId",
+          foreignField: "_id",
+          as: "postDetails",
+        },
+      },
+
+      // 3. 'Bongkar' array postDetails
+      {
+        $unwind: {
+          path: "$postDetails",
+          preserveNullAndEmptyArrays: true, // Jaga request tetap ada meskipun post-nya sudah dihapus
+        },
+      },
+
+      // 4. Urutkan berdasarkan tanggal request terbaru
+      { $sort: { createdAt: -1 } },
+    ];
+    return db.collection("requests").aggregate(pipeline).toArray();
+  }
 }
