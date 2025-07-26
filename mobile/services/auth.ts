@@ -8,8 +8,34 @@ const API_BASE_URL = 'http://localhost:3000/api';
 
 export class AuthService {
   static async register(userData: RegisterData): Promise<User> {
-    // TODO: Implement backend registration call
-    throw new Error('Registration is not implemented yet.');
+    console.log('[AuthService] register() called with', userData);
+    const response = await fetch(`${API_BASE_URL}/auth/account/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    console.log(`⚠️ registration response`, response);
+    const data = await response.json();
+    console.log(`⚠️ registration data`, data);
+
+    if (!response.ok) {
+      throw new Error(data.error || 'An unknown error occurred during registration.');
+    }
+
+    const { token, user } = data;
+
+    if (!token || !user) {
+      throw new Error('Invalid response from server. Expected token and user data after registration.');
+    }
+
+    // Store both the token and user object securely, same as in login
+    await SecureStore.setItemAsync(TOKEN_KEY, token);
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+
+    return user as User;
   }
 
   static async login(email: string, password: string): Promise<User> {

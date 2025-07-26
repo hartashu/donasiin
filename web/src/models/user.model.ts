@@ -9,7 +9,6 @@ const PENDING_REGISTRATIONS_COLLECTION = "pending_registrations";
 const PASSWORD_RESET_TOKENS_COLLECTION = "password_reset_tokens";
 
 export class UserModel {
-    // Tambahkan ini di dalam class UserModel
     static async getUserById(id: string): Promise<WithId<IUser> | null> {
         if (!ObjectId.isValid(id)) return null;
         const usersCollection = await this.getUsersCollection();
@@ -47,9 +46,11 @@ export class UserModel {
 
     static async createUser(data: Omit<IUser, '_id' | 'createdAt' | 'updatedAt'>): Promise<ObjectId> {
         const usersCollection = await this.getUsersCollection();
-        const hashedPassword = data.password ? await hash(data.password, 12) : null;
-
-        const newUser: Omit<IUser, '_id'> = { ...data, password: hashedPassword, createdAt: new Date(), updatedAt: new Date() };
+        const newUser: Omit<IUser, '_id'> = {
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
         const result = await usersCollection.insertOne(newUser as IUser);
         return result.insertedId;
     }
