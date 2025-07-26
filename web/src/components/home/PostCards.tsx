@@ -3,20 +3,34 @@
 import { IPost } from "@/types/types";
 import { Minimize2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image"; // <-- 1. Import Image
+import { useMemo } from "react"; // <-- 2. Import useMemo
+import { formatDistanceToNowStrict } from 'date-fns'; // Untuk format waktu dinamis
 
-export default function PostCards({ data }: { data: IPost[] }) {
+// Asumsi data Anda sekarang berisi informasi author
+interface IPostWithAuthor extends IPost {
+  author: {
+    fullName: string;
+    avatarUrl?: string;
+  }
+}
+
+export default function PostCards({ data }: { data: IPostWithAuthor[] }) {
+  // 3. Gunakan useMemo untuk optimasi
+  const availablePosts = useMemo(() => {
+    return data
+      .filter((d) => d.isAvailable)
+      .slice(0, 5);
+  }, [data]);
+
   return (
     <section className="py-24 md:py-32 bg-[#f8fdfc] text-black">
       <div className="container mx-auto px-6">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-serif text-4xl md:text-5xl font-bold text-[#1e3932]">
             Available Items
           </h2>
-          <Link
-            href="/posts"
-            className="text-sm font-semibold text-[#2a9d8f] hover:underline"
-          >
+          <Link href="/posts" className="text-sm font-semibold text-[#2a9d8f] hover:underline">
             View All →
           </Link>
         </div>
@@ -25,56 +39,58 @@ export default function PostCards({ data }: { data: IPost[] }) {
           Discover amazing items shared by our community members.
         </p>
 
-        {/* Scrollable Card List */}
-        <div className="flex gap-6 overflow-x-auto -mx-6 px-6 pb-2 scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 transition-all">
-          {data
-            .filter((d) => d.isAvailable)
-            .slice(0, 5)
-            .map((d, i) => (
-              <div
-                key={i}
-                className="w-[280px] shrink-0 group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
-              >
-                {/* Image Section */}
-                <div className="relative h-44">
-                  <img
-                    src={d.thumbnailUrl}
-                    alt={d.title}
-                    className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  />
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition duration-300">
-                    <div className="opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 backdrop-blur-sm bg-white/70 px-4 py-2 rounded-full flex items-center gap-2 shadow-md border border-white/40">
+        <div className="flex gap-6 overflow-x-auto -mx-6 px-6 pb-2 scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          {availablePosts.map((d) => (
+            // 4. Gunakan key yang stabil (d.slug)
+            <div
+              key={d.slug}
+              className="w-[280px] shrink-0 group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+            >
+              <div className="relative h-44">
+                {/* 5. Gunakan komponen Image dari Next.js */}
+                <Image
+                  src={d.thumbnailUrl}
+                  alt={d.title}
+                  fill
+                  className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition duration-300">
+                  <div className="opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300">
+                    {/* 6. Perbaiki link href */}
+                    <Link href={`/donations/${d.slug}`} className="backdrop-blur-sm bg-white/70 px-4 py-2 rounded-full flex items-center gap-2 shadow-md border border-white/40 text-sm font-medium text-black">
                       <Minimize2 className="w-3" />
-                      <span className="text-sm font-medium text-black">
-                        View Details
-                      </span>
-                    </div>
+                      View Details
+                    </Link>
                   </div>
-                  <span className="absolute top-2 right-2 bg-[#2a9d8f] text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                    Available
-                  </span>
                 </div>
+                <span className="absolute top-2 right-2 bg-[#2a9d8f] text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                  Available
+                </span>
+              </div>
 
-                {/* Content Section */}
-                <div className="p-4 flex flex-col justify-between h-[180px]">
-                  <h3 className="text-lg font-bold text-[#1f2d28] mb-1 line-clamp-1">
-                    {d.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-2 text-justify">
-                    {d.description}
-                  </p>
-
-                  {/* Footer Info */}
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-auto pt-2 border-t border-gray-100">
-                    <div className="w-6 h-6 rounded-full bg-[#13796f] text-white flex items-center justify-center text-[10px] font-bold">
-                      U
-                    </div>
-                    <span>about 2 hours ago</span>
+              <div className="p-4 flex flex-col justify-between h-[180px]">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1f2d28] mb-1 line-clamp-1">{d.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-2 mb-2 text-justify">{d.description}</p>
+                </div>
+                {/* 7. Gunakan data dinamis untuk author dan waktu */}
+                <div className="flex items-center gap-2 text-xs text-gray-500 mt-auto pt-2 border-t border-gray-100">
+                  <div className="w-6 h-6 rounded-full bg-gray-200">
+                    {d.author?.avatarUrl ? (
+                      <Image src={d.author.avatarUrl} alt={d.author.fullName} width={24} height={24} className="rounded-full" />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-[#13796f] text-white flex items-center justify-center text-[10px] font-bold">
+                        {d.author?.fullName?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
+                  <span className="truncate">{d.author?.fullName}</span>
+                  <span className="text-gray-400">•</span>
+                  <span className="whitespace-nowrap">{d.createdAt ? formatDistanceToNowStrict(new Date(d.createdAt), { addSuffix: true }) : ''}</span>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
         </div>
       </div>
     </section>
