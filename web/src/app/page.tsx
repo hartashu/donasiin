@@ -13,7 +13,6 @@ export default function Home() {
 
   const fetchData = async () => {
     const dataJson = await getPosts();
-    console.log(dataJson);
 
     setData(dataJson);
   };
