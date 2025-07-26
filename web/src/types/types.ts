@@ -31,7 +31,7 @@ export interface IPost {
   title: string; // The title of the post.
   slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.
-  imageUrls?: string[]; // Array of additional image URLs.
+  imageUrls: string[]; // Array of additional image URLs.
   description: string; // Detailed description of the post's content.
   category: string; // A single category used for filtering, searching, and classification.
   isAvailable: boolean; // Availability status of the item.
@@ -120,4 +120,5 @@ export interface IAuthor {
   fullName?: string;
   username?: string;
   email?: string;
+  address:string
 }

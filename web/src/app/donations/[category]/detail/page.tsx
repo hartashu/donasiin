@@ -1,18 +1,22 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { IPost } from "@/types/types";
+import DeletePostButton from "@/components/donations/DeletePostButton";
+import RequestPostButton from "@/components/donations/RequestPostButton";
 
 export default function DonationDetailPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const slug = searchParams.get("slug");
 
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<IPost>();
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
-  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [sessionUserId, setSessionUserId] = useState<string>("");
   const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
@@ -20,7 +24,7 @@ export default function DonationDetailPage() {
       try {
         const res = await fetch(`/api/posts/${slug}`);
         const json = await res.json();
-        setPost(json?.data);
+        setPost(json?.data || null);
       } catch (err) {
         console.error("Failed to fetch post", err);
       } finally {
@@ -32,7 +36,7 @@ export default function DonationDetailPage() {
       try {
         const res = await fetch("/api/auth/session");
         const json = await res.json();
-        setSessionUserId(json?.user?.id || null);
+        setSessionUserId(json?.user?.id || "");
       } catch (err) {
         console.error("Failed to fetch session", err);
       }
@@ -72,10 +76,9 @@ export default function DonationDetailPage() {
       const result = await res.json();
       if (!res.ok) throw new Error(result?.error || "Failed to start chat.");
 
-      window.location.href = `/chat/${result.conversationId}`;
+      router.push(`/chat/${result.conversationId}`);
     } catch (err) {
-      alert("Could not start chat.");
-      console.error(err);
+      console.error("Could not start chat.", err);
     } finally {
       setChatLoading(false);
     }
@@ -84,7 +87,7 @@ export default function DonationDetailPage() {
   if (loading) return <p className="text-center py-10">Loading...</p>;
   if (!post) return <p className="text-center py-10">Post not found.</p>;
 
-  const isOwner = post.userId === sessionUserId;
+  const isOwner = post.userId.toString() === sessionUserId;
 
   return (
     <main className="container mx-auto py-8 px-4">
@@ -94,9 +97,8 @@ export default function DonationDetailPage() {
           <Image
             src={post.imageUrls?.[currentImage] || "/placeholder.svg"}
             alt={`Image ${currentImage + 1}`}
-            layout="fill"
-            objectFit="cover"
-            className="object-center"
+            fill
+            className="object-cover object-center"
           />
           {post.imageUrls?.length > 1 && (
             <>
@@ -125,7 +127,7 @@ export default function DonationDetailPage() {
           <div className="flex items-center gap-3 mt-4">
             <Image
               src={post.author?.avatarUrl || "/placeholder.svg"}
-              alt={post.author?.fullName}
+              alt={post.author?.fullName || "User"}
               width={40}
               height={40}
               className="rounded-full object-cover"
@@ -154,20 +156,16 @@ export default function DonationDetailPage() {
                 to contact the donor.
               </div>
             ) : isOwner ? (
-              <div className="text-sm text-gray-500">
-                You are the owner of this post.
-              </div>
+              <>
+                <div className="text-sm text-gray-500">
+                  You are the owner of this post.
+                </div>
+                <DeletePostButton slug={slug!} />
+              </>
             ) : (
               <>
-                {/* Request Item */}
-                <button
-                  onClick={() => alert("Request item feature triggered")}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded"
-                >
-                  Request This Item
-                </button>
+                <RequestPostButton postId={post._id.toString()} />
 
-                {/* Chat Owner */}
                 <button
                   onClick={handleStartChat}
                   disabled={chatLoading}
