@@ -1,53 +1,55 @@
-import { auth } from '@/lib/auth';
-import { ChatModel } from '@/models/chat.model';
-import { UserModel } from '@/models/user.model';
-import { redirect } from 'next/navigation';
-import { ChatRoom } from '@/components/chat/ChatRoom';
-import { ObjectId } from 'mongodb';
+import { auth } from "@/lib/auth";
+import { ChatModel } from "@/models/chat.model";
+import { UserModel } from "@/models/user.model";
+import { redirect } from "next/navigation";
+import { ChatRoom } from "@/components/chat/ChatRoom";
+import { ObjectId } from "mongodb";
 
 interface ChatRoomPageProps {
-    params: {
-        conversationId: string;
-    };
+  params: Promise<{
+    conversationId: string;
+  }>;
 }
 
 export default async function ChatRoomPage({ params }: ChatRoomPageProps) {
-    const session = await auth();
-    if (!session?.user?.id) {
-        redirect('/auth/login');
-    }
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
 
-    const { conversationId } = params;
-    if (!conversationId.includes(session.user.id)) {
-        redirect('/chat');
-    }
+  const { conversationId } = await params;
+  if (!conversationId.includes(session.user.id)) {
+    redirect("/chat");
+  }
 
-    const initialMessages = await ChatModel.getMessagesByConversationId(conversationId);
+  const initialMessages = await ChatModel.getMessagesByConversationId(
+    conversationId
+  );
 
-    const participantIds = conversationId.split('_');
-    const otherUserId = participantIds.find(id => id !== session.user.id);
+  const participantIds = conversationId.split("_");
+  const otherUserId = participantIds.find((id) => id !== session.user.id);
 
-    let otherUser = null;
-    if (otherUserId && ObjectId.isValid(otherUserId)) {
-        otherUser = await UserModel.getUserById(otherUserId); // Asumsi ada fungsi ini
-    }
+  let otherUser = null;
+  if (otherUserId && ObjectId.isValid(otherUserId)) {
+    otherUser = await UserModel.getUserById(otherUserId); // Asumsi ada fungsi ini
+  }
 
-    if (!otherUser) {
-        redirect('/chat');
-    }
+  if (!otherUser) {
+    redirect("/chat");
+  }
 
-    return (
-        <div className="flex flex-col h-screen">
-            <ChatRoom
-                initialMessages={JSON.parse(JSON.stringify(initialMessages))}
-                currentUser={session.user}
-                otherUser={{
-                    id: otherUser._id.toString(),
-                    fullName: otherUser.fullName,
-                    avatarUrl: otherUser.avatarUrl
-                }}
-                conversationId={conversationId}
-            />
-        </div>
-    );
+  return (
+    <div className="flex flex-col h-screen">
+      <ChatRoom
+        initialMessages={JSON.parse(JSON.stringify(initialMessages))}
+        currentUser={session.user}
+        otherUser={{
+          id: otherUser._id.toString(),
+          fullName: otherUser.fullName,
+          avatarUrl: otherUser.avatarUrl,
+        }}
+        conversationId={conversationId}
+      />
+    </div>
+  );
 }

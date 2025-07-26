@@ -1,13 +1,25 @@
-"use server";
-import { IPost } from "@/types/types";
+// actions/action.ts
+export const getPosts = async (
+  category?: string,
+  search?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<IPost[]> => {
+  const params = new URLSearchParams();
 
-export const getPosts = async (): Promise<IPost[]> => {
-  const res = await fetch("http://localhost:3000/api/posts", {
-    method: "GET",
-    cache: "no-store",
-  });
+  if (category) params.append("category", category);
+  if (search) params.append("search", search);
+  params.append("page", String(page));
+  params.append("limit", String(limit));
+
+  const res = await fetch(
+    `http://localhost:3000/api/posts?${params.toString()}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    }
+  );
+
   const dataJson = await res.json();
-  console.log(dataJson);
-
   return dataJson.data.posts;
 };
