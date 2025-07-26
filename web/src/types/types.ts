@@ -37,6 +37,7 @@ export interface IPost {
   isAvailable: boolean; // Availability status of the item.
   userId: ObjectId; // Reference to the author's user ID.
   aiAnalysis?: string; // AI-generated carbon savings analysis.
+  carbonKg?: number;
   createdAt?: Date; // Creation timestamp.
   updatedAt?: Date; // Last update timestamp.
   author?: IAuthor;
