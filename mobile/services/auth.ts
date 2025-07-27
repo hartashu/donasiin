@@ -8,7 +8,7 @@ const API_BASE_URL = 'http://localhost:3000/api';
 
 export class AuthService {
   static async register(userData: RegisterData): Promise<User> {
-    console.log('[AuthService] register() called with', userData);
+    // console.log('[AuthService] register() called with', userData);
     const response = await fetch(`${API_BASE_URL}/auth/account/register`, {
       method: 'POST',
       headers: {
@@ -17,9 +17,9 @@ export class AuthService {
       body: JSON.stringify(userData),
     });
 
-    console.log(`⚠️ registration response`, response);
+    // console.log(`⚠️ registration response`, response);
     const data = await response.json();
-    console.log(`⚠️ registration data`, data);
+    // console.log(`⚠️ registration data`, data);
 
     if (!response.ok) {
       throw new Error(data.error || 'An unknown error occurred during registration.');
@@ -39,7 +39,7 @@ export class AuthService {
   }
 
   static async login(email: string, password: string): Promise<User> {
-    console.log('[AuthService] login() called with', { email, password });
+    // console.log('[AuthService] login() called with', { email, password });
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -48,7 +48,7 @@ export class AuthService {
       body: JSON.stringify({ email, password }),
     });
 
-    console.log(`⚠️ data`, response)
+    // console.log(`⚠️ data`, response)
     const data = await response.json();
     console.log(`⚠️ data`, data)
     if (!response.ok) {
@@ -56,6 +56,7 @@ export class AuthService {
     }
 
     const { token, user } = data;
+    console.log(`⚠️ token`, user)
 
     if (!token || !user) {
       throw new Error('Invalid response from server.');
