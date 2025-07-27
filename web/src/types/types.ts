@@ -96,6 +96,7 @@ export interface IPendingRegistration {
   password?: string;
   fullName?: string;
   username?: string;
+  address?: string;
   token: string;
   expires: Date;
 }
@@ -120,5 +121,5 @@ export interface IAuthor {
   fullName?: string;
   username?: string;
   email?: string;
-  address:string
+  address: string
 }

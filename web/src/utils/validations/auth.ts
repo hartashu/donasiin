@@ -10,6 +10,7 @@ export const RegisterSchema = z.object({
     username: z.string().min(3, { message: 'Username must be at least 3 characters.' }).regex(/^[a-zA-Z0-9_]+$/, { message: 'Username can only contain letters, numbers, and underscores.' }),
     email: z.string().email({ message: 'Please enter a valid email address.' }),
     password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+    address: z.string().min(10, { message: 'Address must be at least 10 characters long.' }),
 });
 
 export const ForgotPasswordSchema = z.object({
