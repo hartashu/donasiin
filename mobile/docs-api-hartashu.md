@@ -533,3 +533,54 @@ Mengembalikan URL dari semua file yang berhasil diunggah dan nomor resi jika ter
 ### Response Error
 
 - **`400 Bad Request`**: Jika tidak ada file `itemImages` maupun `receiptImage` yang dikirim.
+
+CHAT
+
+const response = await fetch('/api/chat/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ receiverId, text }),
+});
+
+const result = await response.json();                
+
+if (!response.ok) {
+    throw new Error(result.error || 'Failed to send message.');
+}
+
+// Jika berhasil, redirect ke halaman chat yang baru dibuat
+router.push(`/chat/${result.conversationId}`);
+
+
+startTransition(async () => {
+  try {
+      await fetch('/api/chat/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ receiverId: otherUser.id, text }),
+      });
+  } catch (error) {
+      console.error('Failed to send message');
+      // Logika untuk menampilkan error atau mengembalikan pesan optimistik
+      setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
+  }
+});
+
+try {
+  const res = await fetch("/api/chat/conversations");
+  const data = await res.json();
+  console.log("Conversations:", data);
+
+
+  if (res.status === 401) {
+    router.push("/auth/login");
+    return;
+  }
+
+  setConversations(data);
+
+
+/app/chat
+/component/chat/
+
+68846654433e1c7b8f354b6a = petrus

@@ -1,32 +1,56 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+// File: mobile/app/(tabs)/profile.tsx
+
+import React, { useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Settings, CreditCard as Edit, LogOut, MessageCircle } from 'lucide-react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import {
+  Settings,
+  CreditCard as Edit,
+  LogOut,
+  MessageCircle,
+} from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { AuthService } from '../../services/auth';
+
+const API_BASE_URL = 'http://localhost:3000/api';
+
+type MyPostSummary = {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  slug: string;
+};
 
 export default function ProfileScreen() {
   const { user, logout, isLoading } = useAuth();
+  const [myPosts, setMyPosts] = useState<MyPostSummary[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
   const router = useRouter();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/(auth)/login');
-          }
-        }
-      ]
-    );
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/(auth)/login');
+        },
+      },
+    ]);
   };
 
   const handleEditProfile = () => {
@@ -37,6 +61,48 @@ export default function ProfileScreen() {
     router.push('/settings');
   };
 
+  const fetchMyPosts = useCallback(async () => {
+    setPostsLoading(true);
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) {
+        setMyPosts([]);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/users/me/posts`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch your posts.");
+      }
+
+      const result = await response.json();
+      const postsData = result.data || [];
+
+      setMyPosts(
+        postsData.map((post: any) => ({
+          id: post._id,
+          title: post.title,
+          thumbnailUrl: post.thumbnailUrl,
+          slug: post.slug,
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching user's posts:", error);
+    } finally {
+      setPostsLoading(false);
+    }
+  }, []);
+
+  // Call fetchMyPosts whenever this screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyPosts();
+    }, [fetchMyPosts])
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -46,7 +112,8 @@ export default function ProfileScreen() {
       </SafeAreaView>
     );
   }
-
+  console.log(user);
+  
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
@@ -63,20 +130,33 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.settingsButton} onPress={handleSettings}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={handleSettings}
+          >
             <Settings color={Colors.text.secondary} size={24} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
-            <Image 
-              source={{ uri: user.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400' }} 
-              style={styles.avatar} 
+            <Image
+              source={{
+                uri:
+                  user.avatar ||
+                  'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400',
+              }}
+              style={styles.avatar}
             />
-            <TouchableOpacity style={styles.editAvatarButton} onPress={handleEditProfile}>
+            <TouchableOpacity
+              style={styles.editAvatarButton}
+              onPress={handleEditProfile}
+            >
               <Edit color={Colors.white} size={16} />
             </TouchableOpacity>
           </View>
@@ -114,19 +194,16 @@ export default function ProfileScreen() {
 
         <View style={styles.infoSection}>
           <Text style={styles.sectionTitle}>Account Information</Text>
-          
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Email</Text>
             <Text style={styles.infoValue}>{user.email}</Text>
           </View>
-
-          <View style={styles.infoItem}>
+          {/* <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Daily Request Limit</Text>
             <Text style={styles.infoValue}>
               {user.usedRequests} / {user.dailyRequestLimit} used today
             </Text>
-          </View>
-
+          </View> */}
           {user.address && (
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Address</Text>
@@ -137,15 +214,45 @@ export default function ProfileScreen() {
 
         <View style={styles.myItemsSection}>
           <Text style={styles.sectionTitle}>My Available Items</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No items available</Text>
-            <Button
-              title="Create Your First Post"
-              onPress={() => router.push('/create-post')}
-              variant="outline"
-              size="sm"
-            />
-          </View>
+          {postsLoading ? (
+            <ActivityIndicator color={Colors.primary[600]} />
+          ) : myPosts.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {myPosts.map((post) => (
+                <TouchableOpacity
+                  key={post.id}
+                  style={styles.postCard}
+                  onPress={() => router.push(`/post/${post.slug}`)}
+                >
+                  <Image
+                    source={{ uri: post.thumbnailUrl }}
+                    style={styles.postImage}
+                  />
+                  <Text
+                    style={styles.postTitle}
+                    numberOfLines={2}
+                  >
+                    {post.title}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>
+                You haven't posted any items yet.
+              </Text>
+              <Button
+                title="Create Your First Post"
+                onPress={() => router.push('/create-post')}
+                variant="outline"
+                size="sm"
+              />
+            </View>
+          )}
         </View>
 
         <View style={styles.logoutSection}>
@@ -309,6 +416,22 @@ const styles = StyleSheet.create({
   myItemsSection: {
     paddingHorizontal: 24,
     marginBottom: 32,
+  },
+  postCard: {
+    width: 140,
+    marginRight: 16,
+  },
+  postImage: {
+    width: '100%',
+    height: 140,
+    borderRadius: 12,
+    backgroundColor: Colors.gray[200],
+    marginBottom: 8,
+  },
+  postTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text.primary,
   },
   emptyState: {
     backgroundColor: Colors.surface,
