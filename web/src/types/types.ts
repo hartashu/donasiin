@@ -127,3 +127,36 @@ export interface IAuthor {
   email?: string;
   address: string;
 }
+
+//
+export interface IPostWithRequests {
+  _id: string; 
+  title: string;
+  category: string;
+  thumbnailUrl: string;
+  isAvailable: boolean;
+  requests: {
+    _id: string;
+    status: RequestStatus;
+    requester: {
+      _id: string;
+      username: string;
+      fullName: string;
+      avatarUrl?: string;
+    };
+  }[];
+}
+
+export interface IRequestWithPostDetails {
+  _id: string;
+  userId: string;
+  postId: string;
+  status: RequestStatus;
+  createdAt: string;
+  postDetails: {
+    _id: string;
+    title: string;
+    slug: string;
+    thumbnailUrl: string;
+  };
+}

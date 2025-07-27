@@ -30,9 +30,9 @@ export default function PostCards({ data }: { data: IPost[] }) {
           {data
             .filter((d) => d.isAvailable)
             .slice(0, 5)
-            .map((d) => (
+            .map((d, idx) => (
               <div
-                key={d.slug}
+                key={idx}
                 className="w-[280px] shrink-0 group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
               >
                 <div className="relative h-44">
@@ -88,8 +88,8 @@ export default function PostCards({ data }: { data: IPost[] }) {
                     <span className="whitespace-nowrap">
                       {d.createdAt
                         ? formatDistanceToNowStrict(new Date(d.createdAt), {
-                          addSuffix: true,
-                        })
+                            addSuffix: true,
+                          })
                         : ""}
                     </span>
                   </div>

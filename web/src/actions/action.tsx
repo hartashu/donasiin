@@ -1,6 +1,18 @@
-// actions/action.ts
-import { IPost } from "@/types/types";
+"use server";
 
+import {
+  IUser,
+  IPost,
+  IPostWithRequests,
+  IRequestWithPostDetails,
+} from "@/types/types";
+import { cookies } from "next/headers";
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
+// ----------------------------------------------
+// PUBLIC GET POSTS
+// ----------------------------------------------
 export const getPosts = async (
   category?: string,
   search?: string,
@@ -14,23 +26,23 @@ export const getPosts = async (
   params.append("page", String(page));
   params.append("limit", String(limit));
 
-  const res = await fetch(
-    `http://localhost:3000/api/posts?${params.toString()}`,
-    {
-      method: "GET",
-      cache: "no-store",
-    }
-  );
+  const res = await fetch(`${BASE_URL}/api/posts?${params.toString()}`, {
+    method: "GET",
+    cache: "no-store",
+  });
 
   const dataJson = await res.json();
+  console.log(dataJson);
+
   return {
     posts: dataJson.data.posts,
     totalPages: dataJson.data.totalPages,
   };
 };
 
-// ----------------------------------------------------------------------------------------
-// CREATE POST
+// ----------------------------------------------
+// CREATE POST (AUTH REQUIRED)
+// ----------------------------------------------
 type CreatePostParams = {
   title: string;
   thumbnailUrl: string;
@@ -40,20 +52,15 @@ type CreatePostParams = {
   isAvailable: boolean;
 };
 
-export async function uploadImageAction(formData: FormData): Promise<string[]> {
-  const res = await fetch("http://localhost:3000/api/upload", {
-    method: "POST",
-    body: formData,
-  });
-
-  const result = await res.json();
-  return result?.data?.itemUrls || [];
-}
-
 export async function createPostAction(data: CreatePostParams) {
-  const res = await fetch("http://localhost:3000/api/posts", {
+  const cookie = await cookies();
+
+  const res = await fetch(`${BASE_URL}/api/posts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: cookie.toString(),
+    },
     body: JSON.stringify(data),
   });
 
@@ -62,15 +69,20 @@ export async function createPostAction(data: CreatePostParams) {
   return await res.json();
 }
 
-// Delete
+// ----------------------------------------------
+// DELETE POST (AUTH REQUIRED)
+// ----------------------------------------------
 export async function deletePostAction(
   slug: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const res = await fetch(`http://localhost:3000/api/posts/${slug}`, {
+    const cookie = await cookies();
+
+    const res = await fetch(`${BASE_URL}/api/posts/${slug}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
+        Cookie: cookie.toString(),
       },
       cache: "no-store",
     });
@@ -88,4 +100,114 @@ export async function deletePostAction(
   } catch (err: any) {
     return { success: false, error: err.message };
   }
+}
+
+// ----------------------------------------------
+// UPLOAD IMAGE (AUTH REQUIRED)
+// ----------------------------------------------
+export async function uploadImageAction(formData: FormData): Promise<string[]> {
+  const cookie = await cookies();
+
+  const res = await fetch(`${BASE_URL}/api/upload`, {
+    method: "POST",
+    body: formData,
+    headers: {
+      Cookie: cookie.toString(),
+    },
+  });
+
+  const result = await res.json();
+  return result?.data?.itemUrls || [];
+}
+
+// ----------------------------------------------
+// GET MY POSTS (AUTH REQUIRED)
+// ----------------------------------------------
+export async function getMyPostsAction(): Promise<IPostWithRequests[]> {
+  const cookie = await cookies();
+
+  const res = await fetch(`${BASE_URL}/api/users/me/posts`, {
+    method: "GET",
+    headers: {
+      Cookie: cookie.toString(),
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch my posts");
+
+  const json = await res.json();
+  console.log("mypost", json);
+
+  return json.data;
+}
+
+// ----------------------------------------------
+// GET MY REQUESTS (AUTH REQUIRED)
+// ----------------------------------------------
+export async function getMyRequestsAction(): Promise<
+  IRequestWithPostDetails[]
+> {
+  const cookie = await cookies();
+
+  const res = await fetch(`${BASE_URL}/api/users/me/requests`, {
+    method: "GET",
+    headers: {
+      Cookie: cookie.toString(),
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch my requests");
+
+  const json = await res.json();
+  console.log("myrequest", json);
+
+  return json.data;
+}
+
+// ----------------------------------------------
+// GET MY USER (AUTH REQUIRED)
+// ----------------------------------------------
+
+export async function getMyUser(): Promise<IUser> {
+  const cookie = await cookies();
+
+  const res = await fetch(`${BASE_URL}/api/users/me`, {
+    method: "GET",
+    headers: {
+      Cookie: cookie.toString(),
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch user info");
+
+  const json = await res.json();
+  console.log("myuser", json);
+
+  return json.data;
+}
+
+// ----------------------------------------------
+// PATH REQUEST STATUS (AUTH REQUIRED)
+// ----------------------------------------------
+
+export async function updateRequestStatus(
+  id: string,
+  data: { status: string }
+) {
+  const cookie = await cookies();
+
+  const res = await fetch(`${BASE_URL}/api/requests/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: cookie.toString(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Failed to update request status");
+  return res.json();
 }
