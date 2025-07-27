@@ -6,11 +6,11 @@ export default function VerifyNoticePage() {
         <Suspense>
             <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
                 <div
-                    className="absolute inset-0 z-0 shimmer-effect"
+                    className="absolute inset-0 z-0"
                     style={{
-                        background: 'linear-gradient(225deg, #003d2b, #0d5e4c, #2a9d8f, #01140e)',
+                        background: 'linear-gradient(225deg,rgb(9, 62, 50), rgb(9, 62, 50), rgb(142, 202, 195), rgb(2, 54, 42), rgb(9, 62, 50), rgb(142, 202, 195), rgb(9, 62, 50), rgb(255, 255, 255), rgb(255, 255, 255) )',
                         backgroundSize: '400% 400%',
-                        animation: 'gradient-flow 25s ease infinite',
+                        animation: 'gradient-flow 90s ease infinite',
                     }}
                 />
 
