@@ -88,8 +88,8 @@ export default function PostCards({ data }: { data: IPost[] }) {
                     <span className="whitespace-nowrap">
                       {d.createdAt
                         ? formatDistanceToNowStrict(new Date(d.createdAt), {
-                            addSuffix: true,
-                          })
+                          addSuffix: true,
+                        })
                         : ""}
                     </span>
                   </div>

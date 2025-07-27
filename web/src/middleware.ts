@@ -8,7 +8,12 @@ export function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
     const isLoggedIn = !!sessionCookie;
     const isAuthPage = pathname.startsWith('/auth');
-    const isProtectedPage = !isAuthPage && pathname !== '/';
+    const isPublic =
+        pathname === '/' ||
+        pathname.startsWith('/auth') ||
+        pathname.startsWith('/donations');
+
+    const isProtectedPage = !isPublic;
 
     if (isProtectedPage && !isLoggedIn) {
         return NextResponse.redirect(new URL('/auth/login', req.url));

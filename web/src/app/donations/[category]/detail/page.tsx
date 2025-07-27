@@ -153,7 +153,7 @@ export default function DonationDetailPage() {
                 <Link href="/login" className="underline font-medium">
                   log in
                 </Link>{" "}
-                to contact the donor.
+                to request or contact the donator.
               </div>
             ) : isOwner ? (
               <>
