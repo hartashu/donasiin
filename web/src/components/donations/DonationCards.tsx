@@ -51,9 +51,9 @@ export default function DonationCards({ category }: { category?: string }) {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {data.map((d) => (
+              {data.map((d, idx) => (
                 <div
-                  key={d.slug}
+                  key={idx}
                   className="group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
                 >
                   <div className="relative h-44">

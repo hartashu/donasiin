@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 
 interface RequestPostButtonProps {
   postId: string;
+  onSuccess?: () => void;
 }
 
-export default function RequestPostButton({ postId }: RequestPostButtonProps) {
+export default function RequestPostButton({
+  postId,
+  onSuccess,
+}: RequestPostButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -28,7 +32,11 @@ export default function RequestPostButton({ postId }: RequestPostButtonProps) {
         throw new Error(result.error || "Failed to request item");
       }
 
-      router.push("/donations"); // bisa ganti tujuan sesuai kebutuhan
+      // callback ke parent (DonationDetailPage)
+      onSuccess?.();
+
+      // optional: redirect atau stay
+      router.refresh();
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
