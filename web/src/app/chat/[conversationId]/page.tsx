@@ -13,6 +13,11 @@ interface ChatRoomPageProps {
 
 export default async function ChatRoomPage({ params }: ChatRoomPageProps) {
   const session = await auth();
+  // console.log(session);
+  // console.log(session);
+  // console.log(session);
+  // console.log(session);
+
   if (!session?.user?.id) {
     redirect("/auth/login");
   }

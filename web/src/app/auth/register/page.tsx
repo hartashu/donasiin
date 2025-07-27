@@ -1,10 +1,23 @@
+import { Suspense } from "react";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 flex-col">
-      <div className="mb-4 text-3xl">[LOGO] Donasiin</div>
-      <RegisterForm />
-    </div>
+    <Suspense>
+      <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            background: 'linear-gradient(225deg,rgb(9, 62, 50), rgb(9, 62, 50), rgb(142, 202, 195), rgb(2, 54, 42), rgb(9, 62, 50), rgb(142, 202, 195), rgb(9, 62, 50), rgb(255, 255, 255), rgb(255, 255, 255) )',
+            backgroundSize: '400% 400%',
+            animation: 'gradient-flow 90s ease infinite',
+          }}
+        />
+
+        <div className="relative z-10 flex flex-col items-center justify-center w-full">
+          <RegisterForm />
+        </div>
+      </main>
+    </Suspense>
   );
 }

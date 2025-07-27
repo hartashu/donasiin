@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordSchema, type ResetPasswordInput } from '@/utils/validations/auth';
 import Link from 'next/link';
+import { Lock } from 'lucide-react';
 
 interface ResetPasswordFormProps {
     token: string | null;
@@ -43,41 +44,53 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     };
 
     return (
-        <div className="max-w-md w-full">
-            <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold">Set a New Password</h1>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">{error}</div>}
-                    {success && <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm">{success}</div>}
+        <div className="max-w-md w-full animate-subtle-float">
+            <div className="bg-white/60 backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl border border-white/20">
+                <div className="text-center mb-6">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Set a New Password</h1>
+                    {!success && <p className="text-gray-700 text-sm sm:text-md mt-2">Please enter and confirm your new password.</p>}
+                </div>
+
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    {error && <div className="bg-red-500/10 text-red-900 p-3 rounded-md text-sm border border-red-500/20">{error}</div>}
+                    {success && <div className="bg-green-500/10 text-green-900 p-3 rounded-md text-sm border border-green-500/20">{success}</div>}
+
                     {!success && (
                         <>
                             <div className="space-y-2">
-                                <label htmlFor="password">New Password</label>
-                                <input id="password" type="password" {...form.register('password')} disabled={isPending} className="w-full px-4 py-2 border rounded-md" />
-                                {form.formState.errors.password && <p className="text-red-500 text-sm">{form.formState.errors.password.message}</p>}
+                                <label htmlFor="password" className="font-medium text-sm text-gray-600">New Password</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                                    <input id="password" type="password" {...form.register('password')} disabled={isPending} placeholder="••••••••" className="w-full pl-10 pr-4 py-2 bg-white/40 border border-gray-300/50 rounded-md text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#2a9d8f] focus:border-[#2a9d8f] outline-none transition" />
+                                </div>
+                                {form.formState.errors.password && <p className="text-red-600 text-xs px-1 pt-1">{form.formState.errors.password.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label htmlFor="confirmPassword">Confirm New Password</label>
-                                <input id="confirmPassword" type="password" {...form.register('confirmPassword')} disabled={isPending} className="w-full px-4 py-2 border rounded-md" />
-                                {form.formState.errors.confirmPassword && <p className="text-red-500 text-sm">{form.formState.errors.confirmPassword.message}</p>}
+                                <label htmlFor="confirmPassword" className="font-medium text-sm text-gray-600">Confirm New Password</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                                    <input id="confirmPassword" type="password" {...form.register('confirmPassword')} disabled={isPending} placeholder="••••••••" className="w-full pl-10 pr-4 py-2 bg-white/40 border border-gray-300/50 rounded-md text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#2a9d8f] focus:border-[#2a9d8f] outline-none transition" />
+                                </div>
+                                {form.formState.errors.confirmPassword && <p className="text-red-600 text-xs px-1 pt-1">{form.formState.errors.confirmPassword.message}</p>}
                             </div>
-                            <button type="submit" disabled={isPending} className="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-md hover:bg-blue-700 disabled:bg-blue-300">
+                            <button type="submit" disabled={isPending} className="w-full bg-[#2a9d8f] text-white font-semibold py-2.5 rounded-md hover:bg-[#268a7e] transition duration-300 disabled:bg-[#2a9d8f]/50 disabled:cursor-not-allowed">
                                 {isPending ? 'Resetting...' : 'Reset Password'}
                             </button>
                         </>
                     )}
                 </form>
+
+                {success && source === 'native' && (
+                    <p className="text-center text-sm text-gray-800 mt-6 font-medium">Password updated! You can now return to the app.</p>
+                )}
+                {success && source !== 'native' && (
+                    <p className="text-center text-sm text-gray-600 mt-6">
+                        <Link href="/auth/login" className="font-semibold text-[#2a9d8f] hover:underline">
+                            Password updated! Click here to login
+                        </Link>
+                    </p>
+                )}
             </div>
-            {success && source === 'native' && (
-                <p className="text-center text-sm text-gray-600 mt-6">Password updated! You can now return to the app.</p>
-            )}
-            {success && source !== 'native' && (
-                <p className="text-center text-sm text-gray-600 mt-6">
-                    <Link href="/auth/login" className="font-semibold text-blue-600 hover:underline">Click here to login</Link>
-                </p>
-            )}
         </div>
     );
 }

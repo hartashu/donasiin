@@ -3,12 +3,16 @@ import { getSession } from '@/utils/getSession';
 import { ChatModel } from '@/models/chat.model';
 import handleError from '@/errorHandler/errorHandler';
 
+
 export async function GET(
     request: Request,
     { params }: { params: { conversationId: string } }
 ) {
     try {
+        // console.log(auth());
         const session = await getSession();
+        // console.log('session:', session);
+
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

@@ -27,7 +27,7 @@ export function StartChatForm({ receiverId }: StartChatFormProps) {
                     body: JSON.stringify({ receiverId, text }),
                 });
 
-                const result = await response.json();
+                const result = await response.json();                
 
                 if (!response.ok) {
                     throw new Error(result.error || 'Failed to send message.');
