@@ -31,7 +31,7 @@ export interface IPost {
   title: string; // The title of the post.
   slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.
-  imageUrls?: string[]; // Array of additional image URLs.
+  imageUrls: string[]; // Array of additional image URLs.
   description: string; // Detailed description of the post's content.
   category: string; // A single category used for filtering, searching, and classification.
   isAvailable: boolean; // Availability status of the item.
@@ -39,6 +39,7 @@ export interface IPost {
   aiAnalysis?: string; // AI-generated carbon savings analysis.
   createdAt?: Date; // Creation timestamp.
   updatedAt?: Date; // Last update timestamp.
+  author?: IAuthor;
 }
 
 export interface IRequest {
@@ -102,4 +103,13 @@ export interface IVerificationToken {
   identifier: string;
   token: string;
   expires: Date;
+}
+
+export interface IAuthor {
+  _id: ObjectId;
+  avatarUrl?: string;
+  fullName?: string;
+  username?: string;
+  email?: string;
+  address:string
 }

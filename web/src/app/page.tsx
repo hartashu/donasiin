@@ -13,6 +13,7 @@ export default function Home() {
 
   const fetchData = async () => {
     const dataJson = await getPosts();
+
     setData(dataJson);
   };
 
