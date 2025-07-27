@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterSchema, type RegisterInput } from "@/utils/validations/auth";
 import Link from "next/link";
-import { Lock, Mail, Pencil, UserRound } from "lucide-react";
+import { Lock, Mail, Pencil, UserRound, MapPin } from "lucide-react";
 
 export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +74,7 @@ export function RegisterForm() {
             {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
           </div>
 
+
           <div className="space-y-2">
             <label htmlFor="email" className="font-medium text-sm">Email</label>
             <div className="relative">
@@ -90,6 +91,16 @@ export function RegisterForm() {
               <input id="password" type="password" {...register("password")} disabled={isPending} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md" />
             </div>
             {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
+          </div>
+
+
+          <div className="space-y-2">
+            <label htmlFor="address" className="font-medium text-sm">Address</label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <textarea id="address" {...register("address")} disabled={isPending} rows={3} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md resize-none" />
+            </div>
+            {errors.address && <p className="text-red-500 text-sm">{errors.address.message}</p>}
           </div>
 
           <button type="submit" disabled={isPending} className="w-full bg-green-800/80 text-white font-semibold py-2.5 rounded-md hover:bg-green-800/90 disabled:bg-green-700/50">

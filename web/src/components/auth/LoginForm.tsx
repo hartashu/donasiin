@@ -1,43 +1,36 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginSchema, type LoginInput } from '@/utils/validations/auth';
+import { login } from '@/lib/actions/auth.actions';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Mail, Lock } from 'lucide-react';
 import Image from 'next/image';
 
 export function LoginForm() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/';
     const message = searchParams.get('message');
-    const [error, setError] = useState<string | null>(searchParams.get('error') === 'CredentialsSignin' ? 'Invalid email or password.' : searchParams.get('error'));
+    const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 
     const { register, handleSubmit } = useForm<LoginInput>({ resolver: zodResolver(LoginSchema) });
 
     const onSubmit = (data: LoginInput) => {
         setError(null);
-        startTransition(() => {
-            signIn('credentials', {
-                ...data,
-                redirect: false,
-                callbackUrl
-            })
-                .then((result) => {
-                    if (result?.error) {
-                        if (result.error === 'CredentialsSignin') {
-                            setError('Invalid email or password.');
-                        } else {
-                            setError(result.error);
-                        }
-                    } else {
-                        window.location.href = callbackUrl;
-                    }
-                });
+        startTransition(async () => {
+            const result = await login(data);
+            if (result?.error) {
+                setError(result.error);
+            } else {
+                router.push(callbackUrl);
+                router.refresh();
+            }
         });
     };
 
