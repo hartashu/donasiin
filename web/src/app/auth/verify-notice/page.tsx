@@ -1,15 +1,36 @@
+import { Suspense } from "react";
+import { MailCheck } from "lucide-react";
+
 export default function VerifyNoticePage() {
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md text-center">
-                <h1 className="text-2xl font-bold text-orange-600 mb-4">Verify Your Email</h1>
-                <p className="text-gray-700">
-                    Your account has been created, but you need to verify your email address to continue.
-                </p>
-                <p className="text-gray-700 mt-2">
-                    Please check your inbox for a verification link.
-                </p>
-            </div>
-        </div>
+        <Suspense>
+            <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+                <div
+                    className="absolute inset-0 z-0 shimmer-effect"
+                    style={{
+                        background: 'linear-gradient(225deg, #003d2b, #0d5e4c, #2a9d8f, #01140e)',
+                        backgroundSize: '400% 400%',
+                        animation: 'gradient-flow 25s ease infinite',
+                    }}
+                />
+
+                <div className="relative z-10 flex flex-col items-center justify-center w-full">
+                    <div className="max-w-md w-full animate-subtle-float">
+                        <div className="bg-white/60 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 text-center">
+                            <div className="flex justify-center mb-4">
+                                <MailCheck className="w-16 h-16 text-[#2a9d8f]" />
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Verify Your Email</h1>
+                            <p className="text-gray-700 mt-4">
+                                Your account has been created successfully.
+                            </p>
+                            <p className="text-gray-700 mt-2">
+                                Please check your inbox for a verification link to activate your account.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </Suspense>
     );
 }

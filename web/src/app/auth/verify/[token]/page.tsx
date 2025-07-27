@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { finalizeRegistration } from '@/lib/actions/auth.actions';
+import { LoaderCircle } from "lucide-react";
 
 interface VerificationPageProps {
     params: {
@@ -10,10 +12,31 @@ export default async function VerifyPage({ params }: VerificationPageProps) {
     await finalizeRegistration(params.token);
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-            <div className="text-center">
-                <h1 className="text-2xl font-bold mb-4">Processing your verification...</h1>
-            </div>
-        </div>
+        <Suspense>
+            <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+                <div
+                    className="absolute inset-0 z-0 shimmer-effect"
+                    style={{
+                        background: 'linear-gradient(225deg, #003d2b, #0d5e4c, #2a9d8f, #01140e)',
+                        backgroundSize: '400% 400%',
+                        animation: 'gradient-flow 25s ease infinite',
+                    }}
+                />
+
+                <div className="relative z-10 flex flex-col items-center justify-center w-full">
+                    <div className="max-w-md w-full animate-subtle-float">
+                        <div className="bg-white/60 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 text-center">
+                            <div className="flex justify-center items-center mb-4">
+                                <LoaderCircle className="w-16 h-16 text-[#2a9d8f] animate-spin" />
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Verifying Your Account...</h1>
+                            <p className="text-gray-700 mt-4">
+                                Please wait a moment. You will be redirected shortly.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </Suspense>
     );
 }

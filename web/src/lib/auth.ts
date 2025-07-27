@@ -28,7 +28,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 if (!user || !user.password) return null;
                 const isPasswordValid = await UserModel.verifyUserPassword(credentials.password as string, user.password);
                 if (!isPasswordValid) return null;
-                return { id: user._id.toString(), name: user.fullName, email: user.email, image: user.avatarUrl, username: user.username };
+                return {
+                    id: user._id.toString(),
+                    name: user.fullName,
+                    email: user.email,
+                    image: user.avatarUrl,
+                    username: user.username,
+                    address: user.address,
+                    dailyLimit: user.dailyLimit,
+                    fullName: user.fullName,
+                    avatarUrl: user.avatarUrl,
+                };
             },
         }),
     ],
@@ -50,11 +60,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return true;
         },
         async jwt({ token, user }) {
-            if (user?.id) {
+            if (user) {
                 const dbUser = await UserModel.getUserByEmail(user.email!);
                 if (dbUser) {
                     token.id = dbUser._id.toString();
                     token.username = dbUser.username;
+                    token.fullName = dbUser.fullName;
+                    token.avatarUrl = dbUser.avatarUrl;
+                    token.address = dbUser.address;
+                    token.dailyLimit = dbUser.dailyLimit;
                 }
             }
             return token;
@@ -62,7 +76,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         async session({ session, token }) {
             if (session.user && token.id) {
                 session.user.id = token.id as string;
-                session.user.username = token.username as string;
+                session.user.username = token.username ?? null;
+                session.user.fullName = token.fullName ?? null;
+                session.user.avatarUrl = token.avatarUrl ?? null;
+                session.user.address = token.address ?? null;
+                session.user.dailyLimit = token.dailyLimit ?? 0;
             }
             return session;
         },

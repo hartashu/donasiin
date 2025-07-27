@@ -5,6 +5,7 @@ import handleError from '@/errorHandler/errorHandler';
 
 export async function GET() {
     try {
+
         const session = await getSession();
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

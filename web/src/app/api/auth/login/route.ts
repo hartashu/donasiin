@@ -61,8 +61,10 @@ export async function POST(request: NextRequest) {
       user: {
         id: user._id.toString(),
         email: user.email,
-        name: user.fullName,
+        fullName: user.fullName,
         username: user.username,
+        avatarUrl: user.avatarUrl,
+        address: user.address,
       },
     });
   } catch (error) {

@@ -7,13 +7,33 @@ declare module 'next-auth' {
         user: {
             id: string;
             username: string | null;
+            address: string | null;
+            fullName?: string | null;
+            avatarUrl?: string | null;
+            dailyLimit?: number;
             isEmailVerified: boolean;
         } & DefaultSession['user'];
+    }
+
+    interface User {
+        id: string;
+        username?: string | null;
+        address?: string | null;
+        fullName?: string | null;
+        avatarUrl?: string | null;
+        dailyLimit?: number;
+        isEmailVerified?: boolean;
     }
 }
 
 declare module 'next-auth/jwt' {
     interface JWT {
+        id?: string;
+        username?: string | null;
+        address?: string | null;
+        fullName?: string | null;
+        avatarUrl?: string | null;
+        dailyLimit?: number;
         isEmailVerified?: boolean;
     }
 }
@@ -21,8 +41,10 @@ declare module 'next-auth/jwt' {
 declare module '@auth/core/adapters' {
     interface AdapterUser {
         username?: string | null;
-        dailyLimit?: number;
         address?: string | null;
         fullName?: string | null;
+        avatarUrl?: string | null;
+        dailyLimit?: number;
+        isEmailVerified?: boolean;
     }
 }
