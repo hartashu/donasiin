@@ -12,6 +12,7 @@ export type User = {
 
 export type DonationPost = {
   id: string;
+  slug: string;
   title: string;
   description: string;
   images: string[];

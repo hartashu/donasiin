@@ -1,87 +1,97 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search, Filter, Plus } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { Input } from '../../components/ui/Input';
 import { DonationCard } from '../../components/DonationCard';
-import { DonationPost } from '../../types';
+import { DonationPost } from '../../types'; // Assuming types/index.ts exists
 
-// Mock data
-const mockPosts: DonationPost[] = [
-  {
-    id: '1',
-    title: 'Vintage Wooden Coffee Table',
-    description: 'Beautiful handcrafted coffee table in excellent condition',
-    images: ['https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=400'],
-    tags: ['furniture', 'vintage', 'wood'],
-    ownerId: '1',
-    owner: {
-      id: '1',
-      username: 'john_doe',
-      fullName: 'John Doe',
-      email: 'john@example.com',
-      avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400',
-      dailyRequestLimit: 5,
-      usedRequests: 2,
-      createdAt: new Date(),
-    },
-    isAvailable: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    title: 'Children\'s Books Collection',
-    description: 'A wonderful collection of children\'s books suitable for ages 3-8',
-    images: ['https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=400'],
-    tags: ['books', 'children', 'education'],
-    ownerId: '2',
-    owner: {
-      id: '2',
-      username: 'sarah_books',
-      fullName: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=400',
-      dailyRequestLimit: 5,
-      usedRequests: 1,
-      createdAt: new Date(),
-    },
-    isAvailable: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
+const API_BASE_URL = 'http://localhost:3000/api';
+
+const categories = [
+  'All',
+  'Bayi & Anak',
+  'Buku, Musik & Media',
+  'Elektronik',
+  'Fashion & Pakaian',
+  'Kesehatan & Kecantikan',
+  'Olahraga & Luar Ruangan',
+  'Otomotif & Peralatan',
+  'Perlengkapan Hewan Peliharaan',
+  'Perlengkapan Kantor & Alat Tulis',
+  'Rumah & Dapur'
 ];
-
-const categories = ['All', 'Furniture', 'Books', 'Electronics', 'Clothing', 'Kitchen', 'Kids'];
 
 export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [posts, setPosts] = useState<DonationPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const filteredPosts = useMemo(() => {
-    let posts = mockPosts;
+  const fetchPosts = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (selectedCategory !== 'All') params.append('category', selectedCategory);
 
-    // Filter by category
-    if (selectedCategory !== 'All') {
-      posts = posts.filter(post =>
-        post.tags.includes(selectedCategory.toLowerCase())
-      );
+      const response = await fetch(`${API_BASE_URL}/posts?${params.toString()}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to fetch posts. Please try again later.' }));
+        throw new Error(errorData.message || 'An unknown error occurred.');
+      }
+      const result = await response.json();
+      
+      // Map API data to the DonationPost type used by the component
+      const mappedPosts = result.data.posts.map((post: any) => ({
+        id: post._id,
+        slug: post.slug,
+        title: post.title,
+        description: post.description,
+        images: [post.thumbnailUrl, ...(post.imageUrls || [])].filter(Boolean), // Ensure no null/undefined URLs
+        tags: [post.category.toLowerCase()],
+        ownerId: post.userId,
+        owner: {
+          id: post.author._id,
+          username: post.author.username,
+          fullName: post.author.fullName,
+          email: post.author.email || '',
+          avatar: post.author.avatarUrl || 'https://via.placeholder.com/150',
+          dailyRequestLimit: 0,
+          usedRequests: 0,
+          createdAt: new Date(post.author.createdAt || Date.now()),
+        },
+        isAvailable: post.isAvailable,
+        createdAt: new Date(post.createdAt),
+        updatedAt: new Date(post.updatedAt),
+      }));
+
+      setPosts(mappedPosts);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setIsLoading(false);
     }
-
-    // Filter by search query
-    if (searchQuery) {
-      const lowercasedQuery = searchQuery.toLowerCase();
-      posts = posts.filter(post => post.title.toLowerCase().includes(lowercasedQuery) || post.description.toLowerCase().includes(lowercasedQuery));
-    }
-
-    return posts;
   }, [searchQuery, selectedCategory]);
 
+  useEffect(() => {
+    // A simple debounce to prevent API calls on every keystroke
+    const handler = setTimeout(() => {
+      fetchPosts();
+    }, 500); // 500ms delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, selectedCategory, fetchPosts]);
+
   const handlePostPress = (post: DonationPost) => {
-    router.push(`/post/${post.id}`);
+    router.push(`/post/${post.slug}`);
   };
 
   const handleCreatePost = () => {
@@ -91,6 +101,46 @@ export default function HomeScreen() {
   const renderPost = ({ item }: { item: DonationPost }) => (
     <DonationCard post={item} onPress={() => handlePostPress(item)} />
   );
+
+  const renderContent = () => {
+    if (isLoading && posts.length === 0) { // Only show full-screen loader on initial load
+      return <ActivityIndicator size="large" color={Colors.primary[600]} style={styles.centered} />;
+    }
+
+    if (error) {
+      return (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={() => fetchPosts()} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (!isLoading && posts.length === 0) {
+      return (
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>No items found.</Text>
+          <Text style={styles.emptySubText}>Try adjusting your search or filters.</Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={(item) => item.id}
+        style={styles.postsList}
+        contentContainerStyle={styles.postsContent}
+        showsVerticalScrollIndicator={false}
+        // Add pull-to-refresh functionality
+        onRefresh={fetchPosts}
+        refreshing={isLoading}
+      />
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -117,7 +167,12 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.categoriesContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoriesScrollView}
+        contentContainerStyle={styles.categoriesContainer}
+      >
         {categories.map((category) => (
           <TouchableOpacity
             key={category}
@@ -135,16 +190,9 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
-      <FlatList
-        data={filteredPosts}
-        renderItem={renderPost}
-        keyExtractor={(item) => item.id}
-        style={styles.postsList}
-        contentContainerStyle={styles.postsContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {renderContent()}
     </SafeAreaView>
   );
 }
@@ -207,12 +255,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  categoriesScrollView: {
+    marginBottom: 16,
+    flexGrow: 0, // Prevent ScrollView from taking up all available space
+  },
   categoriesContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     paddingHorizontal: 24,
-    marginBottom: 16,
-    gap: 12,
+    gap: 8,
   },
   categoryButton: {
     paddingHorizontal: 16,
@@ -240,5 +290,38 @@ const styles = StyleSheet.create({
   postsContent: {
     paddingHorizontal: 24,
     paddingBottom: 16,
+    flexGrow: 1, // Ensures the container can grow to fill space for centered content
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.error[600],
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: Colors.primary[600],
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: Colors.white,
+    fontWeight: '600',
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
   },
 });

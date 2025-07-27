@@ -35,6 +35,11 @@ export class UserModel {
         return usersCollection.findOne({ email });
     }
 
+    static async getPendingRegistrationByEmail(email: string): Promise<WithId<IPendingRegistration> | null> {
+        const pendingCollection = await this.getPendingRegistrationsCollection();
+        return pendingCollection.findOne({ email });
+    }
+
     static async getUserByUsername(username: string): Promise<WithId<IUser> | null> {
         const usersCollection = await this.getUsersCollection();
         return usersCollection.findOne({ username });
@@ -55,7 +60,7 @@ export class UserModel {
         return result.insertedId;
     }
 
-    static async createPendingRegistration(data: { email: string; password?: string; fullName?: string; username?: string; }): Promise<string> {
+    static async createPendingRegistration(data: { email: string; password?: string; fullName?: string; username?: string; address?: string; }): Promise<string> {
         const pendingCollection = await this.getPendingRegistrationsCollection();
         const hashedPassword = data.password ? await hash(data.password, 12) : undefined;
         const token = uuidv4();

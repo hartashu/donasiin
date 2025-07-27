@@ -28,7 +28,13 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-router"
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs to access your photos to let you select images for your donation post."
+        }
+      ]
     ]
   }
 }
