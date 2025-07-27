@@ -41,8 +41,9 @@ export async function POST(request: NextRequest) {
       id: user._id.toString(),
       email: user.email,
       username: user.username,
-      name: user.fullName,
-      picture: user.avatarUrl,
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl,
+      address : user.address
     };
 
     const secret = process.env.AUTH_SECRET;
