@@ -117,7 +117,13 @@ export default function ChatScreen() {
   };
 
   const handleChatPress = (chat: Chat) => {
-    router.push(`/chat/${chat.id}`);
+    const otherUser = getOtherParticipant(chat);
+    if (!otherUser) return;
+
+    router.push({
+      pathname: `/chat/${chat.id}`,
+      params: { otherUser: JSON.stringify(otherUser) },
+    });
   };
 
   const renderChat = ({ item }: { item: Chat }) => {

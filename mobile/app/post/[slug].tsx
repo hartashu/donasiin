@@ -1,3 +1,4 @@
+// mobile/app/(your-stack)/PostDetailScreen.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -14,18 +15,15 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   SafeAreaView,
   useSafeAreaInsets,
-  SafeAreaProvider,
 } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import { DonationPost } from "../../types";
 import { MessageSquare, ChevronLeft } from "lucide-react-native";
+import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
 
 const { width } = Dimensions.get("window");
 const API_BASE_URL = "http://localhost:3000/api";
-
-// Make sure your app is wrapped in a SafeAreaProvider (e.g. in app/_layout.tsx):
-// <SafeAreaProvider><Stack screenOptions={{ headerShown: false }}/></SafeAreaProvider>
 
 export default function PostDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -35,7 +33,9 @@ export default function PostDetailScreen() {
   const [post, setPost] = useState<DonationPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRequesting, setIsRequesting] = useState(false);
 
+  // Fetch post details from backend
   const fetchPostDetails = useCallback(async () => {
     if (!slug) return;
     setLoading(true);
@@ -52,7 +52,9 @@ export default function PostDetailScreen() {
         slug: apiPost.slug,
         title: apiPost.title,
         description: apiPost.description,
-        images: [apiPost.thumbnailUrl, ...(apiPost.imageUrls||[])].filter(Boolean),
+        images: [apiPost.thumbnailUrl, ...(apiPost.imageUrls || [])].filter(
+          Boolean
+        ),
         tags: [apiPost.category.toLowerCase()],
         ownerId: apiPost.author._id,
         owner: {
@@ -69,8 +71,8 @@ export default function PostDetailScreen() {
         createdAt: new Date(apiPost.createdAt),
         updatedAt: new Date(apiPost.updatedAt),
       });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (e: any) {
+      setError(e.message);
     } finally {
       setLoading(false);
     }
@@ -80,26 +82,82 @@ export default function PostDetailScreen() {
     fetchPostDetails();
   }, [fetchPostDetails]);
 
-  const handleRequestItem = () =>
-    Alert.alert("Request Item", "This feature is coming soon!");
+  // Ask for confirmation before sending the request
+  const handleRequestItem = () => {
+    if (!post) return;
+    Alert.alert(
+      "Confirm Request",
+      `Are you sure you want to request "${post.title}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Yes, Request", onPress: () => submitRequest() },
+      ]
+    );
+  };
 
-  // Put the back button over the image
-  const headerLeft = useCallback(() => (
-    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-      <ChevronLeft size={24} color={Colors.white} />
-    </TouchableOpacity>
-  ), [router]);
+  // Submit the request to your /requests endpoint
+  const submitRequest = async () => {
+    if (!post) return;
+    setIsRequesting(true);
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) throw new Error("You must be logged in to request an item.");
 
-  const screenOptions = useMemo(() => ({
-    headerTransparent: true,
-    headerTitle: "",
-    headerLeft,
-    headerLeftContainerStyle: {
-      paddingTop: Math.max(insets.top, 16),
-    },
-  }), [headerLeft, insets.top]);
+      const res = await fetch(`${API_BASE_URL}/requests`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ postId: post.id }),
+      });
+      const responseData = await res.json();
+      console.log("Response Data:", responseData);
+      
+      if (!res.ok) throw new Error(responseData.message || "Failed to submit request.");
 
-  // ─── Loading ─────────────────────────
+      Alert.alert(
+        "Request Sent!",
+        "Your request has been sent to the owner. You can check its status in your history.",
+        [{ text: "OK", onPress: () => router.back() }]
+      );
+    } catch (err: any) {
+      if (err.message.includes("You must be logged in")) {
+        Alert.alert("Login Required", err.message, [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => router.push("/(auth)/login") },
+        ]);
+      } else {
+        Alert.alert("Error", err.message || "An unexpected error occurred.");
+      }
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  // Custom back button over the image
+  const headerLeft = useCallback(
+    () => (
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <ChevronLeft size={24} color={Colors.white} />
+      </TouchableOpacity>
+    ),
+    [router]
+  );
+
+  const screenOptions = useMemo(
+    () => ({
+      headerTransparent: true,
+      headerTitle: "",
+      headerLeft,
+      headerLeftContainerStyle: {
+        paddingTop: Math.max(insets.top, 16),
+      },
+    }),
+    [headerLeft, insets.top]
+  );
+
+  // Loading state
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
@@ -108,7 +166,7 @@ export default function PostDetailScreen() {
     );
   }
 
-  // ─── Error ───────────────────────────
+  // Error state
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
@@ -120,23 +178,17 @@ export default function PostDetailScreen() {
 
   if (!post) return null;
 
-  // ─── Main UI ──────────────────────────
+  // Main UI
   return (
     <>
-      {/* 1) The image + transparent header under the safe area */}
-      <SafeAreaView
-        edges={["top","left","right"]}     // respect top inset for image
-        style={styles.imageContainer}
-      >
-        <Stack.Screen options={screenOptions}/>
-        <Image source={{ uri: post.images[0] }} style={styles.headerImage}/>
+      {/* 1) Full-bleed image + transparent header */}
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.imageContainer}>
+        <Stack.Screen options={screenOptions} />
+        <Image source={{ uri: post.images[0] }} style={styles.headerImage} />
       </SafeAreaView>
 
-      {/* 2) Details + footer, filling the rest of the screen */}
-      <SafeAreaView
-        edges={["left","right","bottom"]}
-        style={styles.container}
-      >
+      {/* 2) Scrollable details + footer */}
+      <SafeAreaView edges={["left", "right", "bottom"]} style={styles.container}>
         <View style={styles.flexGrow}>
           <ScrollView
             style={styles.flexGrow}
@@ -147,15 +199,15 @@ export default function PostDetailScreen() {
             <View style={styles.tagContainer}>
               <Text style={styles.tag}>{post.tags[0]}</Text>
             </View>
-            <View style={styles.separator}/>
+            <View style={styles.separator} />
             <View style={styles.ownerInfo}>
-              <Image source={{ uri: post.owner.avatar }} style={styles.ownerAvatar}/>
+              <Image source={{ uri: post.owner.avatar }} style={styles.ownerAvatar} />
               <View>
                 <Text style={styles.ownerName}>{post.owner.fullName}</Text>
                 <Text style={styles.ownerUsername}>@{post.owner.username}</Text>
               </View>
             </View>
-            <View style={styles.separator}/>
+            <View style={styles.separator} />
             <Text style={styles.sectionTitle}>Description</Text>
             <Text style={styles.description}>{post.description}</Text>
           </ScrollView>
@@ -163,9 +215,10 @@ export default function PostDetailScreen() {
           <View style={styles.footer}>
             <Button
               title="Request Item"
-              icon={<MessageSquare size={18} color={Colors.white}/>}
               onPress={handleRequestItem}
-              disabled={!post.isAvailable}
+              loading={isRequesting}
+              icon={<MessageSquare size={18} color={Colors.white} />}
+              disabled={!post.isAvailable || isRequesting}
             />
           </View>
         </View>
@@ -175,9 +228,9 @@ export default function PostDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, backgroundColor: Colors.background },
+  container: { flex: 1, backgroundColor: Colors.background },
   imageContainer: { backgroundColor: Colors.background },
-  flexGrow: { flex:1 },
+  flexGrow: { flex: 1 },
 
   headerImage: {
     width,
@@ -235,7 +288,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.secondary,
   },
-
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
@@ -247,14 +299,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: Colors.text.secondary,
   },
-
   footer: {
     padding: 24,
     borderTopWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.background,
   },
-
   backButton: {
     backgroundColor: "rgba(0,0,0,0.4)",
     width: 40,
@@ -263,12 +313,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   errorText: {
-    flex:1,
-    textAlign:"center",
+    flex: 1,
+    textAlign: "center",
     color: Colors.error[600],
-    fontSize:16,
-    marginTop:20,
+    fontSize: 16,
+    marginTop: 20,
   },
 });

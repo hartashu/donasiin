@@ -1,92 +1,135 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { DonationRequest } from '../../types';
-import { Clock, CircleCheck as CheckCircle, Truck, Circle as XCircle } from 'lucide-react-native';
+import { Clock, CheckCircle, Truck, XCircle, X } from 'lucide-react-native';
+import { AuthService } from '../../services/auth';
+import { Button } from '../../components/ui/Button';
 
-// Mock data
-const mockRequests: DonationRequest[] = [
-  {
-    id: '1',
-    postId: '1',
-    post: {
-      id: '1',
-      title: 'Vintage Wooden Coffee Table',
-      description: 'Beautiful handcrafted coffee table',
-      images: ['https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=400'],
-      tags: ['furniture'],
-      ownerId: '2',
-      owner: {
-        id: '2',
-        username: 'john_doe',
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400',
-        dailyRequestLimit: 5,
-        usedRequests: 2,
-        createdAt: new Date(),
-      },
-      isAvailable: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    requesterId: '1',
-    requester: {
-      id: '1',
-      username: 'current_user',
-      fullName: 'Current User',
-      email: 'current@example.com',
-      dailyRequestLimit: 5,
-      usedRequests: 3,
-      createdAt: new Date(),
-    },
-    status: 'shipped',
-    trackingCode: 'TR123456789',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    postId: '2',
-    post: {
-      id: '2',
-      title: 'Children\'s Books Collection',
-      description: 'A wonderful collection of children\'s books',
-      images: ['https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=400'],
-      tags: ['books'],
-      ownerId: '3',
-      owner: {
-        id: '3',
-        username: 'sarah_books',
-        fullName: 'Sarah Johnson',
-        email: 'sarah@example.com',
-        avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=400',
-        dailyRequestLimit: 5,
-        usedRequests: 1,
-        createdAt: new Date(),
-      },
-      isAvailable: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    requesterId: '1',
-    requester: {
-      id: '1',
-      username: 'current_user',
-      fullName: 'Current User',
-      email: 'current@example.com',
-      dailyRequestLimit: 5,
-      usedRequests: 3,
-      createdAt: new Date(),
-    },
-    status: 'pending',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+const API_BASE_URL = 'http://localhost:3000/api';
 
 export default function RequestsScreen() {
+  const [requests, setRequests] = useState<DonationRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const fetchRequests = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) {
+        throw new Error("You must be logged in to view your requests.");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/users/me/requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch requests.");
+      }
+
+      const result = await response.json();
+      const currentUser = await AuthService.getCurrentUser();
+
+      const mappedRequests = result.data.map((item: any): DonationRequest => ({
+        id: item._id,
+        postId: item.postId,
+        status: item.status.toLowerCase(),
+        trackingCode: item.trackingCode,
+        createdAt: new Date(item.createdAt),
+        updatedAt: new Date(item.updatedAt || item.createdAt),
+        requesterId: item.userId,
+        requester: currentUser!, // We know the user is logged in
+        post: {
+          id: item.postDetails._id,
+          slug: item.postDetails.slug,
+          title: item.postDetails.title,
+          images: [item.postDetails.thumbnailUrl].filter(Boolean),
+          // NOTE: The API for requests doesn't provide full post details.
+          // We use placeholders for data not provided.
+          description: 'Loading description...',
+          tags: [],
+          isAvailable: true,
+          ownerId: 'unknown',
+          owner: {
+            id: 'unknown',
+            username: 'loading...',
+            fullName: 'Loading...',
+            email: '',
+            avatar: 'https://via.placeholder.com/150',
+            dailyRequestLimit: 0,
+            usedRequests: 0,
+            createdAt: new Date(),
+          },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      }));
+
+      setRequests(mappedRequests);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchRequests();
+    }, [fetchRequests])
+  );
+
+  const handleDeleteRequest = (requestId: string) => {
+    Alert.alert(
+      "Delete Request",
+      "Are you sure you want to delete this request? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => proceedWithDeletion(requestId),
+        },
+      ]
+    );
+  };
+
+  const proceedWithDeletion = async (requestId: string) => {
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) {
+        throw new Error("Authentication is required to delete a request.");
+      }
+
+      // NOTE: Assuming a DELETE /api/requests/:id endpoint exists.
+      const response = await fetch(`${API_BASE_URL}/requests/${requestId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to delete request." }));
+        throw new Error(errorData.message || "Failed to delete request.");
+      }
+
+      setRequests(prevRequests => prevRequests.filter(req => req.id !== requestId));
+      Alert.alert("Success", "The request has been successfully deleted.");
+    } catch (error: any) {
+      Alert.alert("Deletion Failed", error.message || "An unexpected error occurred.");
+    }
+  };
+
   const getStatusIcon = (status: DonationRequest['status']) => {
     switch (status) {
       case 'pending':
@@ -95,6 +138,8 @@ export default function RequestsScreen() {
         return <CheckCircle color={Colors.success[500]} size={20} />;
       case 'shipped':
         return <Truck color={Colors.primary[500]} size={20} />;
+      case 'completed':
+        return <CheckCircle color={Colors.success[700]} size={20} />;
       case 'rejected':
         return <XCircle color={Colors.error[500]} size={20} />;
       default:
@@ -110,6 +155,8 @@ export default function RequestsScreen() {
         return Colors.success[500];
       case 'shipped':
         return Colors.primary[500];
+      case 'completed':
+        return Colors.success[700];
       case 'rejected':
         return Colors.error[500];
       default:
@@ -117,27 +164,30 @@ export default function RequestsScreen() {
     }
   };
 
+  const handleRequestPress = (item: DonationRequest) => {
+    router.push(`/post/${item.post.slug}`);
+  };
   const renderRequest = ({ item }: { item: DonationRequest }) => (
-    <TouchableOpacity style={styles.requestCard}>
+    <TouchableOpacity style={styles.requestCard} onPress={() => handleRequestPress(item)}>
       <Image source={{ uri: item.post.images[0] }} style={styles.postImage} />
-      
+
       <View style={styles.requestContent}>
-        <Text style={styles.postTitle} numberOfLines={2}>
-          {item.post.title}
-        </Text>
-        
-        <View style={styles.ownerInfo}>
-          <Image source={{ uri: item.post.owner.avatar }} style={styles.ownerAvatar} />
-          <Text style={styles.ownerName}>@{item.post.owner.username}</Text>
+        <View style={styles.requestHeader}>
+          <Text style={styles.postTitle} numberOfLines={2}>
+            {item.post.title}
+          </Text>
+          <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteRequest(item.id); }} style={styles.deleteButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <X color={Colors.text.tertiary} size={16} />
+          </TouchableOpacity>
         </View>
-        
+
         <View style={styles.statusContainer}>
           {getStatusIcon(item.status)}
           <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
             {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
           </Text>
         </View>
-        
+
         {item.status === 'shipped' && item.trackingCode && (
           <View style={styles.trackingContainer}>
             <Text style={styles.trackingLabel}>Tracking:</Text>
@@ -148,21 +198,49 @@ export default function RequestsScreen() {
     </TouchableOpacity>
   );
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Requests</Text>
-        <Text style={styles.subtitle}>Track your donation requests</Text>
-      </View>
+  const renderContent = () => {
+    if (isLoading) {
+      return <ActivityIndicator size="large" color={Colors.primary[600]} style={styles.centered} />;
+    }
 
+    if (error) {
+      return (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Button title="Try Again" onPress={fetchRequests} />
+        </View>
+      );
+    }
+
+    if (requests.length === 0) {
+      return (
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>You haven't made any requests yet.</Text>
+          <Text style={styles.emptySubText}>Find an item you like and request it!</Text>
+        </View>
+      );
+    }
+
+    return (
       <FlatList
-        data={mockRequests}
+        data={requests}
         renderItem={renderRequest}
         keyExtractor={(item) => item.id}
         style={styles.requestsList}
         contentContainerStyle={styles.requestsContent}
         showsVerticalScrollIndicator={false}
+        onRefresh={fetchRequests}
+        refreshing={isLoading}
       />
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>My Requests</Text>
+      </View>
+      {renderContent()}
     </SafeAreaView>
   );
 }
@@ -183,10 +261,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.text.primary,
     marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
   },
   requestsList: {
     flex: 1,
@@ -216,15 +290,22 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 16,
   },
+  requestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
   postTitle: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '600',
     color: Colors.text.primary,
-    marginBottom: 8,
+    marginRight: 8,
   },
   ownerInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center', 
     marginBottom: 12,
   },
   ownerAvatar: {
@@ -260,5 +341,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: Colors.primary[600],
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.error[600],
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  deleteButton: {
+    padding: 4,
   },
 });
