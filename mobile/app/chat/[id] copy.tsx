@@ -99,7 +99,7 @@ export default function ChatDetailScreen() {
       const token = await AuthService.getStoredToken();
       if (!token) throw new Error("Authentication required.");
 
-      await fetch(`${API_BASE_URL}/chat/messages`, {
+      const response = await fetch(`${API_BASE_URL}/chat/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,13 +107,20 @@ export default function ChatDetailScreen() {
         },
         body: JSON.stringify({ receiverId: otherUser.id, text: inputText }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred on the server.' }));
+        throw new Error(errorData.message || 'Failed to send message.');
+      }
+
       // On success, do nothing, as the UI is already updated.
         
     } catch (error) {
       console.error('Failed to send message:', error);
       // On failure, remove the optimistic message
       setMessages(previousMessages => previousMessages.filter(msg => msg._id !== newMessage._id));
-      // Optionally, show an error alert to the user
+      // Show an error alert to the user
+      Alert.alert('Send Failed', (error as Error).message);
     }
   };
 

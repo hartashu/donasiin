@@ -17,9 +17,9 @@ export class AuthService {
       body: JSON.stringify(userData),
     });
 
-    // console.log(`⚠️ registration response`, response);
+    console.log(`⚠️ registration response`, response);
     const data = await response.json();
-    // console.log(`⚠️ registration data`, data);
+    console.log(`⚠️ registration data`, data);
 
     if (!response.ok) {
       throw new Error(data.error || 'An unknown error occurred during registration.');

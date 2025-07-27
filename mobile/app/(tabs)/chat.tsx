@@ -1,104 +1,25 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { Chat } from '../../types';
+import { Chat, User } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { AuthService } from '../../services/auth';
+import { Button } from '../../components/ui/Button';
 
-// Mock data
-const mockChats: Chat[] = [
-  {
-    id: '1',
-    participants: [
-      {
-        id: '1',
-        username: 'current_user',
-        fullName: 'Current User',
-        email: 'current@example.com',
-        dailyRequestLimit: 5,
-        usedRequests: 3,
-        createdAt: new Date(),
-      },
-      {
-        id: '2',
-        username: 'john_doe',
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400',
-        dailyRequestLimit: 5,
-        usedRequests: 2,
-        createdAt: new Date(),
-      }
-    ],
-    lastMessage: {
-      id: '1',
-      chatId: '1',
-      senderId: '2',
-      sender: {
-        id: '2',
-        username: 'john_doe',
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400',
-        dailyRequestLimit: 5,
-        usedRequests: 2,
-        createdAt: new Date(),
-      },
-      content: 'Hi! I saw you\'re interested in the coffee table. When would be a good time to pick it up?',
-      createdAt: new Date(),
-      isRead: false,
-    },
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    participants: [
-      {
-        id: '1',
-        username: 'current_user',
-        fullName: 'Current User',
-        email: 'current@example.com',
-        dailyRequestLimit: 5,
-        usedRequests: 3,
-        createdAt: new Date(),
-      },
-      {
-        id: '3',
-        username: 'sarah_books',
-        fullName: 'Sarah Johnson',
-        email: 'sarah@example.com',
-        avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=400',
-        dailyRequestLimit: 5,
-        usedRequests: 1,
-        createdAt: new Date(),
-      }
-    ],
-    lastMessage: {
-      id: '2',
-      chatId: '2',
-      senderId: '1',
-      sender: {
-        id: '1',
-        username: 'current_user',
-        fullName: 'Current User',
-        email: 'current@example.com',
-        dailyRequestLimit: 5,
-        usedRequests: 3,
-        createdAt: new Date(),
-      },
-      content: 'Thank you so much for the books! My kids will love them.',
-      createdAt: new Date(Date.now() - 3600000), // 1 hour ago
-      isRead: true,
-    },
-    updatedAt: new Date(Date.now() - 3600000),
-  },
-];
+const API_BASE_URL = 'http://localhost:3000/api';
 
 export default function ChatScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const getOtherParticipant = (chat: Chat) => {
-    return chat.participants.find(p => p.id !== '1'); // Assuming current user ID is 1
+    if (!user) return null;
+    return chat.participants.find(p => p.id !== user.id);
   };
 
   const formatTime = (date: Date) => {
@@ -115,6 +36,93 @@ export default function ChatScreen() {
       return date.toLocaleDateString();
     }
   };
+
+  const fetchConversations = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) {
+        throw new Error("You must be logged in to view messages.");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/chat/conversations`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to fetch conversations.");
+      }
+
+      const result = await response.json();
+      console.log("API response for conversations:", result);
+
+      const conversations = Array.isArray(result) ? result : result.data;
+
+      if (!Array.isArray(conversations)) {
+        throw new Error("Unexpected response format from the server.");
+      }
+
+      const currentUser = await AuthService.getCurrentUser();
+      if (!currentUser) {
+        throw new Error("Current user not found. Please log in again.");
+      }
+
+      // Map API response to the Chat type
+      const mappedChats: Chat[] = conversations.map((convo: any) => {
+        const otherUser: User = {
+          id: convo.otherUser.id,
+          username: convo.otherUser.username || 'unknown',
+          fullName: convo.otherUser.fullName,
+          email: '',
+          avatar: convo.otherUser.avatarUrl || 'https://via.placeholder.com/150',
+          dailyRequestLimit: 0,
+          usedRequests: 0,
+          createdAt: new Date(),
+        };
+
+        const participants: User[] = [currentUser, otherUser];
+
+        let lastMessage = undefined;
+        if (convo.lastMessageText) {
+          const sender = participants.find(p => p.id === convo.lastMessageSenderId) || otherUser;
+          lastMessage = {
+            id: convo.lastMessageId || convo.conversationId,
+            chatId: convo.conversationId,
+            senderId: convo.lastMessageSenderId,
+            sender: sender!,
+            content: convo.lastMessageText,
+            createdAt: new Date(convo.lastMessageAt),
+            isRead: convo.lastMessageIsRead,
+          };
+        }
+
+        return {
+          id: convo.conversationId,
+          participants,
+          lastMessage,
+          updatedAt: new Date(convo.lastMessageAt),
+        };
+      });
+
+      setChats(mappedChats);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    // This useCallback + useFocusEffect pattern ensures that conversations
+    // are refetched every time the user navigates to this tab.
+    useCallback(() => {
+      fetchConversations();
+    }, [fetchConversations])
+  );
 
   const handleChatPress = (chat: Chat) => {
     const otherUser = getOtherParticipant(chat);
@@ -150,7 +158,7 @@ export default function ChatScreen() {
             <Text 
               style={[
                 styles.lastMessage,
-                !item.lastMessage.isRead && styles.unreadMessage
+                !item.lastMessage.isRead && item.lastMessage.senderId !== user?.id && styles.unreadMessage
               ]} 
               numberOfLines={2}
             >
@@ -159,10 +167,48 @@ export default function ChatScreen() {
           )}
         </View>
         
-        {item.lastMessage && !item.lastMessage.isRead && (
+        {item.lastMessage && !item.lastMessage.isRead && item.lastMessage.senderId !== user?.id && (
           <View style={styles.unreadDot} />
         )}
       </TouchableOpacity>
+    );
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return <ActivityIndicator size="large" color={Colors.primary[600]} style={styles.emptyContainer} />;
+    }
+
+    if (error) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Button title="Try Again" onPress={fetchConversations} />
+        </View>
+      );
+    }
+
+    if (chats.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No messages yet</Text>
+          <Text style={styles.emptySubText}>
+            When you request an item or someone requests yours, your chat will appear here.
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={chats}
+        renderItem={renderChat}
+        keyExtractor={(item) => item.id}
+        style={styles.chatsList}
+        showsVerticalScrollIndicator={false}
+        onRefresh={fetchConversations}
+        refreshing={isLoading}
+      />
     );
   };
 
@@ -170,16 +216,9 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Messages</Text>
-        <Text style={styles.subtitle}>Stay connected with the community</Text>
       </View>
 
-      <FlatList
-        data={mockChats}
-        renderItem={renderChat}
-        keyExtractor={(item) => item.id}
-        style={styles.chatsList}
-        showsVerticalScrollIndicator={false}
-      />
+      {renderContent()}
     </SafeAreaView>
   );
 }
@@ -200,10 +239,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.text.primary,
     marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
   },
   chatsList: {
     flex: 1,
@@ -257,5 +292,28 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: Colors.primary[600],
     marginLeft: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.error[600],
+    textAlign: 'center',
+    marginBottom: 16,
   },
 });
