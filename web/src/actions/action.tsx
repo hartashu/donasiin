@@ -6,7 +6,7 @@ export const getPosts = async (
   search?: string,
   page: number = 1,
   limit: number = 10
-): Promise<IPost[]> => {
+): Promise<{ posts: IPost[]; totalPages: number }> => {
   const params = new URLSearchParams();
 
   if (category) params.append("category", category);
@@ -23,7 +23,10 @@ export const getPosts = async (
   );
 
   const dataJson = await res.json();
-  return dataJson.data.posts;
+  return {
+    posts: dataJson.data.posts,
+    totalPages: dataJson.data.totalPages,
+  };
 };
 
 // ----------------------------------------------------------------------------------------
