@@ -99,6 +99,10 @@ export interface IPendingRegistration {
   address?: string;
   token: string;
   expires: Date;
+  location?: {
+    type: "Point";
+    coordinates: [number, number]; // [longitude, latitude]
+  };
 }
 
 export interface IPasswordResetToken {
@@ -121,5 +125,5 @@ export interface IAuthor {
   fullName?: string;
   username?: string;
   email?: string;
-  address: string
+  address: string;
 }

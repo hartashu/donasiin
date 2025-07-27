@@ -277,4 +277,49 @@ export class PostModel {
 
     return db.collection("posts").aggregate(pipeline).toArray();
   }
+
+  static async getTotalCarbonSaved(): Promise<number> {
+    const db = await connectToDb();
+
+    const pipeline = [
+      // Tahap 1: Cari semua request yang sudah selesai
+      {
+        $match: {
+          status: "COMPLETED",
+        },
+      },
+      // Tahap 2: Gabungkan dengan koleksi 'posts' untuk mendapatkan data karbon
+      {
+        $lookup: {
+          from: "posts",
+          localField: "postId",
+          foreignField: "_id",
+          as: "donatedPost",
+        },
+      },
+      // Tahap 3: 'Bongkar' array hasil join
+      {
+        $unwind: "$donatedPost",
+      },
+      // Tahap 4: Kelompokkan semua hasil dan jumlahkan nilai 'carbonKg'
+      {
+        $group: {
+          _id: null, // Mengelompokkan semua dokumen menjadi satu
+          totalCarbonSaved: { $sum: "$donatedPost.carbonKg" }, // Jumlahkan semua nilai carbonKg
+        },
+      },
+    ];
+
+    const result = await db
+      .collection("requests")
+      .aggregate(pipeline)
+      .toArray();
+
+    // Jika ada donasi yang selesai, kembalikan totalnya. Jika tidak, kembalikan 0.
+    if (result.length > 0 && result[0].totalCarbonSaved) {
+      return result[0].totalCarbonSaved;
+    } else {
+      return 0;
+    }
+  }
 }
