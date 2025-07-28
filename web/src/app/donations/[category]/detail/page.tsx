@@ -67,10 +67,10 @@ export default function DonationDetailPage() {
     try {
       const res = await fetch("/api/chat/messages", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           receiverId: post.author._id,
-          text: `Hi, I'm interested in your donation: ${title}.`,
         }),
       });
 
