@@ -10,13 +10,14 @@ export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
 
   const handleRegister = async () => {
-    if (!fullName || !username || !email || !password) {
+    if (!fullName || !username || !email || !password || !address) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -28,14 +29,15 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      await register({ fullName, username, email, password });
+      await register({ fullName, username, email, password, address });
       Alert.alert(
-        'Registration Successful',
-        'You can now log in with your new account.',
-        [{ text: 'OK', onPress: () => router.push('/(auth)/login') }]
+        'Verification Required',
+        'A verification email has been sent. Please check your inbox to complete registration.',
+        [{ text: 'OK', onPress: () => router.push('/(auth)/verify-email') }]
       );
-    } catch (error) {
-      Alert.alert('Registration Failed', 'An error occurred during registration');
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unknown error occurred during registration.';
+      Alert.alert('Registration Failed', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -60,6 +62,13 @@ export default function RegisterScreen() {
               onChangeText={setFullName}
               placeholder="Enter your full name"
               autoCapitalize="words"
+            />
+
+            <Input
+              label="Full Address"
+              value={address}
+              onChangeText={setAddress}
+              placeholder="For item delivery purposes"
             />
 
             <Input

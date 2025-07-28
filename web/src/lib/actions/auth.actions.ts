@@ -44,13 +44,13 @@ export async function finalizeRegistration(
 ) {
   const pendingUser = await UserModel.getPendingRegistrationByToken(token);
   if (!pendingUser) {
-    return redirect("/auth/register?error=invalid_token");
+    return redirect(`/auth/verify-notice?error=${encodeURIComponent("Invalid token")}`);
   }
 
   const existingUser = await UserModel.getUserByEmail(pendingUser.email);
   if (existingUser) {
     await UserModel.deletePendingRegistration(pendingUser.email);
-    return redirect("/auth/login?message=account_already_exists");
+    return redirect(`/auth/verify-notice?error=${encodeURIComponent("Email already exists")}`);
   }
 
   await UserModel.createUser({
@@ -67,6 +67,6 @@ export async function finalizeRegistration(
   await UserModel.deletePendingRegistration(pendingUser.email);
 
   if (from !== "native") {
-    redirect("/auth/login?message=registration_successful");
+    redirect(`/auth/verify-notice?success=${encodeURIComponent("Registration complete")}`);
   }
 }

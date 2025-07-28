@@ -61,7 +61,7 @@ export default function DonationDetailPage() {
     );
   };
 
-  const handleStartChat = async () => {
+  const handleStartChat = async (title: string) => {
     if (!post?.author?._id) return;
     setChatLoading(true);
     try {
@@ -175,7 +175,7 @@ export default function DonationDetailPage() {
                 />
 
                 <button
-                  onClick={handleStartChat}
+                  onClick={() => handleStartChat(post.title)}
                   disabled={chatLoading}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
                 >

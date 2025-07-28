@@ -16,6 +16,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@react-native-picker/picker": "^2.11.1",
     "@types/nodemailer": "^6.4.17",
+    "@types/three": "^0.178.1",
     "@types/uuid": "^10.0.0",
     "@zxing/library": "^0.21.3",
     "ai": "^4.3.19",
@@ -39,6 +40,7 @@
     "react-dom": "19.1.0",
     "react-hook-form": "^7.52.1",
     "tesseract.js": "^6.0.1",
+    "three": "^0.178.0",
     "uuid": "^11.1.0",
     "zod": "^3.25.76"
   },
