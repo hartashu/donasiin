@@ -137,7 +137,6 @@ export async function getMyPostsAction(): Promise<IPostWithRequests[]> {
   if (!res.ok) throw new Error("Failed to fetch my posts");
 
   const json = await res.json();
-  console.log("mypost", json);
 
   return json.data;
 }
@@ -161,8 +160,6 @@ export async function getMyRequestsAction(): Promise<
   if (!res.ok) throw new Error("Failed to fetch my requests");
 
   const json = await res.json();
-  console.log("myrequest", json);
-
   return json.data;
 }
 
@@ -184,8 +181,6 @@ export async function getMyUser(): Promise<IUser> {
   if (!res.ok) throw new Error("Failed to fetch user info");
 
   const json = await res.json();
-  console.log("myuser", json);
-
   return json.data;
 }
 
