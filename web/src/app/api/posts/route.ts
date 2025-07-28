@@ -1,10 +1,10 @@
-import handleError from "@/errorHandler/errorHandler";
-import { PostModel } from "@/models/post";
-import { IJsonResponse, IPost } from "@/types/types";
-import { getSession } from "@/utils/getSession";
-import { postSchema } from "@/utils/validations/post";
-import { ObjectId, WithId } from "mongodb";
-import { NextRequest, NextResponse } from "next/server";
+// import handleError from "@/errorHandler/errorHandler";
+// import { PostModel } from "@/models/post";
+// import { IJsonResponse, IPost } from "@/types/types";
+// import { getSession } from "@/utils/getSession";
+// import { postSchema } from "@/utils/validations/post";
+// import { ObjectId, WithId } from "mongodb";
+// import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,7 +45,64 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: Request) {
+// export async function POST(request: Request) {
+//   try {
+//     const session = await getSession();
+//     if (!session?.user?.id) {
+//       return NextResponse.json(
+//         { statusCode: 401, error: "Unauthorized" },
+//         { status: 401 }
+//       );
+//     }
+
+//     const body = await request.json();
+
+//     const validatedData = postSchema.parse(body);
+
+//     const slug = validatedData.title
+//       .toLowerCase()
+//       .replace(/\s+/g, "-")
+//       .replace(/[^\w-]+/g, "");
+
+//     const result = await PostModel.addPost({
+//       ...validatedData,
+//       slug: slug,
+//       imageUrls: validatedData.imageUrls ?? [],
+//       userId: new ObjectId(session.user.id),
+//     });
+
+//     if (!result.acknowledged) {
+//       throw new Error("Add post failed");
+//     }
+
+//     return NextResponse.json(
+//       {
+//         statusCode: 201,
+//         message: "Add post success",
+//         data: { insertedId: result.insertedId },
+//       },
+//       { status: 201 }
+//     );
+//   } catch (error) {
+//     return handleError(error);
+//   }
+// }
+
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/utils/getSession";
+import handleError from "@/errorHandler/errorHandler";
+import { PostModel } from "@/models/post";
+import { postSchema } from "@/utils/validations/post"; // Pastikan skema ini hanya berisi title, desc, category
+import { ObjectId } from "mongodb";
+import { uploadFile } from "@/utils/cloudinary/cloudinaryService";
+import {
+  identifyItemFromImage,
+  getCarbonFootprintForItem,
+} from "@/utils/carbonCredit/carbonAnalysisService";
+
+export const maxDuration = 60;
+
+export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session?.user?.id) {
@@ -55,30 +112,79 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
+    const formData = await request.formData();
 
-    const validatedData = postSchema.parse(body);
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const category = formData.get("category") as string;
+    const itemImages = formData.getAll("itemImages") as File[];
 
-    const slug = validatedData.title
+    if (itemImages.length === 0) {
+      return NextResponse.json(
+        { error: "At least one image is required." },
+        { status: 400 }
+      );
+    }
+
+    // Asumsi skema Zod Anda divalidasi seperti ini
+    // postSchema.parse({ title, description, category, imageUrls: itemImages.map(f => f.name) });
+
+    const uploadPromises = itemImages.map(async (file) => {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      return uploadFile(buffer);
+    });
+    const uploadResults = await Promise.all(uploadPromises);
+    const imageUrls = uploadResults.map((result) => result.secure_url);
+
+    const mainImageBuffer = Buffer.from(await itemImages[0].arrayBuffer());
+    const analysisResult = await identifyItemFromImage(
+      mainImageBuffer,
+      itemImages[0].type
+    );
+
+    let totalCarbonKg: number | null = null;
+    let aiAnalysis: string | null = null;
+    if (analysisResult) {
+      const { itemName, quantity } = analysisResult;
+      const singleItemCarbon = await getCarbonFootprintForItem(itemName);
+      if (singleItemCarbon) {
+        totalCarbonKg = singleItemCarbon * quantity;
+        aiAnalysis = `Donating ${quantity} ${itemName}(s) helps save approximately ${totalCarbonKg.toFixed(
+          1
+        )} kg of CO2.`;
+      }
+    }
+
+    const slug = title
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^\w-]+/g, "");
 
-    const result = await PostModel.addPost({
-      ...validatedData,
-      slug: slug,
+    const postToSave = {
+      title,
+      slug,
+      description,
+      category,
+      thumbnailUrl: imageUrls[0],
+      imageUrls,
       userId: new ObjectId(session.user.id),
-    });
+      isAvailable: true,
+      carbonKg: totalCarbonKg ?? undefined,
+      aiAnalysis: aiAnalysis ?? undefined,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
+    const result = await PostModel.addPost(postToSave);
     if (!result.acknowledged) {
-      throw new Error("Add post failed");
+      throw new Error("Failed to create post in database.");
     }
 
     return NextResponse.json(
       {
         statusCode: 201,
-        message: "Add post success",
-        data: { insertedId: result.insertedId },
+        message: "Post created successfully!",
+        data: { insertedId: result.insertedId, slug: postToSave.slug },
       },
       { status: 201 }
     );

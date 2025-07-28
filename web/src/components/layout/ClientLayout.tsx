@@ -13,13 +13,20 @@ export default function ClientLayout({
   const isAuthRoute = pathname.startsWith("/auth");
   const isChatRoute = pathname.startsWith("/chat");
 
+  if (isAuthRoute || isChatRoute) {
+    return <>{children}</>;
+  }
+
   return (
-    <main className="bg-white text-black min-h-screen flex flex-col">
-      {!isAuthRoute && !isChatRoute && <Header />}
+    <div className="relative min-h-screen flex flex-col overflow-x-hidden">
+      <div
+        className="fixed inset-0 z-[-1]"
 
-      <section className="flex-grow">{children}</section>
+      />
 
-      {!isAuthRoute && !isChatRoute && <Footer />}
-    </main>
+      <Header />
+      <main className="flex-grow">{children}</main>
+      <Footer />
+    </div>
   );
 }

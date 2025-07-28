@@ -130,7 +130,7 @@ export interface IAuthor {
 
 //
 export interface IPostWithRequests {
-  _id: string; 
+  _id: string;
   title: string;
   category: string;
   thumbnailUrl: string;
@@ -159,4 +159,13 @@ export interface IRequestWithPostDetails {
     slug: string;
     thumbnailUrl: string;
   };
+}
+
+export interface IIncompleteProfile {
+  _id: ObjectId;
+  email: string;
+  fullName?: string | null;
+  avatarUrl?: string | null;
+  token: string;
+  expires: Date;
 }

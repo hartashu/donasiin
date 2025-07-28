@@ -31,6 +31,14 @@ export const ResetPasswordSchema = z
         path: ['confirmPassword'],
     });
 
+
+export const CompleteProfileSchema = z.object({
+    username: z.string().min(3, { message: 'Username must be at least 3 characters.' }).regex(/^[a-zA-Z0-9_]+$/, { message: 'Username can only contain letters, numbers, and underscores.' }),
+    address: z.string().min(10, { message: 'Address must be at least 10 characters long.' }),
+});
+
+
+export type CompleteProfileInput = z.infer<typeof CompleteProfileSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
