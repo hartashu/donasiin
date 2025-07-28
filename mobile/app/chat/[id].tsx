@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -10,24 +10,29 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
-import { useAuth } from '../../context/AuthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors } from '../../constants/Colors';
-import { Send } from 'lucide-react-native';
-import { AuthService } from '../../services/auth';
+  Alert,
+} from "react-native";
+import { useLocalSearchParams, Stack, useRouter } from "expo-router";
+import { useAuth } from "../../context/AuthContext";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "../../constants/Colors";
+import { Send, ChevronLeft } from "lucide-react-native";
+import { AuthService } from "../../services/auth";
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = "http://localhost:3000/api";
 
 export default function ChatDetailScreen() {
-  const { id: chatId, otherUser: otherUserString } = useLocalSearchParams<{ id: string, otherUser: string }>();
+  const { id: chatId, otherUser: otherUserString } = useLocalSearchParams<{
+    id: string;
+    otherUser: string;
+  }>();
+  const router = useRouter();
   const { user } = useAuth();
   const [messages, setMessages] = useState<any[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const currentUserId = user?.id || '1'; // Fallback for mock environment
+  const currentUserId = user?.id || "1"; // Fallback for mock environment
 
   // Parse the otherUser object passed from the previous screen
   const otherUser = otherUserString ? JSON.parse(otherUserString) : null;
@@ -42,7 +47,7 @@ export default function ChatDetailScreen() {
 
       // Corrected URL to match the dynamic route on the server
       const response = await fetch(`${API_BASE_URL}/chat/messages/${chatId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -51,7 +56,7 @@ export default function ChatDetailScreen() {
       const data = await response.json();
 
       // console.log("API response for messages:", data);
-      
+
       // Map the API response to the format the UI expects
       const mappedMessages = data.map((msg: any) => ({
         _id: msg._id,
@@ -59,7 +64,7 @@ export default function ChatDetailScreen() {
         createdAt: new Date(msg.createdAt),
         user: {
           _id: msg.senderId,
-        }
+        },
       }));
 
       // FlatList inverted expects data to be in reverse chronological order (newest first)
@@ -81,48 +86,61 @@ export default function ChatDetailScreen() {
     }
     if (!otherUser) return;
 
-    // Optimistic UI update
-    const newMessage = {
-      _id: Math.random().toString(),
-      text: inputText,
-      createdAt: new Date(),
-      user: {
-        _id: currentUserId,
-        name: user?.fullName || 'Current User',
-      },
-    };
-
-    setMessages(previousMessages => [newMessage, ...previousMessages]);
-    setInputText('');
+    // Keep a copy of the text to send, then clear the input for a responsive feel.
+    const messageToSend = inputText;
+    setInputText("");
 
     try {
       const token = await AuthService.getStoredToken();
       if (!token) throw new Error("Authentication required.");
 
-      await fetch(`${API_BASE_URL}/chat/messages`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/chat/messages`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ receiverId: otherUser.id, text: inputText }),
+        body: JSON.stringify({ receiverId: otherUser.id, text: messageToSend }),
       });
-      // On success, do nothing, as the UI is already updated.
-        
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({
+            message: "An unknown error occurred on the server.",
+          }));
+        throw new Error(errorData.message || "Failed to send message.");
+      }
+
+      // On success, refetch all messages to ensure the list is up-to-date.
+      await fetchMessages();
     } catch (error) {
-      console.error('Failed to send message:', error);
-      // On failure, remove the optimistic message
-      setMessages(previousMessages => previousMessages.filter(msg => msg._id !== newMessage._id));
-      // Optionally, show an error alert to the user
+      console.error("Failed to send message:", error);
+      // Show an error alert to the user
+      // Restore the input text so the user doesn't lose their message
+      setInputText(messageToSend);
+      Alert.alert("Send Failed", (error as Error).message);
     }
   };
 
   const renderMessageItem = ({ item }: { item: any }) => {
     const isCurrentUser = item.user._id === currentUserId;
     return (
-      <View style={[styles.messageRow, isCurrentUser ? styles.sentRow : styles.receivedRow]}>
-        <View style={[styles.messageBubble, isCurrentUser ? styles.sentBubble : styles.receivedBubble]}>
-          <Text style={isCurrentUser ? styles.sentText : styles.receivedText}>{item.text}</Text>
+      <View
+        style={[
+          styles.messageRow,
+          isCurrentUser ? styles.sentRow : styles.receivedRow,
+        ]}
+      >
+        <View
+          style={[
+            styles.messageBubble,
+            isCurrentUser ? styles.sentBubble : styles.receivedBubble,
+          ]}
+        >
+          <Text style={isCurrentUser ? styles.sentText : styles.receivedText}>
+            {item.text}
+          </Text>
         </View>
       </View>
     );
@@ -148,8 +166,8 @@ export default function ChatDetailScreen() {
     return (
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} // Header is now part of the view
       >
         <FlatList
           data={messages}
@@ -195,13 +213,18 @@ export default function ChatDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <Stack.Screen
-        options={{
-          headerBackTitle: 'Messages',
-          headerTitle: renderHeaderTitle,
-        }}
-      />
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.customHeader}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ChevronLeft size={24} color={Colors.primary[600]} />
+          <Text style={styles.backButtonText}>Messages</Text>
+        </TouchableOpacity>
+        <View style={styles.headerTitleWrapper}>
+          {renderHeaderTitle()}
+        </View>
+        <View style={{ width: 90 }} />{/* Spacer to balance the back button */}
+      </View>
       {renderContent()}
     </SafeAreaView>
   );
@@ -212,18 +235,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 90, // Give it a fixed width to help with centering the title
+  },
+  backButtonText: {
+    color: Colors.primary[600],
+    fontSize: 17,
+    marginLeft: 4,
+  },
+  headerTitleWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorText: {
     color: Colors.error[600],
     fontSize: 16,
   },
   headerTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   headerAvatar: {
     width: 32,
@@ -232,8 +279,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   headerName: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: "600",
     color: Colors.text.primary,
   },
   headerStatus: {
@@ -248,17 +295,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   messageRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginVertical: 4,
   },
   sentRow: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   receivedRow: {
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
   },
   messageBubble: {
-    maxWidth: '75%',
+    maxWidth: "75%",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
@@ -280,8 +327,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     borderTopWidth: 1,
     borderColor: Colors.border,
@@ -302,7 +349,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: Colors.primary[600],
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
