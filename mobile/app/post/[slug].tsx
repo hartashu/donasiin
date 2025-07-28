@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   TouchableOpacity,
+  FlatList,
   Dimensions,
   Alert,
 } from "react-native";
@@ -18,12 +19,7 @@ import {
 } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import { DonationPost } from "../../types";
-import {
-  MessageSquare,
-  ChevronLeft,
-  MapPin,
-  Sparkles,
-} from "lucide-react-native";
+import { MessageSquare, ChevronLeft } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
@@ -59,6 +55,7 @@ export default function PostDetailScreen() {
   const [isRequesting, setIsRequesting] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
   const { user } = useAuth();
+  const [activeIndex, setActiveIndex] = useState(0);
 
   // Fetch post details from backend
   const fetchPostDetails = useCallback(async () => {
@@ -77,9 +74,7 @@ export default function PostDetailScreen() {
         slug: apiPost.slug,
         title: apiPost.title,
         description: apiPost.description,
-        images: [apiPost.thumbnailUrl, ...(apiPost.imageUrls || [])].filter(
-          Boolean
-        ),
+        images: apiPost.imageUrls || [],
         tags: [apiPost.category.toLowerCase()],
         ownerId: apiPost.author._id,
         owner: {
@@ -203,6 +198,17 @@ export default function PostDetailScreen() {
     }
   };
 
+  // --- Image Carousel Logic ---
+  const onViewableItemsChanged = useCallback(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      setActiveIndex(viewableItems[0].index ?? 0);
+    }
+  }, []);
+
+  const viewabilityConfig = {
+    itemVisiblePercentThreshold: 50,
+  };
+
   // Custom back button over the image
   const headerLeft = useCallback(
     () => (
@@ -215,6 +221,8 @@ export default function PostDetailScreen() {
 
   const screenOptions = useMemo(
     () => ({
+      // This screen needs its own header to show the custom back button.
+      headerShown: true,
       headerTransparent: true,
       headerTitle: "",
       headerLeft,
@@ -248,13 +256,41 @@ export default function PostDetailScreen() {
 
   const isOwner = user?.id === post.ownerId;
 
+  const isOwner = user?.id === post.ownerId;
+
   // Main UI
   return (
     <>
       {/* 1) Full-bleed image + transparent header */}
       <SafeAreaView edges={["top", "left", "right"]} style={styles.imageContainer}>
         <Stack.Screen options={screenOptions} />
-        <Image source={{ uri: post.images[0] }} style={styles.headerImage} />
+        <View>
+          <FlatList
+            data={post.images}
+            renderItem={({ item }) => (
+              <Image source={{ uri: item }} style={styles.headerImage} />
+            )}
+            keyExtractor={(item, index) => `${item}-${index}`}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+          />
+          {post.images.length > 1 && (
+            <View style={styles.paginationContainer}>
+              {post.images.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.paginationDot,
+                    index === activeIndex && styles.paginationDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
       </SafeAreaView>
 
       {/* 2) Scrollable details + footer */}
@@ -305,6 +341,33 @@ export default function PostDetailScreen() {
           </ScrollView>
 
           <View style={styles.footer}>
+            {!user ? (
+              <Button
+                title="Login to Request or Chat"
+                onPress={() => router.push('/(auth)/login')}
+              />
+            ) : isOwner ? (
+              <Text style={styles.ownerNotice}>You are the owner of this item.</Text>
+            ) : (
+              <>
+                <Button
+                  title="Chat"
+                  onPress={handleStartChat}
+                  loading={isStartingChat}
+                  variant="outline"
+                  icon={<MessageSquare size={18} color={Colors.primary[600]} />}
+                  style={{ flex: 1, marginRight: 8 }}
+                  disabled={isRequesting || isStartingChat || !post.isAvailable}
+                />
+                <Button
+                  title="Request Item"
+                  onPress={handleRequestItem}
+                  loading={isRequesting}
+                  style={{ flex: 1, marginLeft: 8 }}
+                  disabled={!post.isAvailable || isRequesting || isStartingChat}
+                />
+              </>
+            )}
             {!user ? (
               <Button
                 title="Login to Request or Chat"
@@ -442,6 +505,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -463,5 +528,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.text.secondary,
     fontStyle: 'italic',
+  },
+  paginationContainer: {
+    position: 'absolute',
+    bottom: 16,
+    flexDirection: 'row',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: Colors.white,
   },
 });

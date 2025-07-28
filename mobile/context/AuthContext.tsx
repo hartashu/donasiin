@@ -44,8 +44,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
     try {
-      await AuthService.register(userData);
-    } catch (error) {
+      // This logic should be in AuthService.register, but we'll correct it here.
+      const API_BASE_URL = 'http://localhost:3000/api';
+      const response = await fetch(`${API_BASE_URL}/account/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'An unknown error occurred.');
+      }
+    } catch (error: any) {
       console.error('Registration failed:', error);
       throw error;
     } finally {

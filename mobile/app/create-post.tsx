@@ -243,22 +243,22 @@ export default function CreatePostScreen() {
             </Text>
           ))}
 
-          <Input
-            label="Item Title"
-            value={title}
-            onChangeText={setTitle}
-            placeholder="e.g., Vintage Wooden Coffee Table"
-          />
+        <Input
+          label="Item Title"
+          value={title}
+          onChangeText={setTitle}
+          placeholder="e.g., Vintage Wooden Coffee Table"
+        />
 
-          <Input
-            label="Description"
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Describe the item, its condition, dimensions, etc."
-            multiline
-            numberOfLines={4}
-            style={styles.descriptionInput}
-          />
+        <Input
+          label="Description"
+          value={description}
+          onChangeText={setDescription}
+          placeholder="Describe the item, its condition, dimensions, etc."
+          multiline
+          numberOfLines={4}
+          style={styles.descriptionInput}
+        />
 
           <Text style={styles.label}>Category</Text>
           <View style={styles.pickerContainer}>
@@ -316,19 +316,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: 24,
     height: 24,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  addImageButton: {
+  addBtn: {
     width: 100,
     height: 100,
     borderRadius: 12,
-    backgroundColor: Colors.primary[100],
-    justifyContent: 'center',
-    alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.primary[200],
     borderStyle: 'dashed',
+    borderColor: Colors.primary[200],
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   descriptionInput: { height: 120, textAlignVertical: 'top' },
   pickerContainer: {
@@ -336,8 +335,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    justifyContent: 'center',
     marginBottom: 24,
+    justifyContent: 'center',
   },
   picker: { height: Platform.OS === 'ios' ? undefined : 50 },
   submitButton: { marginTop: 16 },
