@@ -94,6 +94,8 @@ export default function ChatDetailScreen() {
       const token = await AuthService.getStoredToken();
       if (!token) throw new Error("Authentication required.");
 
+      // console.log("other user", otherUser);
+      
       const response = await fetch(`${API_BASE_URL}/chat/messages`, {
         method: "POST",
         headers: {
