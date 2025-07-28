@@ -42,6 +42,8 @@ export async function identifyItemFromImage(
         },
       ],
     });
+
+    console.log("🚀 ~ identifyItemFromImage ~ object:", object);
     return object;
   } catch (error) {
     console.error("AI item identification error:", error);

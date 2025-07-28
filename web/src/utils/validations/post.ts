@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const postSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long"),
-  thumbnailUrl: z.string().url({ message: "Invalid URL format" }),
+  thumbnailUrl: z.string().url({ message: "Invalid URL format" }).optional(),
   imageUrls: z.array(z.string().url()).optional(),
   description: z
     .string()
