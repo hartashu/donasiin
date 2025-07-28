@@ -161,7 +161,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.fullName}>{user.name}</Text>
+          <Text style={styles.fullName}>{user.fullName}</Text>
           <Text style={styles.username}>@{user.username}</Text>
 
           <View style={styles.actionButtons}>
