@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  ScrollView,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { Button } from '../../components/ui/Button';
@@ -12,32 +21,33 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
 
   const handleRegister = async () => {
+    setError(null); // Clear previous errors
     if (!fullName || !username || !email || !password || !address) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
+      setError('Password must be at least 6 characters long');
       return;
     }
 
     setLoading(true);
     try {
       await register({ fullName, username, email, password, address });
-      Alert.alert(
-        'Verification Required',
-        'A verification email has been sent. Please check your inbox to complete registration.',
-        [{ text: 'OK', onPress: () => router.push('/(auth)/verify-email') }]
+      Alert.alert( // Keep alert for success as it's a final action before redirect
+        'Registration Successful',
+        'You can now log in with your new account.',
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
       );
     } catch (error: any) {
-      const errorMessage = error.message || 'An unknown error occurred during registration.';
-      Alert.alert('Registration Failed', errorMessage);
+      setError(error.message || 'An unknown error occurred during registration.');
     } finally {
       setLoading(false);
     }
@@ -48,14 +58,26 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join our community of generous donors and grateful recipients</Text>
+            <Text style={styles.subtitle}>
+              Join our community of generous donors and grateful recipients
+            </Text>
           </View>
 
           <View style={styles.form}>
+            {error && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
             <Input
               label="Full Name"
               value={fullName}
@@ -150,6 +172,19 @@ const styles = StyleSheet.create({
   },
   form: {
     marginBottom: 32,
+  },
+  errorContainer: {
+    backgroundColor: '#fef2f2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    textAlign: 'center',
   },
   registerButton: {
     marginTop: 8,

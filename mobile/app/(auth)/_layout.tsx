@@ -17,17 +17,6 @@ export default function AuthLayout() {
           headerTintColor: Colors.text.primary,
         }}
       />
-      <Stack.Screen
-        name="verify-email"
-        options={{
-          headerStyle: {
-            backgroundColor: Colors.background,
-          },
-          headerShadowVisible: false,
-          headerTitle: 'Verify Email',
-          headerTintColor: Colors.text.primary,
-        }}
-      />
     </Stack>
   );
 }
