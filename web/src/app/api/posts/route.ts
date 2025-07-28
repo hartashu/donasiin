@@ -1,49 +1,57 @@
-// import handleError from "@/errorHandler/errorHandler";
-// import { PostModel } from "@/models/post";
-// import { IJsonResponse, IPost } from "@/types/types";
-// import { getSession } from "@/utils/getSession";
-// import { postSchema } from "@/utils/validations/post";
-// import { ObjectId, WithId } from "mongodb";
-// import { NextRequest, NextResponse } from "next/server";
+import { IJsonResponse, IPost } from "@/types/types";
+import { ObjectId, WithId } from "mongodb";
 
-// export async function GET(request: NextRequest) {
-//   try {
-//     const { searchParams } = request.nextUrl;
-//     const page = parseInt(searchParams.get("page") || "1");
-//     const limit = parseInt(searchParams.get("limit") || "10");
-//     const category = searchParams.get("category") || undefined;
-//     const search = searchParams.get("search") || undefined;
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/utils/getSession";
+import handleError from "@/errorHandler/errorHandler";
+import { PostModel } from "@/models/post";
+import { postSchema } from "@/utils/validations/post";
+import { uploadFile } from "@/utils/cloudinary/cloudinaryService";
+import {
+  identifyItemFromImage,
+  getCarbonFootprintForItem,
+} from "@/utils/carbonCredit/carbonAnalysisService";
 
-//     const { posts, total } = await PostModel.getAllPosts({
-//       page,
-//       limit,
-//       category,
-//       search,
-//     });
+export const maxDuration = 60;
 
-//     return NextResponse.json<
-//       IJsonResponse<{
-//         posts: WithId<IPost>[];
-//         total: number;
-//         page: number;
-//         totalPages: number;
-//       }>
-//     >(
-//       {
-//         statusCode: 200,
-//         data: {
-//           posts,
-//           total,
-//           page,
-//           totalPages: Math.ceil(total / limit),
-//         },
-//       },
-//       { status: 200 }
-//     );
-//   } catch (error) {
-//     return handleError(error);
-//   }
-// }
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = request.nextUrl;
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const category = searchParams.get("category") || undefined;
+    const search = searchParams.get("search") || undefined;
+
+    const { posts, total } = await PostModel.getAllPosts({
+      page,
+      limit,
+      category,
+      search,
+    });
+
+    return NextResponse.json<
+      IJsonResponse<{
+        posts: WithId<IPost>[];
+        total: number;
+        page: number;
+        totalPages: number;
+      }>
+    >(
+      {
+        statusCode: 200,
+        data: {
+          posts,
+          total,
+          page,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
 // export async function POST(request: Request) {
 //   try {
@@ -87,20 +95,6 @@
 //     return handleError(error);
 //   }
 // }
-
-import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/utils/getSession";
-import handleError from "@/errorHandler/errorHandler";
-import { PostModel } from "@/models/post";
-import { postSchema } from "@/utils/validations/post"; // Pastikan skema ini hanya berisi title, desc, category
-import { ObjectId } from "mongodb";
-import { uploadFile } from "@/utils/cloudinary/cloudinaryService";
-import {
-  identifyItemFromImage,
-  getCarbonFootprintForItem,
-} from "@/utils/carbonCredit/carbonAnalysisService";
-
-export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
