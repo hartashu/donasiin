@@ -3,6 +3,7 @@
 import { createPostAction, uploadImageAction } from "@/actions/action";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileUp, ImagePlus, LoaderCircle, Tag, Text, Type, X } from "lucide-react";
 
 export default function CreatePost() {
   const router = useRouter();
@@ -30,9 +31,16 @@ export default function CreatePost() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      setSelectedFiles(Array.from(files));
+      // Append new files to existing ones instead of replacing
+      setSelectedFiles(prevFiles => [...prevFiles, ...Array.from(files)]);
     }
   };
+
+  // Function to handle removing a selected file
+  const handleRemoveFile = (indexToRemove: number) => {
+    setSelectedFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove));
+  };
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,6 +57,7 @@ export default function CreatePost() {
         isAvailable: true,
       });
 
+      // Reset form on success is good practice
       setFormData({
         title: "",
         thumbnailUrl: "",
@@ -61,101 +70,122 @@ export default function CreatePost() {
       router.push("/donations");
     } catch (err) {
       console.error("Submit failed:", err);
+      // Optionally, show an error message to the user
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white py-10 px-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Create Post</h1>
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      {/* Background */}
+      <div
+        className="absolute inset-0 z-0"
+      // style={{
+      //   background: 'linear-gradient(225deg,rgb(9, 62, 50), rgb(9, 62, 50), rgb(142, 202, 195), rgb(2, 54, 42), rgb(9, 62, 50), rgb(142, 202, 195), rgb(9, 62, 50), rgb(255, 255, 255), rgb(255, 255, 255) )',
+      //   backgroundSize: '400% 400%',
+      //   animation: 'gradient-flow 90s ease infinite',
+      // }}
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Title</label>
-          <input
-            required
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="border border-gray-300 w-full px-3 py-2 rounded"
-          />
-        </div>
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-2xl animate-subtle-float">
+        <div className="bg-white/60 backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl border border-white/20">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Create a New Post</h1>
+            <p className="text-gray-700 text-sm sm:text-md mt-2">Share something to the community.</p>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium">Thumbnail URL</label>
-          <input
-            required
-            name="thumbnailUrl"
-            value={formData.thumbnailUrl}
-            onChange={handleChange}
-            className="border border-gray-300 w-full px-3 py-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Description</label>
-          <textarea
-            required
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="border border-gray-300 w-full px-3 py-2 rounded h-24 resize-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Category</label>
-          <select
-            required
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="border border-gray-300 w-full px-3 py-2 rounded bg-white"
-          >
-            <option value="" disabled>
-              -- Select a Category --
-            </option>
-            <option value="elektronik">Elektronik</option>
-            <option value="fashion">Fashion & Pakaian</option>
-            <option value="rumah-dapur">Rumah & Dapur</option>
-            <option value="kesehatan-kecantikan">Kesehatan & Kecantikan</option>
-            <option value="olahraga-luar">Olahraga & Luar Ruangan</option>
-            <option value="bayi-anak">Bayi & Anak</option>
-            <option value="otomotif-peralatan">Otomotif & Peralatan</option>
-            <option value="buku-musik-media">Buku, Musik & Media</option>
-            <option value="hewan">Perlengkapan Hewan Peliharaan</option>
-            <option value="kantor-alat-tulis">
-              Perlengkapan Kantor & Alat Tulis
-            </option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Upload Images</label>
-          <input type="file" multiple onChange={handleFileChange} />
-          {selectedFiles.length > 0 && (
-            <div className="flex gap-2 mt-3 flex-wrap">
-              {selectedFiles.map((file, idx) => (
-                <img
-                  key={idx}
-                  src={URL.createObjectURL(file)}
-                  alt="preview"
-                  className="w-24 h-24 object-cover rounded border"
-                />
-              ))}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Title Input */}
+            <div className="space-y-2">
+              <label htmlFor="title" className="font-medium text-sm text-gray-600">Title</label>
+              <div className="relative">
+                <Type className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <input id="title" required name="title" value={formData.title} onChange={handleChange} className="w-full pl-10 pr-4 py-2 bg-white/40 border border-gray-300/50 rounded-md text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#2a9d8f] focus:border-[#2a9d8f] outline-none transition" placeholder="e.g., Slightly Used Study Table" />
+              </div>
             </div>
-          )}
-        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-4 px-6 py-2 bg-black text-white rounded hover:bg-gray-800"
-        >
-          {loading ? "Submitting..." : "Create"}
-        </button>
-      </form>
+            {/* Thumbnail URL Input */}
+            <div className="space-y-2">
+              <label htmlFor="thumbnailUrl" className="font-medium text-sm text-gray-600">Thumbnail URL</label>
+              <div className="relative">
+                <ImagePlus className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <input id="thumbnailUrl" required name="thumbnailUrl" value={formData.thumbnailUrl} onChange={handleChange} className="w-full pl-10 pr-4 py-2 bg-white/40 border border-gray-300/50 rounded-md text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#2a9d8f] focus:border-[#2a9d8f] outline-none transition" placeholder="https://example.com/image.jpg" />
+              </div>
+            </div>
+
+            {/* Description Input */}
+            <div className="space-y-2">
+              <label htmlFor="description" className="font-medium text-sm text-gray-600">Description</label>
+              <div className="relative">
+                <Text className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
+                <textarea id="description" required name="description" value={formData.description} onChange={handleChange} className="w-full pl-10 pr-4 py-2 bg-white/40 border border-gray-300/50 rounded-md text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#2a9d8f] focus:border-[#2a9d8f] outline-none transition h-28 resize-none" placeholder="Provide details about the item..." />
+              </div>
+            </div>
+
+            {/* Category Select */}
+            <div className="space-y-2">
+              <label htmlFor="category" className="font-medium text-sm text-gray-600">Category</label>
+              <div className="relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <select id="category" required name="category" value={formData.category} onChange={handleChange} className="w-full pl-10 pr-4 py-2 appearance-none bg-white/40 border border-gray-300/50 rounded-md text-gray-900 focus:ring-2 focus:ring-[#2a9d8f] focus:border-[#2a9d8f] outline-none transition">
+                  <option value="" disabled>-- Select a Category --</option>
+                  <option value="elektronik">Elektronik</option>
+                  <option value="fashion">Fashion & Pakaian</option>
+                  <option value="rumah-dapur">Rumah & Dapur</option>
+                  <option value="kesehatan-kecantikan">Kesehatan & Kecantikan</option>
+                  <option value="olahraga-luar">Olahraga & Luar Ruangan</option>
+                  <option value="bayi-anak">Bayi & Anak</option>
+                  <option value="otomotif-peralatan">Otomotif & Peralatan</option>
+                  <option value="buku-musik-media">Buku, Musik & Media</option>
+                  <option value="hewan">Perlengkapan Hewan Peliharaan</option>
+                  <option value="kantor-alat-tulis">Perlengkapan Kantor & Alat Tulis</option>
+                </select>
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <label className="font-medium text-sm text-gray-600">Upload Images</label>
+
+              <div className="relative border-2 border-dashed border-gray-400/50 rounded-lg p-6 text-center hover:border-[#2a9d8f] transition cursor-pointer">
+                <FileUp className="mx-auto h-12 w-12 text-gray-500" />
+                <p className="mt-2 text-sm text-gray-600">Drag & drop files here, or click to browse</p>
+                <input type="file" multiple onChange={handleFileChange} className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" />
+              </div>
+            </div>
+
+            {/* Image Preview Area */}
+            {selectedFiles.length > 0 && (
+              <div className="flex gap-3 mt-2 mb-3 flex-wrap">
+                {selectedFiles.map((file, idx) => (
+                  <div key={idx} className="relative">
+                    <img src={URL.createObjectURL(file)} alt="preview" className="w-24 h-24 object-cover rounded-md border-2 border-white/50 shadow-md" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(idx)}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-0.5 w-6 h-6 flex items-center justify-center hover:bg-red-700 transition-transform transform hover:scale-110 focus:outline-none"
+                      aria-label="Hapus gambar"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="w-full bg-[#2a9d8f] text-white font-semibold py-2.5 rounded-md hover:bg-[#268a7e] transition duration-300 disabled:bg-[#2a9d8f]/50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              {loading ? (
+                <>
+                  <LoaderCircle className="animate-spin h-5 w-5" />
+                  Submitting...
+                </>
+              ) : 'Create Post'}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
