@@ -108,10 +108,12 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
 
+    // 1. Ekstrak data teks dan file
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const category = formData.get("category") as string;
     const itemImages = formData.getAll("itemImages") as File[];
+    console.log("🚀 ~ POST ~ itemImages:", itemImages);
 
     if (itemImages.length === 0) {
       return NextResponse.json(
@@ -120,9 +122,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Asumsi skema Zod Anda divalidasi seperti ini
-    // postSchema.parse({ title, description, category, imageUrls: itemImages.map(f => f.name) });
+    // 2. Validasi data teks
+    postSchema.parse({ title, description, category });
 
+    // 3. Upload semua gambar ke Cloudinary
     const uploadPromises = itemImages.map(async (file) => {
       const buffer = Buffer.from(await file.arrayBuffer());
       return uploadFile(buffer);
@@ -130,30 +133,47 @@ export async function POST(request: NextRequest) {
     const uploadResults = await Promise.all(uploadPromises);
     const imageUrls = uploadResults.map((result) => result.secure_url);
 
+    // 4. Lakukan analisis AI pada gambar pertama
     const mainImageBuffer = Buffer.from(await itemImages[0].arrayBuffer());
     const analysisResult = await identifyItemFromImage(
       mainImageBuffer,
       itemImages[0].type
     );
 
-    let totalCarbonKg: number | null = null;
-    let aiAnalysis: string | null = null;
-    if (analysisResult) {
-      const { itemName, quantity } = analysisResult;
-      const singleItemCarbon = await getCarbonFootprintForItem(itemName);
-      if (singleItemCarbon) {
-        totalCarbonKg = singleItemCarbon * quantity;
-        aiAnalysis = `Donating ${quantity} ${itemName}(s) helps save approximately ${totalCarbonKg.toFixed(
-          1
-        )} kg of CO2.`;
-      }
+    // Validasi hasil identifikasi
+    if (!analysisResult) {
+      return NextResponse.json(
+        {
+          error:
+            "AI could not identify the item in the image. Please try another photo.",
+        },
+        { status: 400 }
+      );
+    }
+    const { itemName, quantity } = analysisResult;
+
+    const singleItemCarbon = await getCarbonFootprintForItem(itemName);
+
+    // Validasi hasil estimasi karbon
+    if (singleItemCarbon === null) {
+      return NextResponse.json(
+        {
+          error: `AI could not estimate the carbon footprint for: ${itemName}.`,
+        },
+        { status: 400 }
+      );
     }
 
+    const totalCarbonKg = singleItemCarbon * quantity;
+    const aiAnalysis = `Donating ${quantity} ${itemName}(s) helps save approximately ${totalCarbonKg.toFixed(
+      1
+    )} kg of CO2.`;
+
+    // 5. Siapkan dokumen lengkap untuk disimpan
     const slug = title
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^\w-]+/g, "");
-
     const postToSave = {
       title,
       slug,
@@ -163,12 +183,13 @@ export async function POST(request: NextRequest) {
       imageUrls,
       userId: new ObjectId(session.user.id),
       isAvailable: true,
-      carbonKg: totalCarbonKg ?? undefined,
-      aiAnalysis: aiAnalysis ?? undefined,
+      carbonKg: totalCarbonKg,
+      aiAnalysis,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
+    // 6. Simpan ke database
     const result = await PostModel.addPost(postToSave);
     if (!result.acknowledged) {
       throw new Error("Failed to create post in database.");
