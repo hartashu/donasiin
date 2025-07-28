@@ -7,12 +7,46 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { hash, compare } from "bcryptjs";
 import { Collection, ObjectId, WithId } from "mongodb";
+import { IIncompleteProfile } from "@/types/types";
 
+const INCOMPLETE_PROFILES_COLLECTION = "incomplete_profiles";
 const USERS_COLLECTION = "users";
 const PENDING_REGISTRATIONS_COLLECTION = "pending_registrations";
 const PASSWORD_RESET_TOKENS_COLLECTION = "password_reset_tokens";
 
 export class UserModel {
+  static async getTotalUsers(): Promise<number> {
+    const usersCollection = await this.getUsersCollection();
+    return usersCollection.countDocuments();
+  }
+
+  static async getIncompleteProfilesCollection(): Promise<Collection<IIncompleteProfile>> {
+    const db = await connectToDb();
+    return db.collection<IIncompleteProfile>(INCOMPLETE_PROFILES_COLLECTION);
+  }
+
+  static async createIncompleteProfile(data: { email: string; fullName?: string | null; avatarUrl?: string | null; }): Promise<string> {
+    const incompleteCollection = await this.getIncompleteProfilesCollection();
+    const token = uuidv4();
+    const expires = new Date(new Date().getTime() + 15 * 60 * 1000); // Token valid 15 menit
+
+    await incompleteCollection.deleteMany({ email: data.email });
+
+    const newProfile: Omit<IIncompleteProfile, '_id'> = { ...data, token, expires };
+    await incompleteCollection.insertOne(newProfile as IIncompleteProfile);
+    return token;
+  }
+
+  static async getIncompleteProfileByToken(token: string): Promise<WithId<IIncompleteProfile> | null> {
+    const incompleteCollection = await this.getIncompleteProfilesCollection();
+    return incompleteCollection.findOne({ token, expires: { $gt: new Date() } });
+  }
+
+  static async deleteIncompleteProfile(email: string): Promise<void> {
+    const incompleteCollection = await this.getIncompleteProfilesCollection();
+    await incompleteCollection.deleteOne({ email });
+  }
+
   static async getUserById(id: string): Promise<WithId<IUser> | null> {
     if (!ObjectId.isValid(id)) return null;
     const usersCollection = await this.getUsersCollection();

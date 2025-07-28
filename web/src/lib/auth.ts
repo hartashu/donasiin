@@ -36,8 +36,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     username: user.username,
                     address: user.address,
                     dailyLimit: user.dailyLimit,
-                    fullName: user.fullName,
-                    avatarUrl: user.avatarUrl,
                 };
             },
         }),
@@ -48,14 +46,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         async signIn({ user, account }) {
             if (account?.provider === 'google') {
                 const existingUser = await UserModel.getUserByEmail(user.email!);
-                if (!existingUser) {
-                    const usernameFromEmail = user.email!.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
-                    const uniqueUsername = `${usernameFromEmail}${Math.floor(100 + Math.random() * 900)}`;
-                    await UserModel.createUser({
-                        email: user.email!, fullName: user.name ?? "New User", username: uniqueUsername,
-                        avatarUrl: user.image ?? "", dailyLimit: 5, address: '', password: null,
-                    });
+                if (existingUser) {
+                    return true; // Izinkan login untuk pengguna yang sudah ada
                 }
+
+                // Jika pengguna BARU, buat profil sementara dan redirect
+                const token = await UserModel.createIncompleteProfile({
+                    email: user.email!,
+                    fullName: user.name,
+                    avatarUrl: user.image,
+                });
+
+                // Hentikan proses login dan redirect ke halaman lengkapi profil
+                return `/auth/complete-profile?token=${token}`;
             }
             return true;
         },
