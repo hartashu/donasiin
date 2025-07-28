@@ -18,6 +18,7 @@ export default function ChatLayout({
       try {
         const res = await fetch("/api/chat/conversations");
         const data = await res.json();
+        
         console.log("Conversations:", data);
 
         if (res.status === 401) {

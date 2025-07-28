@@ -52,11 +52,12 @@ export default function ChatScreen() {
         },
       });
 
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to fetch conversations.");
       }
-
+      
       const result = await response.json();
 
       const conversations = Array.isArray(result) ? result : result.data;
