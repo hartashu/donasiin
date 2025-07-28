@@ -13,13 +13,13 @@
 //   const [loading, setLoading] = useState(true);
 //   const router = useRouter();
 
+
 //   useEffect(() => {
 //     const fetchConversations = async () => {
 //       try {
 //         const res = await fetch("/api/chat/conversations");
 //         const data = await res.json();
 //         console.log("Conversations:", data);
-
 //         if (res.status === 401) {
 //           router.push("/auth/login");
 //           return;
