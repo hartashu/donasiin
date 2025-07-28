@@ -55,62 +55,122 @@
 //     );
 // }
 
+// 'use client';
+
+// import Link from 'next/link';
+// import { formatDistanceToNowStrict } from 'date-fns';
+// import type { IConversationInboxItem } from '@/types/types';
+// import { useEffect, useState } from 'react';
+// import { pusherClient } from '@/lib/pusher';
+// import Image from 'next/image';
+
+// interface ConversationListProps {
+//     currentUser: any;
+//     initialConversations: IConversationInboxItem[];
+// }
+
+// export function ConversationList({ currentUser, initialConversations }: ConversationListProps) {
+//     const [conversations, setConversations] = useState(initialConversations);
+
+//     useEffect(() => {
+//         if (!currentUser?.id) return;
+
+//         const handleNewMessage = (newMessage: any) => {
+//             setConversations((currentConversations) => {
+//                 const updatedConversations = currentConversations.filter(
+//                     (convo) => convo.conversationId !== newMessage.conversationId
+//                 );
+
+//                 const newConvoItem: IConversationInboxItem = {
+//                     conversationId: newMessage.conversationId,
+//                     lastMessageText: newMessage.text,
+//                     lastMessageAt: newMessage.createdAt,
+//                     otherUser: newMessage.senderId === currentUser.id
+//                         ? newMessage.receiver
+//                         : newMessage.sender,
+//                 };
+
+//                 window.location.reload();
+
+//                 return [newConvoItem, ...updatedConversations];
+//             });
+//         };
+
+//         conversations.forEach(convo => {
+//             const channel = pusherClient.subscribe(convo.conversationId);
+//             channel.bind('messages:new', handleNewMessage);
+//         });
+
+//         return () => {
+//             conversations.forEach(convo => {
+//                 pusherClient.unsubscribe(convo.conversationId);
+//             });
+//         };
+//     }, [conversations, currentUser?.id]);
+
+//     return (
+//         <div className="overflow-y-auto">
+//             {conversations.map((convo) => (
+//                 <Link key={convo.conversationId} href={`/chat/${convo.conversationId}`} className="flex items-center p-4 border-b hover:bg-gray-50">
+//                     <div className="relative w-12 h-12 rounded-full mr-4 flex-shrink-0">
+//                         {convo.otherUser.avatarUrl ? (
+//                             <Image src={convo.otherUser.avatarUrl} alt={convo.otherUser.fullName} fill className="rounded-full object-cover" />
+//                         ) : (
+//                             <div className="w-full h-full rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
+//                                 {convo.otherUser.fullName.charAt(0).toUpperCase()}
+//                             </div>
+//                         )}
+//                     </div>
+//                     <div className="flex-1 overflow-hidden">
+//                         <div className="flex justify-between items-center">
+//                             <h3 className="font-semibold truncate">{convo.otherUser.fullName}</h3>
+//                             <p className="text-xs text-gray-500 whitespace-nowrap">
+//                                 {formatDistanceToNowStrict(new Date(convo.lastMessageAt), { addSuffix: true })}
+//                             </p>
+//                         </div>
+//                         <p className="text-sm text-gray-600 truncate">{convo.lastMessageText}</p>
+//                     </div>
+//                 </Link>
+//             ))}
+//         </div>
+//     );
+// }
+
 'use client';
 
 import Link from 'next/link';
 import { formatDistanceToNowStrict } from 'date-fns';
-import type { IConversationInboxItem } from '@/types/types';
 import { useEffect, useState } from 'react';
-import { pusherClient } from '@/lib/pusher';
 import Image from 'next/image';
+import type { Session } from 'next-auth';
+
+type PlainConversation = {
+    conversationId: string;
+    lastMessageText: string;
+    lastMessageAt: string;
+    otherUser: {
+        _id: string;
+        fullName: string;
+        username: string;
+        avatarUrl?: string;
+    };
+};
 
 interface ConversationListProps {
-    currentUser: any;
-    initialConversations: IConversationInboxItem[];
+    currentUser: Session['user'];
+    initialConversations: PlainConversation[];
 }
 
 export function ConversationList({ currentUser, initialConversations }: ConversationListProps) {
-    const [conversations, setConversations] = useState(initialConversations);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        if (!currentUser?.id) return;
-
-        const handleNewMessage = (newMessage: any) => {
-            setConversations((currentConversations) => {
-                const updatedConversations = currentConversations.filter(
-                    (convo) => convo.conversationId !== newMessage.conversationId
-                );
-
-                const newConvoItem: IConversationInboxItem = {
-                    conversationId: newMessage.conversationId,
-                    lastMessageText: newMessage.text,
-                    lastMessageAt: newMessage.createdAt,
-                    otherUser: newMessage.senderId === currentUser.id
-                        ? newMessage.receiver
-                        : newMessage.sender,
-                };
-
-                window.location.reload();
-
-                return [newConvoItem, ...updatedConversations];
-            });
-        };
-
-        conversations.forEach(convo => {
-            const channel = pusherClient.subscribe(convo.conversationId);
-            channel.bind('messages:new', handleNewMessage);
-        });
-
-        return () => {
-            conversations.forEach(convo => {
-                pusherClient.unsubscribe(convo.conversationId);
-            });
-        };
-    }, [conversations, currentUser?.id]);
+        setIsClient(true);
+    }, []);
 
     return (
         <div className="overflow-y-auto">
-            {conversations.map((convo) => (
+            {initialConversations.map((convo) => (
                 <Link key={convo.conversationId} href={`/chat/${convo.conversationId}`} className="flex items-center p-4 border-b hover:bg-gray-50">
                     <div className="relative w-12 h-12 rounded-full mr-4 flex-shrink-0">
                         {convo.otherUser.avatarUrl ? (
@@ -125,7 +185,7 @@ export function ConversationList({ currentUser, initialConversations }: Conversa
                         <div className="flex justify-between items-center">
                             <h3 className="font-semibold truncate">{convo.otherUser.fullName}</h3>
                             <p className="text-xs text-gray-500 whitespace-nowrap">
-                                {formatDistanceToNowStrict(new Date(convo.lastMessageAt), { addSuffix: true })}
+                                {isClient ? formatDistanceToNowStrict(new Date(convo.lastMessageAt), { addSuffix: true }) : '...'}
                             </p>
                         </div>
                         <p className="text-sm text-gray-600 truncate">{convo.lastMessageText}</p>
