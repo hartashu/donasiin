@@ -170,6 +170,20 @@ export async function POST(request: NextRequest) {
     )} kg of CO2.`;
 
     // 5. Siapkan dokumen lengkap untuk disimpan
+
+    // --- LOGIKA SLUG UNIK DIMULAI DI SINI ---
+    const baseSlug = title
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "");
+    let finalSlug = baseSlug;
+    let counter = 2;
+    while (await PostModel.isSlugExist(finalSlug)) {
+      finalSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    // --- LOGIKA SLUG UNIK SELESAI ---
+
     const slug = title
       .toLowerCase()
       .replace(/\s+/g, "-")

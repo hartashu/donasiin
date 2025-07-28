@@ -13,6 +13,14 @@ interface IGetAllPostsParams {
 }
 
 export class PostModel {
+  static async isSlugExist(slug: string): Promise<boolean> {
+    const db = await connectToDb();
+    const post = await db
+      .collection(POST_COLLECTION)
+      .findOne({ slug }, { projection: { _id: 1 } });
+    return !!post;
+  }
+
   static async getAllPosts({
     page = 1,
     limit = 10,

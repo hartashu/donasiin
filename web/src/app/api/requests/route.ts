@@ -32,13 +32,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Panggil fungsi createRequest yang sudah dimodifikasi
     const result = await RequestModel.createRequest(
       new ObjectId(postId),
       new ObjectId(session.user.id)
     );
 
+    // Handle kemungkinan error dari model
+    if (result === "LIMIT_EXCEEDED") {
+      return NextResponse.json(
+        { error: "Daily request limit exceeded." },
+        { status: 429 }
+      ); // 429: Too Many Requests
+    }
+    if (result === "USER_NOT_FOUND") {
+      return NextResponse.json({ error: "User not found." }, { status: 404 });
+    }
+
+    // Jika berhasil
     return NextResponse.json(
-      { message: "Request created successfully", data: result },
+      {
+        message: "Request created successfully",
+        data: result,
+      },
       { status: 201 }
     );
   } catch (error) {

@@ -1,6 +1,7 @@
 // lib/carbonAnalysisService.ts
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 // 🔽 'generateObject' dan 'generateText' sama-sama ada di 'ai'
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { CarbonFootprintModel } from "@/models/carbonFootprint";
@@ -10,6 +11,19 @@ const google = createGoogleGenerativeAI({
 });
 
 const model = google("models/gemini-1.5-flash-latest");
+
+// const openrouter = createOpenAI({
+//   apiKey: process.env.OPENROUTER_API_KEY,
+//   // Arahkan ke endpoint API OpenRouter
+//   baseURL: "https://openrouter.ai/api/v1",
+//   // Header kustom yang direkomendasikan oleh OpenRouter
+//   headers: {
+//     "HTTP-Referer": "YOUR_SITE_URL", // Ganti dengan URL website Anda
+//     "X-Title": "Donation App", // Ganti dengan nama aplikasi Anda
+//   },
+// });
+
+// const model = openrouter("qwen/qwen2.5-vl-32b-instruct:free");
 
 /**
  * Mengidentifikasi item dan jumlahnya dari gambar.
