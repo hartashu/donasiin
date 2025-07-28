@@ -18,6 +18,7 @@ export default function DonationDetailPage() {
   const [currentImage, setCurrentImage] = useState(0);
   const [sessionUserId, setSessionUserId] = useState<string>("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [hasRequested, setHasRequested] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -162,9 +163,16 @@ export default function DonationDetailPage() {
                 </div>
                 <DeletePostButton slug={slug!} />
               </>
+            ) : hasRequested ? (
+              <div className="p-4 bg-green-50 text-green-700 border rounded text-center font-medium">
+                You have already requested this item.
+              </div>
             ) : (
               <>
-                <RequestPostButton postId={post._id.toString()} />
+                <RequestPostButton
+                  postId={post._id.toString()}
+                  onSuccess={() => setHasRequested(true)} // update state ketika request berhasil
+                />
 
                 <button
                   onClick={handleStartChat}
