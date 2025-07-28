@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   TouchableOpacity,
+  FlatList,
   Dimensions,
   Alert,
 } from "react-native";
@@ -19,6 +20,7 @@ import {
 import { Colors } from "../../constants/Colors";
 import { DonationPost } from "../../types";
 import { MessageSquare, ChevronLeft } from "lucide-react-native";
+import { useAuth } from "../../context/AuthContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
 
@@ -34,6 +36,9 @@ export default function PostDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [isStartingChat, setIsStartingChat] = useState(false);
+  const { user } = useAuth();
+  const [activeIndex, setActiveIndex] = useState(0);
 
   // Fetch post details from backend
   const fetchPostDetails = useCallback(async () => {
@@ -52,9 +57,7 @@ export default function PostDetailScreen() {
         slug: apiPost.slug,
         title: apiPost.title,
         description: apiPost.description,
-        images: [apiPost.thumbnailUrl, ...(apiPost.imageUrls || [])].filter(
-          Boolean
-        ),
+        images: apiPost.imageUrls || [],
         tags: [apiPost.category.toLowerCase()],
         ownerId: apiPost.author._id,
         owner: {
@@ -135,6 +138,58 @@ export default function PostDetailScreen() {
     }
   };
 
+  const handleStartChat = async () => {
+    if (!post || !post.owner) return;
+    setIsStartingChat(true);
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) {
+        Alert.alert("Login Required", "You must be logged in to start a chat.", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => router.push("/(auth)/login") },
+        ]);
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/chat/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          receiverId: post.owner.id,
+          text: `Hi, I'm interested in your donation: "${post.title}"`,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.message || "Failed to start chat.");
+      }
+
+      router.push({
+        pathname: `/chat/${result.conversationId}`,
+        params: { otherUser: JSON.stringify(post.owner) },
+      });
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "An unexpected error occurred.");
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
+
+  // --- Image Carousel Logic ---
+  const onViewableItemsChanged = useCallback(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      setActiveIndex(viewableItems[0].index ?? 0);
+    }
+  }, []);
+
+  const viewabilityConfig = {
+    itemVisiblePercentThreshold: 50,
+  };
+
   // Custom back button over the image
   const headerLeft = useCallback(
     () => (
@@ -147,6 +202,8 @@ export default function PostDetailScreen() {
 
   const screenOptions = useMemo(
     () => ({
+      // This screen needs its own header to show the custom back button.
+      headerShown: true,
       headerTransparent: true,
       headerTitle: "",
       headerLeft,
@@ -178,13 +235,41 @@ export default function PostDetailScreen() {
 
   if (!post) return null;
 
+  const isOwner = user?.id === post.ownerId;
+
   // Main UI
   return (
     <>
       {/* 1) Full-bleed image + transparent header */}
       <SafeAreaView edges={["top", "left", "right"]} style={styles.imageContainer}>
         <Stack.Screen options={screenOptions} />
-        <Image source={{ uri: post.images[0] }} style={styles.headerImage} />
+        <View>
+          <FlatList
+            data={post.images}
+            renderItem={({ item }) => (
+              <Image source={{ uri: item }} style={styles.headerImage} />
+            )}
+            keyExtractor={(item, index) => `${item}-${index}`}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+          />
+          {post.images.length > 1 && (
+            <View style={styles.paginationContainer}>
+              {post.images.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.paginationDot,
+                    index === activeIndex && styles.paginationDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
       </SafeAreaView>
 
       {/* 2) Scrollable details + footer */}
@@ -213,13 +298,33 @@ export default function PostDetailScreen() {
           </ScrollView>
 
           <View style={styles.footer}>
-            <Button
-              title="Request Item"
-              onPress={handleRequestItem}
-              loading={isRequesting}
-              icon={<MessageSquare size={18} color={Colors.white} />}
-              disabled={!post.isAvailable || isRequesting}
-            />
+            {!user ? (
+              <Button
+                title="Login to Request or Chat"
+                onPress={() => router.push('/(auth)/login')}
+              />
+            ) : isOwner ? (
+              <Text style={styles.ownerNotice}>You are the owner of this item.</Text>
+            ) : (
+              <>
+                <Button
+                  title="Chat"
+                  onPress={handleStartChat}
+                  loading={isStartingChat}
+                  variant="outline"
+                  icon={<MessageSquare size={18} color={Colors.primary[600]} />}
+                  style={{ flex: 1, marginRight: 8 }}
+                  disabled={isRequesting || isStartingChat || !post.isAvailable}
+                />
+                <Button
+                  title="Request Item"
+                  onPress={handleRequestItem}
+                  loading={isRequesting}
+                  style={{ flex: 1, marginLeft: 8 }}
+                  disabled={!post.isAvailable || isRequesting || isStartingChat}
+                />
+              </>
+            )}
           </View>
         </View>
       </SafeAreaView>
@@ -304,6 +409,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.background,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -319,5 +426,31 @@ const styles = StyleSheet.create({
     color: Colors.error[600],
     fontSize: 16,
     marginTop: 20,
+  },
+  ownerNotice: {
+    flex: 1,
+    textAlign: 'center',
+    color: Colors.text.secondary,
+    fontStyle: 'italic',
+  },
+  paginationContainer: {
+    position: 'absolute',
+    bottom: 16,
+    flexDirection: 'row',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: Colors.white,
   },
 });

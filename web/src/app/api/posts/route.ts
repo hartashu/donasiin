@@ -6,44 +6,44 @@
 // import { ObjectId, WithId } from "mongodb";
 // import { NextRequest, NextResponse } from "next/server";
 
-// export async function GET(request: NextRequest) {
-//   try {
-//     const { searchParams } = request.nextUrl;
-//     const page = parseInt(searchParams.get("page") || "1");
-//     const limit = parseInt(searchParams.get("limit") || "10");
-//     const category = searchParams.get("category") || undefined;
-//     const search = searchParams.get("search") || undefined;
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = request.nextUrl;
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const category = searchParams.get("category") || undefined;
+    const search = searchParams.get("search") || undefined;
 
-//     const { posts, total } = await PostModel.getAllPosts({
-//       page,
-//       limit,
-//       category,
-//       search,
-//     });
+    const { posts, total } = await PostModel.getAllPosts({
+      page,
+      limit,
+      category,
+      search,
+    });
 
-//     return NextResponse.json<
-//       IJsonResponse<{
-//         posts: WithId<IPost>[];
-//         total: number;
-//         page: number;
-//         totalPages: number;
-//       }>
-//     >(
-//       {
-//         statusCode: 200,
-//         data: {
-//           posts,
-//           total,
-//           page,
-//           totalPages: Math.ceil(total / limit),
-//         },
-//       },
-//       { status: 200 }
-//     );
-//   } catch (error) {
-//     return handleError(error);
-//   }
-// }
+    return NextResponse.json<
+      IJsonResponse<{
+        posts: WithId<IPost>[];
+        total: number;
+        page: number;
+        totalPages: number;
+      }>
+    >(
+      {
+        statusCode: 200,
+        data: {
+          posts,
+          total,
+          page,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
 // export async function POST(request: Request) {
 //   try {
