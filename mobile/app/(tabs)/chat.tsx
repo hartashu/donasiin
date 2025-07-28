@@ -58,7 +58,6 @@ export default function ChatScreen() {
       }
 
       const result = await response.json();
-      console.log("API response for conversations:", result);
 
       const conversations = Array.isArray(result) ? result : result.data;
 
@@ -74,7 +73,7 @@ export default function ChatScreen() {
       // Map API response to the Chat type
       const mappedChats: Chat[] = conversations.map((convo: any) => {
         const otherUser: User = {
-          id: convo.otherUser.id,
+          id: convo.otherUser._id,
           username: convo.otherUser.username || 'unknown',
           fullName: convo.otherUser.fullName,
           email: '',
