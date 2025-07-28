@@ -105,10 +105,10 @@ export default function TalkingSection() {
             animate={
               showLeft
                 ? {
-                    rotate: [0, -2, 2, -2, 0],
-                    scale: [1, 1.03, 1.02, 1.03, 1],
-                    transition: { duration: 1 },
-                  }
+                  rotate: [0, -2, 2, -2, 0],
+                  scale: [1, 1.03, 1.02, 1.03, 1],
+                  transition: { duration: 1 },
+                }
                 : {}
             }
             className="w-full max-w-[260px]"
@@ -140,10 +140,10 @@ export default function TalkingSection() {
             animate={
               showRight
                 ? {
-                    rotate: [0, 2, -2, 2, 0],
-                    scale: [1, 1.03, 1.02, 1.03, 1],
-                    transition: { duration: 1 },
-                  }
+                  rotate: [0, 2, -2, 2, 0],
+                  scale: [1, 1.03, 1.02, 1.03, 1],
+                  transition: { duration: 1 },
+                }
                 : {}
             }
             className="w-full max-w-[260px]"
@@ -165,3 +165,23 @@ export default function TalkingSection() {
     </section>
   );
 }
+
+
+// "use client";
+
+// import { motion } from "framer-motion";
+
+// export default function TalkingSection() {
+//   return (
+//     <section className="relative py-24 text-black overflow-hidden bg-gray-50">
+//       <div className="container mx-auto px-6 text-center">
+//         <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="relative text-4xl md:text-5xl font-extrabold text-brand-dark mb-4 tracking-tight">
+//           Conversations that Matter
+//         </motion.h2>
+//         <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }} className="text-gray-600 text-lg max-w-2xl mx-auto">
+//           Connect directly with donors and recipients. Our secure chat ensures that every item finds a grateful new home, fostering a community of trust and support.
+//         </motion.p>
+//       </div>
+//     </section>
+//   );
+// }
