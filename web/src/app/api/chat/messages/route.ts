@@ -44,13 +44,29 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { receiverId, text } = body;
 
-        if (!receiverId || !text) {
-            return NextResponse.json({ error: 'Missing receiverId or text' }, { status: 400 });
+        // if (!receiverId || !text) {
+        //     return NextResponse.json({ error: 'Missing receiverId or text' }, { status: 400 });
+        // }
+
+        // const newMessage = await ChatModel.createMessage(session.user.id, receiverId, text);
+
+        // // Siarkan pesan baru ke channel yang relevan
+        // await pusherServer.trigger(newMessage.conversationId, 'messages:new', newMessage);
+
+        // return NextResponse.json(newMessage, { status: 201 });
+
+        if (!receiverId) {
+            return NextResponse.json({ error: 'Missing receiverId' }, { status: 400 });
         }
 
+        if (!text) {
+        const { conversationId } = await ChatModel.getOrCreateConversation(session.user.id, receiverId);
+        return NextResponse.json({ conversationId }, { status: 201 });
+        }
+
+        // Jika text ada, langsung kirim message
         const newMessage = await ChatModel.createMessage(session.user.id, receiverId, text);
 
-        // Siarkan pesan baru ke channel yang relevan
         await pusherServer.trigger(newMessage.conversationId, 'messages:new', newMessage);
 
         return NextResponse.json(newMessage, { status: 201 });

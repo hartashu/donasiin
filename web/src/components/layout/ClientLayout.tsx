@@ -18,14 +18,11 @@ export default function ClientLayout({
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col overflow-x-hidden">
-      <div
-        className="fixed inset-0 z-[-1]"
-
-      />
+    <div className="relative min-h-screen flex flex-col">
+      <div className="fixed inset-0 z-[-1]" />
 
       <Header />
-      <main className="flex-grow">{children}</main>
+      <main className="">{children}</main>
       <Footer />
     </div>
   );
