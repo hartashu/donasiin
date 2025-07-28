@@ -61,7 +61,7 @@ export default function DonationDetailPage() {
     );
   };
 
-  const handleStartChat = async () => {
+  const handleStartChat = async (title: string) => {
     if (!post?.author?._id) return;
     setChatLoading(true);
     try {
@@ -70,7 +70,7 @@ export default function DonationDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           receiverId: post.author._id,
-          text: "Hi, I'm interested in your donation.",
+          text: `Hi, I'm interested in your donation: ${title}.`,
         }),
       });
 
@@ -175,7 +175,7 @@ export default function DonationDetailPage() {
                 />
 
                 <button
-                  onClick={handleStartChat}
+                  onClick={() => handleStartChat(post.title)}
                   disabled={chatLoading}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
                 >

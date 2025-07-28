@@ -15,6 +15,7 @@ const PENDING_REGISTRATIONS_COLLECTION = "pending_registrations";
 const PASSWORD_RESET_TOKENS_COLLECTION = "password_reset_tokens";
 
 export class UserModel {
+
   static async getTotalUsers(): Promise<number> {
     const usersCollection = await this.getUsersCollection();
     return usersCollection.countDocuments();
