@@ -56,3 +56,27 @@ export async function sendPasswordResetEmail(to: string, token: string, source?:
 
   await transporter.sendMail(mailOptions);
 };
+
+
+// Tambahkan fungsi ini di dalam file src/lib/utils/email.ts
+
+export const sendShippingNotificationEmail = async (to: string, postTitle: string, trackingCode: string) => {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: to,
+    subject: `Your requested item "${postTitle}" has been shipped!`,
+    html: `
+      <div style="font-family: sans-serif; padding: 20px;">
+        <h2>Item Shipped!</h2>
+        <p>Good news! The item you requested, <strong>${postTitle}</strong>, has been shipped by the donor.</p>
+        <p>You can track your package with the following tracking code:</p>
+        <div style="background-color: #f2f2f2; padding: 10px; border-radius: 5px; text-align: center; margin: 20px 0;">
+          <strong style="font-size: 1.2em; letter-spacing: 2px;">${trackingCode}</strong>
+        </div>
+        <p>Please remember to mark the item as 'Completed' in your profile once you receive it.</p>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};

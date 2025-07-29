@@ -32,23 +32,23 @@ export async function PATCH(
     const isDonor = post.userId.toString() === session.user.id;
     const isRequester = currentRequest.userId.toString() === session.user.id;
 
-    // Logika untuk Donatur
+    // Donor logic
     if (isDonor) {
       const body = await request.json();
       const { status, trackingCode } = updateRequestStatusSchema.parse(body);
 
-      // Donatur hanya bisa: ACCEPT, REJECT, atau SHIPPED
+      // Donors can only: ACCEPT, REJECT, or SHIPPED
       if (
         status === RequestStatus.ACCEPTED ||
         status === RequestStatus.REJECTED ||
         status === RequestStatus.SHIPPED
       ) {
         await RequestModel.updateRequestStatus(
-          currentRequest._id,
+          currentRequest._id.toString(), // <-- FIX: Convert ObjectId to string
           status,
           trackingCode
         );
-        // Jika diterima, update status post menjadi tidak tersedia
+        // If accepted, update post status to unavailable
         if (status === RequestStatus.ACCEPTED) {
           await PostModel.updatePost(post.slug, { isAvailable: false });
         }
@@ -58,16 +58,16 @@ export async function PATCH(
       }
     }
 
-    // Logika untuk Penerima
+    // Requester logic
     if (isRequester) {
       const body = await request.json();
-      // Penerima hanya bisa: COMPLETED
+      // Requesters can only: COMPLETED
       if (
         body.status === RequestStatus.COMPLETED &&
         currentRequest.status === RequestStatus.SHIPPED
       ) {
         await RequestModel.updateRequestStatus(
-          currentRequest._id,
+          currentRequest._id.toString(), // <-- FIX: Convert ObjectId to string
           RequestStatus.COMPLETED
         );
         return NextResponse.json({ message: "Request completed successfully" });
@@ -78,6 +78,43 @@ export async function PATCH(
       { error: "Forbidden or invalid action" },
       { status: 403 }
     );
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 1. Cari permintaan yang akan dihapus
+    const requestToDelete = await RequestModel.getRequestById(params.id);
+    if (!requestToDelete) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+
+    // 2. Otorisasi: Pastikan hanya pembuat request yang bisa menghapus
+    const isRequester = requestToDelete.userId.toString() === session.user.id;
+    if (!isRequester) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only delete your own requests." },
+        { status: 403 }
+      );
+    }
+
+    // 3. Hapus permintaan dari database
+    const isDeleted = await RequestModel.deleteRequestById(params.id);
+    if (!isDeleted) {
+      throw new Error("Failed to delete the request.");
+    }
+
+    return NextResponse.json({ message: "Request deleted successfully" });
   } catch (error) {
     return handleError(error);
   }

@@ -1,5 +1,5 @@
 // mobile/app/(your-stack)/PostDetailScreen.tsx
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,34 +12,40 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import { DonationPost } from "../../types";
-import { MessageSquare, ChevronLeft } from "lucide-react-native";
+import {
+  MessageSquare,
+  ChevronLeft,
+  MapPin,
+  Sparkles,
+} from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
 
-const { width } = Dimensions.get("window");
+// Single local API base URL
 const API_BASE_URL = "http://localhost:3000/api";
+
+const { width } = Dimensions.get("window");
 
 const formatDistanceToNow = (date: Date): string => {
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  let interval = seconds / 31536000; // years
+  let interval = seconds / 31536000;
   if (interval > 1) return `${Math.floor(interval)}y ago`;
-  interval = seconds / 2592000; // months
+  interval = seconds / 2592000;
   if (interval > 1) return `${Math.floor(interval)}mo ago`;
-  interval = seconds / 86400; // days
+  interval = seconds / 86400;
   if (interval > 1) return `${Math.floor(interval)}d ago`;
-  interval = seconds / 3600; // hours
+  interval = seconds / 3600;
   if (interval > 1) return `${Math.floor(interval)}h ago`;
-  interval = seconds / 60; // minutes
+  interval = seconds / 60;
   if (interval > 1) return `${Math.floor(interval)}m ago`;
   return `${Math.floor(seconds)}s ago`;
 };
@@ -48,16 +54,15 @@ export default function PostDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
 
   const [post, setPost] = useState<DonationPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
-  const { user } = useAuth();
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Fetch post details from backend
   const fetchPostDetails = useCallback(async () => {
     if (!slug) return;
     setLoading(true);
@@ -81,7 +86,8 @@ export default function PostDetailScreen() {
           id: apiPost.author._id,
           username: apiPost.author.username,
           fullName: apiPost.author.fullName,
-          avatar: apiPost.author.avatarUrl || "https://via.placeholder.com/150",
+          avatarUrl:
+            apiPost.author.avatarUrl || "https://via.placeholder.com/150",
           address: apiPost.author.address,
           email: "",
           dailyRequestLimit: 0,
@@ -89,6 +95,7 @@ export default function PostDetailScreen() {
           createdAt: new Date(),
         },
         isAvailable: apiPost.isAvailable,
+        aiAnalysis: apiPost.aiAnalysis,
         createdAt: new Date(apiPost.createdAt),
         updatedAt: new Date(apiPost.updatedAt),
         aiAnalysis: apiPost.aiAnalysis,
@@ -104,7 +111,6 @@ export default function PostDetailScreen() {
     fetchPostDetails();
   }, [fetchPostDetails]);
 
-  // Ask for confirmation before sending the request
   const handleRequestItem = () => {
     if (!post) return;
     Alert.alert(
@@ -112,19 +118,16 @@ export default function PostDetailScreen() {
       `Are you sure you want to request "${post.title}"?`,
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Yes, Request", onPress: () => submitRequest() },
+        { text: "Yes, Request", onPress: submitRequest },
       ]
     );
   };
-
-  // Submit the request to your /requests endpoint
   const submitRequest = async () => {
     if (!post) return;
     setIsRequesting(true);
     try {
       const token = await AuthService.getStoredToken();
       if (!token) throw new Error("You must be logged in to request an item.");
-
       const res = await fetch(`${API_BASE_URL}/requests`, {
         method: "POST",
         headers: {
@@ -133,24 +136,21 @@ export default function PostDetailScreen() {
         },
         body: JSON.stringify({ postId: post.id }),
       });
-      const responseData = await res.json();
-      console.log("Response Data:", responseData);
-      
-      if (!res.ok) throw new Error(responseData.message || "Failed to submit request.");
-
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || "Failed to submit request.");
       Alert.alert(
         "Request Sent!",
         "Your request has been sent to the owner. You can check its status in your history.",
         [{ text: "OK", onPress: () => router.back() }]
       );
     } catch (err: any) {
-      if (err.message.includes("You must be logged in")) {
+      if (err.message.includes("logged in")) {
         Alert.alert("Login Required", err.message, [
           { text: "Cancel", style: "cancel" },
           { text: "Login", onPress: () => router.push("/(auth)/login") },
         ]);
       } else {
-        Alert.alert("Error", err.message || "An unexpected error occurred.");
+        Alert.alert("Error", err.message);
       }
     } finally {
       setIsRequesting(false);
@@ -158,18 +158,21 @@ export default function PostDetailScreen() {
   };
 
   const handleStartChat = async () => {
-    if (!post || !post.owner) return;
+    if (!post?.owner) return;
     setIsStartingChat(true);
     try {
       const token = await AuthService.getStoredToken();
       if (!token) {
-        Alert.alert("Login Required", "You must be logged in to start a chat.", [
-          { text: "Cancel", style: "cancel" },
-          { text: "Login", onPress: () => router.push("/(auth)/login") },
-        ]);
+        Alert.alert(
+          "Login Required",
+          "You must be logged in to start a chat.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Login", onPress: () => router.push("/(auth)/login") },
+          ]
+        );
         return;
       }
-
       const res = await fetch(`${API_BASE_URL}/chat/messages`, {
         method: "POST",
         headers: {
@@ -181,35 +184,26 @@ export default function PostDetailScreen() {
           text: `Hi, I'm interested in your donation: "${post.title}"`,
         }),
       });
-
-      const result = await res.json();
-      if (!res.ok) {
-        throw new Error(result.message || "Failed to start chat.");
-      }
-
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || "Failed to start chat.");
       router.push({
-        pathname: `/chat/${result.conversationId}`,
+        pathname: `/chat/${json.conversationId}`,
         params: { otherUser: JSON.stringify(post.owner) },
       });
     } catch (err: any) {
-      Alert.alert("Error", err.message || "An unexpected error occurred.");
+      Alert.alert("Error", err.message);
     } finally {
       setIsStartingChat(false);
     }
   };
 
-  // --- Image Carousel Logic ---
   const onViewableItemsChanged = useCallback(({ viewableItems }) => {
     if (viewableItems.length > 0) {
       setActiveIndex(viewableItems[0].index ?? 0);
     }
   }, []);
+  const viewabilityConfig = { itemVisiblePercentThreshold: 50 };
 
-  const viewabilityConfig = {
-    itemVisiblePercentThreshold: 50,
-  };
-
-  // Custom back button over the image
   const headerLeft = useCallback(
     () => (
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -218,22 +212,17 @@ export default function PostDetailScreen() {
     ),
     [router]
   );
-
   const screenOptions = useMemo(
     () => ({
-      // This screen needs its own header to show the custom back button.
       headerShown: true,
       headerTransparent: true,
       headerTitle: "",
       headerLeft,
-      headerLeftContainerStyle: {
-        paddingTop: Math.max(insets.top, 16),
-      },
+      headerLeftContainerStyle: { paddingTop: Math.max(insets.top, 16) },
     }),
     [headerLeft, insets.top]
   );
 
-  // Loading state
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
@@ -241,161 +230,133 @@ export default function PostDetailScreen() {
       </SafeAreaView>
     );
   }
-
-  // Error state
-  if (error) {
+  if (error || !post) {
     return (
       <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>{error || "Unknown error."}</Text>
         <Button title="Go Back" onPress={() => router.back()} />
       </SafeAreaView>
     );
   }
 
-  if (!post) return null;
-
   const isOwner = user?.id === post.ownerId;
 
-  const isOwner = user?.id === post.ownerId;
-
-  // Main UI
   return (
     <>
-      {/* 1) Full-bleed image + transparent header */}
-      <SafeAreaView edges={["top", "left", "right"]} style={styles.imageContainer}>
-        <Stack.Screen options={screenOptions} />
-        <View>
-          <FlatList
-            data={post.images}
-            renderItem={({ item }) => (
-              <Image source={{ uri: item }} style={styles.headerImage} />
-            )}
-            keyExtractor={(item, index) => `${item}-${index}`}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
-          />
-          {post.images.length > 1 && (
-            <View style={styles.paginationContainer}>
-              {post.images.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.paginationDot,
-                    index === activeIndex && styles.paginationDotActive,
-                  ]}
-                />
-              ))}
-            </View>
+      <Stack.Screen options={screenOptions} />
+      <SafeAreaView
+        edges={["top", "left", "right"]}
+        style={styles.imageWrapper}
+      >
+        <FlatList
+          data={post.images}
+          renderItem={({ item }) => (
+            <Image source={{ uri: item }} style={styles.headerImage} />
           )}
-        </View>
+          keyExtractor={(_, i) => `${i}`}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+        />
+        {post.images.length > 1 && (
+          <View style={styles.paginationContainer}>
+            {post.images.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.paginationDot,
+                  i === activeIndex && styles.paginationDotActive,
+                ]}
+              />
+            ))}
+          </View>
+        )}
       </SafeAreaView>
 
-      {/* 2) Scrollable details + footer */}
-      <SafeAreaView edges={["left", "right", "bottom"]} style={styles.container}>
-        <View style={styles.flexGrow}>
-          <ScrollView
-            style={styles.flexGrow}
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.title}>{post.title}</Text>
-            <View style={styles.metaContainer}>
-              <View style={styles.tagContainer}>
-                <Text style={styles.tag}>{post.tags[0]}</Text>
-              </View>
-              <Text style={styles.metaText}>•</Text>
-              <Text style={styles.metaText}>
-                Posted {formatDistanceToNow(post.createdAt)}
-              </Text>
+      <SafeAreaView
+        edges={["left", "right", "bottom"]}
+        style={styles.container}
+      >
+        <ScrollView
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.title}>{post.title}</Text>
+          <View style={styles.metaRow}>
+            <View style={styles.tagBox}>
+              <Text style={styles.tag}>{post.tags[0]}</Text>
             </View>
-            <View style={styles.separator} />
-            <View style={styles.ownerInfo}>
-              <Image source={{ uri: post.owner.avatar }} style={styles.ownerAvatar} />
-              <View>
-                <Text style={styles.ownerName}>{post.owner.fullName}</Text>
-                <Text style={styles.ownerUsername}>@{post.owner.username}</Text>
-                {post.owner.address && (
-                  <View style={styles.addressContainer}>
-                    <MapPin size={14} color={Colors.text.secondary} />
-                    <Text style={styles.addressText}>{post.owner.address}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-            <View style={styles.separator} />
-            {post.aiAnalysis && (
-              <>
-                <View style={styles.sectionHeader}>
-                  <Sparkles size={20} color={Colors.primary[600]} />
-                  <Text style={styles.sectionTitle}>AI Carbon Analysis</Text>
-                </View>
-                <Text style={styles.description}>{post.aiAnalysis}</Text>
-                <View style={styles.separator} />
-              </>
-            )}
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{post.description}</Text>
-          </ScrollView>
-
-          <View style={styles.footer}>
-            {!user ? (
-              <Button
-                title="Login to Request or Chat"
-                onPress={() => router.push('/(auth)/login')}
-              />
-            ) : isOwner ? (
-              <Text style={styles.ownerNotice}>You are the owner of this item.</Text>
-            ) : (
-              <>
-                <Button
-                  title="Chat"
-                  onPress={handleStartChat}
-                  loading={isStartingChat}
-                  variant="outline"
-                  icon={<MessageSquare size={18} color={Colors.primary[600]} />}
-                  style={{ flex: 1, marginRight: 8 }}
-                  disabled={isRequesting || isStartingChat || !post.isAvailable}
-                />
-                <Button
-                  title="Request Item"
-                  onPress={handleRequestItem}
-                  loading={isRequesting}
-                  style={{ flex: 1, marginLeft: 8 }}
-                  disabled={!post.isAvailable || isRequesting || isStartingChat}
-                />
-              </>
-            )}
-            {!user ? (
-              <Button
-                title="Login to Request or Chat"
-                onPress={() => router.push('/(auth)/login')}
-              />
-            ) : isOwner ? (
-              <Text style={styles.ownerNotice}>You are the owner of this item.</Text>
-            ) : (
-              <>
-                <Button
-                  title="Chat"
-                  onPress={handleStartChat}
-                  loading={isStartingChat}
-                  variant="outline"
-                  icon={<MessageSquare size={18} color={Colors.primary[600]} />}
-                  style={{ flex: 1, marginRight: 8 }}
-                  disabled={isRequesting || isStartingChat || !post.isAvailable}
-                />
-                <Button
-                  title="Request Item"
-                  onPress={handleRequestItem}
-                  loading={isRequesting}
-                  style={{ flex: 1, marginLeft: 8 }}
-                  disabled={!post.isAvailable || isRequesting || isStartingChat}
-                />
-              </>
-            )}
+            <Text style={styles.metaText}>
+              • Posted {formatDistanceToNow(post.createdAt)}
+            </Text>
           </View>
+          <View style={styles.separator} />
+
+          <View style={styles.ownerInfo}>
+            <Image
+              source={{ uri: post.owner.avatarUrl }}
+              style={styles.ownerAvatar}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ownerName}>{post.owner.fullName}</Text>
+              <Text style={styles.ownerUsername}>@{post.owner.username}</Text>
+              {post.owner.address && (
+                <View style={styles.addressRow}>
+                  <MapPin size={14} color={Colors.text.secondary} />
+                  <Text style={styles.addressText}>{post.owner.address}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          <View style={styles.separator} />
+
+          {post.aiAnalysis && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Sparkles size={20} color={Colors.primary[600]} />
+                <Text style={styles.sectionTitle}>AI Carbon Analysis</Text>
+              </View>
+              <Text style={styles.description}>{post.aiAnalysis}</Text>
+              <View style={styles.separator} />
+            </>
+          )}
+
+          <Text style={styles.sectionTitle}>Description</Text>
+          <Text style={styles.description}>{post.description}</Text>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          {!user ? (
+            <Button
+              title="Login to Request or Chat"
+              onPress={() => router.push("/(auth)/login")}
+            />
+          ) : isOwner ? (
+            <Text style={styles.ownerNotice}>
+              You are the owner of this item.
+            </Text>
+          ) : (
+            <>
+              <Button
+                title="Chat"
+                onPress={handleStartChat}
+                loading={isStartingChat}
+                variant="outline"
+                icon={<MessageSquare size={18} color={Colors.primary[600]} />}
+                style={{ flex: 1, marginRight: 8 }}
+                disabled={isRequesting || isStartingChat || !post.isAvailable}
+              />
+              <Button
+                title="Request Item"
+                onPress={handleRequestItem}
+                loading={isRequesting}
+                style={{ flex: 1 }}
+                disabled={!post.isAvailable || isRequesting || isStartingChat}
+              />
+            </>
+          )}
         </View>
       </SafeAreaView>
     </>
@@ -404,84 +365,70 @@ export default function PostDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  imageContainer: { backgroundColor: Colors.background },
-  flexGrow: { flex: 1 },
-
-  headerImage: {
-    width,
-    height: width * 0.8,
-    resizeMode: "cover",
+  imageWrapper: { backgroundColor: Colors.background },
+  headerImage: { width, height: width * 0.8, resizeMode: "cover" },
+  paginationContainer: {
+    position: "absolute",
+    bottom: 16,
+    flexDirection: "row",
+    alignSelf: "center",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 16,
   },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.5)",
+    marginHorizontal: 4,
+  },
+  paginationDotActive: { backgroundColor: Colors.white },
 
   contentContainer: {
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 24,
   },
-
   title: {
     fontSize: 28,
     fontWeight: "bold",
     color: Colors.text.primary,
     marginBottom: 8,
   },
-  metaContainer: {
+  metaRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
     gap: 8,
   },
-  metaText: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-  },
-  tagContainer: {
+  tagBox: {
     backgroundColor: Colors.primary[100],
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 16,
-    alignSelf: "flex-start",
   },
   tag: {
     color: Colors.primary[700],
     fontWeight: "600",
     textTransform: "capitalize",
   },
-  separator: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: 24,
-  },
-  ownerInfo: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  ownerAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 16,
-  },
-  ownerName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: Colors.text.primary,
-  },
-  ownerUsername: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-  },
-  addressContainer: {
+  metaText: { fontSize: 14, color: Colors.text.secondary },
+  separator: { height: 1, backgroundColor: Colors.border, marginVertical: 24 },
+
+  ownerInfo: { flexDirection: "row", alignItems: "flex-start" },
+  ownerAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 16 },
+  ownerName: { fontSize: 18, fontWeight: "600", color: Colors.text.primary },
+  ownerUsername: { fontSize: 14, color: Colors.text.secondary },
+  addressRow: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 4,
     gap: 4,
   },
-  addressText: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    flexShrink: 1, // Allow text to wrap
-  },
+  addressText: { fontSize: 14, color: Colors.text.secondary, flexShrink: 1 },
+
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -493,20 +440,15 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: Colors.text.primary,
   },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: Colors.text.secondary,
-  },
+  description: { fontSize: 16, lineHeight: 24, color: Colors.text.secondary },
+
   footer: {
     padding: 24,
     borderTopWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.background,
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   backButton: {
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -525,28 +467,8 @@ const styles = StyleSheet.create({
   },
   ownerNotice: {
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
     color: Colors.text.secondary,
-    fontStyle: 'italic',
-  },
-  paginationContainer: {
-    position: 'absolute',
-    bottom: 16,
-    flexDirection: 'row',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 16,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginHorizontal: 4,
-  },
-  paginationDotActive: {
-    backgroundColor: Colors.white,
+    fontStyle: "italic",
   },
 });

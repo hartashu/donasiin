@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, animate } from "framer-motion";
+import { animate } from "framer-motion";
 import { Globe, Leaf, Users, Gift, Sparkles } from "lucide-react";
-import * as THREE from 'three';
+import * as THREE from "three";
 
 const QUOTES = [
   "A single act of kindness throws out roots in all directions.",
@@ -21,110 +21,132 @@ export default function Witness() {
   const [quote, setQuote] = useState(QUOTES[0]);
 
   const countRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  const inViewRef = useRef(null);
-  const isInView = useInView(inViewRef, { once: true, margin: "-100px" });
-  const globeRef = useRef<HTMLDivElement>(null);
-  const globeInstance = useRef<THREE.Mesh>();
+  const inViewRef = useRef<HTMLDivElement | null>(null);
+  const globeRef = useRef<HTMLDivElement | null>(null);
+  const globeInstance = useRef<THREE.Mesh | null>(null);
 
+
+  // Fetch data
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch('/api/stats/home');
+        const res = await fetch("/api/stats/home");
         const { data } = await res.json();
         if (data) setStats(data);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
       }
     };
     fetchStats();
   }, []);
 
+  // Animate counters
   useEffect(() => {
-    if (isInView && stats.totalUsers > 0) {
-      const targets = [stats.totalUsers, parseFloat(stats.totalCarbonSavedKg), stats.totalPosts];
-      countRefs.current.forEach((ref, i) => {
-        if (ref) {
-          animate(0, targets[i], {
-            duration: 2.5,
-            onUpdate: (v) => {
-              if (i === 1) {
-                ref.textContent = v.toFixed(2);
-              } else {
-                ref.textContent = Math.floor(v).toLocaleString();
-              }
-            },
+    if (!inViewRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && stats.totalUsers > 0) {
+          const targets = [
+            stats.totalUsers,
+            parseFloat(stats.totalCarbonSavedKg),
+            stats.totalPosts,
+          ];
+          countRefs.current.forEach((ref, i) => {
+            if (ref) {
+              animate(0, targets[i], {
+                duration: 2.5,
+                onUpdate: (v) => {
+                  ref.textContent =
+                    i === 1 ? v.toFixed(2) : Math.floor(v).toLocaleString();
+                },
+              });
+            }
           });
         }
-      });
-    }
-  }, [isInView, stats]);
+      },
+      { threshold: 0.3 }
+    );
 
+    observer.observe(inViewRef.current);
+    return () => observer.disconnect();
+  }, [stats]);
+
+  // Globe animation
   useEffect(() => {
-    const currentGlobeRef = globeRef.current;
-    if (!currentGlobeRef || globeInstance.current) return;
+    const current = globeRef.current;
+    if (!current || globeInstance.current) return;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, currentGlobeRef.clientWidth / currentGlobeRef.clientHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      current.clientWidth / current.clientHeight,
+      0.1,
+      1000
+    );
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(currentGlobeRef.clientWidth, currentGlobeRef.clientHeight);
-    currentGlobeRef.appendChild(renderer.domElement);
+    renderer.setSize(current.clientWidth, current.clientHeight);
+    current.appendChild(renderer.domElement);
 
     const geometry = new THREE.SphereGeometry(1.5, 64, 64);
-
-    const textureLoader = new THREE.TextureLoader();
-    const earthTexture = textureLoader.load('/earth-texture.jpg');
-    const material = new THREE.MeshStandardMaterial({ map: earthTexture });
-
+    const texture = new THREE.TextureLoader().load("/earth-texture.jpg");
+    const material = new THREE.MeshStandardMaterial({ map: texture });
     const globe = new THREE.Mesh(geometry, material);
     globeInstance.current = globe;
     scene.add(globe);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.5);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    directionalLight.position.set(5, 3, 5);
-    scene.add(directionalLight);
-
+    scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    dirLight.position.set(5, 3, 5);
+    scene.add(dirLight);
     camera.position.z = 4;
 
-    const animationLoop = () => {
-      requestAnimationFrame(animationLoop);
+    const animateGlobe = () => {
+      requestAnimationFrame(animateGlobe);
       globe.rotation.y += 0.001;
       renderer.render(scene, camera);
     };
-    animationLoop();
+    animateGlobe();
 
-    const handleResize = () => {
-      if (currentGlobeRef) {
-        camera.aspect = currentGlobeRef.clientWidth / currentGlobeRef.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(currentGlobeRef.clientWidth, currentGlobeRef.clientHeight);
-      }
+    const resize = () => {
+      if (!current) return;
+      camera.aspect = current.clientWidth / current.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(current.clientWidth, current.clientHeight);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", resize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      if (currentGlobeRef && renderer.domElement) {
-        currentGlobeRef.removeChild(renderer.domElement);
+      window.removeEventListener("resize", resize);
+      if (current.contains(renderer.domElement)) {
+        current.removeChild(renderer.domElement);
       }
-    }
+    };
   }, []);
 
-  const handleInteractWithGlobe = () => {
+  const handleGlobeClick = () => {
     if (globeInstance.current) {
       globeInstance.current.rotation.y += Math.PI / 2;
     }
   };
 
   const shuffleQuote = () => {
-    setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+    const random = Math.floor(Math.random() * QUOTES.length);
+    setQuote(QUOTES[random]);
   };
 
   const statItems = [
-    { label: "Total Users", icon: <Users size={36} className="mx-auto mb-2 text-[#2a9d8f]" /> },
-    { label: "Carbon Saved (Kg)", icon: <Leaf size={36} className="mx-auto mb-2 text-green-500" /> },
-    { label: "Total Items Shared", icon: <Gift size={36} className="mx-auto mb-2 text-[#e76f51]" /> },
+    {
+      label: "Total Users",
+      icon: <Users size={36} className="mx-auto mb-2 text-[#2a9d8f]" />,
+    },
+    {
+      label: "Carbon Saved (Kg)",
+      icon: <Leaf size={36} className="mx-auto mb-2 text-green-500" />,
+    },
+    {
+      label: "Total Items Shared",
+      icon: <Gift size={36} className="mx-auto mb-2 text-[#e76f51]" />,
+    },
   ];
 
   return (
@@ -139,12 +161,24 @@ export default function Witness() {
         </p>
       </div>
 
-      <div ref={inViewRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto text-center">
+      <div
+        ref={inViewRef}
+        className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto text-center"
+      >
         {statItems.map((item, i) => (
-          <div key={item.label} className="bg-gray-50 border p-6 rounded-2xl hover:shadow-xl transition">
+          <div
+            key={item.label}
+            className="bg-gray-50 border p-6 rounded-2xl hover:shadow-xl transition"
+          >
             {item.icon}
             <h3 className="text-4xl font-extrabold text-[#1e3932]">
-              <span ref={(el) => { if (el) countRefs.current[i] = el; }}>0</span>
+              <span
+                ref={(el) => {
+                  countRefs.current[i] = el;
+                }}
+              >
+                0
+              </span>
             </h3>
             <p className="text-lg mt-2">{item.label}</p>
           </div>
@@ -152,8 +186,14 @@ export default function Witness() {
       </div>
 
       <div className="max-w-xl mx-auto text-center mt-12">
-        <div ref={globeRef} className="w-full h-64 md:h-80 cursor-grab active:cursor-grabbing"></div>
-        <button className="mt-4 px-6 py-3 bg-[#2a9d8f] text-white rounded-xl shadow-lg hover:shadow-2xl flex items-center gap-2 mx-auto" onClick={handleInteractWithGlobe}>
+        <div
+          ref={globeRef}
+          className="w-full h-64 md:h-80 cursor-grab active:cursor-grabbing"
+        ></div>
+        <button
+          className="mt-4 px-6 py-3 bg-[#2a9d8f] text-white rounded-xl shadow-lg hover:shadow-2xl flex items-center gap-2 mx-auto"
+          onClick={handleGlobeClick}
+        >
           <Globe className="w-5 h-5" /> Interact with Earth
         </button>
       </div>
@@ -163,7 +203,10 @@ export default function Witness() {
         <p className="text-xl font-medium italic text-gray-700 mb-4 h-20 flex items-center justify-center">
           “{quote}”
         </p>
-        <button onClick={shuffleQuote} className="text-sm px-4 py-2 border border-gray-400 rounded-full hover:bg-gray-100 transition">
+        <button
+          onClick={shuffleQuote}
+          className="text-sm px-4 py-2 border border-gray-400 rounded-full hover:bg-gray-100 transition"
+        >
           🔄 Inspire Me Again
         </button>
       </div>

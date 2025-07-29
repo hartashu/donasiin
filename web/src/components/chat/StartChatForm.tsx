@@ -6,11 +6,13 @@ import { Send } from 'lucide-react';
 
 interface StartChatFormProps {
     receiverId: string;
+    postTitle: string; // wajib ada biar gak error
 }
 
-export function StartChatForm({ receiverId }: StartChatFormProps) {
+export function StartChatForm({ receiverId, postTitle }: StartChatFormProps) {
+
     const router = useRouter();
-    const [text, setText] = useState('');
+    const [text, setText] = useState(`Hi, I'm interested in your donation: "${postTitle}"`);
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 

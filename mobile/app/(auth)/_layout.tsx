@@ -1,5 +1,5 @@
-import { Stack } from 'expo-router';
-import { Colors } from '../../constants/Colors';
+import { Stack } from "expo-router";
+import { Colors } from "../../constants/Colors";
 
 export default function AuthLayout() {
   return (
@@ -12,19 +12,8 @@ export default function AuthLayout() {
             backgroundColor: Colors.background,
           },
           headerShadowVisible: false,
-          headerTitle: '',
-          headerBackTitle: 'Login',
-          headerTintColor: Colors.text.primary,
-        }}
-      />
-      <Stack.Screen
-        name="verify-email"
-        options={{
-          headerStyle: {
-            backgroundColor: Colors.background,
-          },
-          headerShadowVisible: false,
-          headerTitle: 'Verify Email',
+          headerTitle: "",
+          headerBackTitle: "Login",
           headerTintColor: Colors.text.primary,
         }}
       />

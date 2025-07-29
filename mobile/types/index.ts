@@ -3,7 +3,7 @@ export type User = {
   username: string;
   fullName: string;
   email: string;
-  avatar?: string;
+  avatarUrl?: string;
   address?: string;
   dailyRequestLimit: number;
   usedRequests: number;

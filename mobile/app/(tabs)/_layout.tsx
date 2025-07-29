@@ -1,6 +1,11 @@
-import { Tabs } from 'expo-router';
-import { Chrome as Home, MessageCircle, User, Heart } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
+import { Tabs } from "expo-router";
+import {
+  House as Home,
+  MessageCircle,
+  User,
+  Handshake,
+} from "lucide-react-native";
+import { Colors } from "../../constants/Colors";
 
 export default function TabLayout() {
   return (
@@ -16,36 +21,40 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '500',
+          fontWeight: "500",
         },
         headerShown: false,
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
-          title: 'Home',
+          title: "Home",
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="requests"
         options={{
-          title: 'My Requests',
-          tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
+          title: "Requests",
+          tabBarIcon: ({ color, size }) => (
+            <Handshake color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
-          title: 'Messages',
-          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
+          title: "Messages",
+          tabBarIcon: ({ color, size }) => (
+            <MessageCircle color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />

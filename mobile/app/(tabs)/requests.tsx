@@ -1,6 +1,4 @@
-// screens/RequestsScreen.tsx
-
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,293 +10,296 @@ import {
   Alert,
   TextInput,
   Platform,
-} from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useFocusEffect, useRouter } from 'expo-router'
-import { Colors } from '../../constants/Colors'
-import { DonationRequest } from '../../types'
-import { Clock, CheckCircle, Truck, XCircle, X } from 'lucide-react-native'
-import { AuthService } from '../../services/auth'
-import { Button } from '../../components/ui/Button'
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { useRouter } from "expo-router";
+import { Colors } from "../../constants/Colors";
+import { DonationRequest } from "../../types";
+import { Clock, CheckCircle, XCircle, X, Sparkles } from "lucide-react-native";
+import { AuthService } from "../../services/auth";
+import { Button } from "../../components/ui/Button";
 
-const API_BASE_URL = 'http://localhost:3000/api'
-const MAX_TRACKING_LENGTH = 50
+const API_BASE_URL = "http://localhost:3000/api";
+const MAX_TRACKING_LENGTH = 50;
 
 export default function RequestsScreen() {
-  const [requests, setRequests] = useState<DonationRequest[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [trackingCodes, setTrackingCodes] = useState<Record<string, string>>({})
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const router = useRouter()
+  const [requests, setRequests] = useState<DonationRequest[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [ocrLoadingId, setOcrLoadingId] = useState<string | null>(null);
+  const [trackingCodes, setTrackingCodes] = useState<Record<string, string>>(
+    {}
+  );
+  const [viewMode, setViewMode] = useState<"outgoing" | "incoming">("outgoing");
+  const router = useRouter();
 
   const fetchRequests = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
     try {
-      const token = await AuthService.getStoredToken()
-      if (!token) throw new Error('You must be logged in.')
+      const token = await AuthService.getStoredToken();
+      if (!token) throw new Error("You must be logged in.");
+      // verify user for auth flow
+      await AuthService.getCurrentUser();
 
-      const user = await AuthService.getCurrentUser()
-      if (!user) throw new Error('Could not get current user.')
-      setCurrentUserId(user.id)
-
-      // Fetch both outgoing and incoming requests in parallel
-      const [outgoingRes, incomingRes] = await Promise.all([
+      const [outRes, inRes] = await Promise.all([
         fetch(`${API_BASE_URL}/users/me/requests`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE_URL}/users/me/posts`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-      ])
+      ]);
+      if (!outRes.ok || !inRes.ok) throw new Error("Failed to fetch requests.");
 
-      if (!outgoingRes.ok || !incomingRes.ok) {
-        throw new Error('Failed to fetch one or more request types.')
-      }
+      const outJson = await outRes.json();
+      const inJson = await inRes.json();
 
-      const outgoingJson = await outgoingRes.json()
-      const incomingJson = await incomingRes.json()
+      const mappedOut: DonationRequest[] = (outJson.data || [])
+        .filter((i: any) => i.postDetails)
+        .map((i: any) => ({
+          id: i._id,
+          postId: i.postId,
+          status: i.status.toLowerCase(),
+          trackingCode: i.trackingCode ?? "",
+          createdAt: new Date(i.createdAt),
+          updatedAt: new Date(i.updatedAt || i.createdAt),
+          requesterId: i.userId,
+          isOutgoing: true,
+          post: {
+            id: i.postDetails._id,
+            slug: i.postDetails.slug,
+            title: i.postDetails.title,
+            images: [i.postDetails.thumbnailUrl].filter(Boolean),
+          },
+        }));
 
-      // Map outgoing requests (requests you made)
-      const mappedOutgoing: DonationRequest[] = (outgoingJson.data || [])
-        .filter((item: any) => item.postDetails) // FIX: Prevents crash if post is deleted
-        .map(
-          (item: any): DonationRequest => ({
-            id: item._id,
-            postId: item.postId,
-            status: item.status.toLowerCase(),
-            trackingCode: item.trackingCode ?? '',
-            createdAt: new Date(item.createdAt),
-            updatedAt: new Date(item.updatedAt || item.createdAt),
-            requesterId: item.userId,
-            isOutgoing: true, // This is an outgoing request
-            post: {
-              id: item.postDetails._id,
-              slug: item.postDetails.slug,
-              title: item.postDetails.title,
-              images: [item.postDetails.thumbnailUrl].filter(Boolean),
-            },
-          })
-        )
-
-      // Map incoming requests (requests for your items)
-      const mappedIncoming: DonationRequest[] = []
-      ;(incomingJson.data || []).forEach((post: any) => {
-        ;(post.requests || []).forEach((req: any) => {
-          if (req.requester) { // Ensure requester data exists
-            mappedIncoming.push({
+      const mappedIn: DonationRequest[] = [];
+      (inJson.data || []).forEach((post: any) => {
+        (post.requests || []).forEach((req: any) => {
+          if (req.requester) {
+            mappedIn.push({
               id: req._id,
               postId: post._id,
               status: req.status.toLowerCase(),
-              trackingCode: req.trackingCode ?? '',
+              trackingCode: req.trackingCode ?? "",
               createdAt: new Date(req.createdAt),
               updatedAt: new Date(req.updatedAt || req.createdAt),
               requesterId: req.requester._id,
-              isOutgoing: false, // This is an incoming request
+              isOutgoing: false,
               post: {
                 id: post._id,
                 slug: post.slug,
                 title: post.title,
                 images: [post.thumbnailUrl].filter(Boolean),
               },
-            })
+            });
           }
-        })
-      })
+        });
+      });
 
-      // Combine, sort by most recent, and update state
-      const allRequests = [...mappedOutgoing, ...mappedIncoming].sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-      )
-      setRequests(allRequests)
+      // combine & sort
+      setRequests(
+        [...mappedOut, ...mappedIn].sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+        )
+      );
     } catch (e: any) {
-      setError(e.message)
+      setError(e.message);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
-  useFocusEffect(useCallback(() => {
-    fetchRequests()
-  }, [fetchRequests]))
+  // run once on mount
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
-  // Generic PATCH helper
   const patchRequest = async (id: string, body: any) => {
-    const token = await AuthService.getStoredToken()
-    if (!token) throw new Error('Auth required.')
+    const token = await AuthService.getStoredToken();
+    if (!token) throw new Error("Auth required.");
     const resp = await fetch(`${API_BASE_URL}/requests/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
-    })
-    const json = await resp.json()
-    
-    console.log("data !!!",json);
-    
-    if (!resp.ok) {
-      throw new Error(json.message || 'Update failed.')
-    }
-    return json
-  }
-
-  // ---- HANDLERS ----
-
-  const handleAccept = async (id: string) => {
-    setUpdatingId(id)
-    try {
-      await patchRequest(id, { status: 'ACCEPTED' })
-      setRequests(r =>
-        r.map(x => x.id === id ? { ...x, status: 'accepted' } : x)
-      )
-    } catch (e: any) {
-      Alert.alert('Error', e.message)
-    } finally {
-      setUpdatingId(null)
-    }
-  }
-
-  const handleReject = async (id: string) => {
-    setUpdatingId(id)
-    try {
-      await patchRequest(id, { status: 'REJECTED' })
-      setRequests(r =>
-        r.map(x => x.id === id ? { ...x, status: 'rejected' } : x)
-      )
-    } catch (e: any) {
-      Alert.alert('Error', e.message)
-    } finally {
-      setUpdatingId(null)
-    }
-  }
+    });
+    const json = await resp.json();
+    if (!resp.ok) throw new Error(json.message || "Update failed.");
+    return json;
+  };
 
   const handleShip = async (id: string) => {
-    const code = trackingCodes[id]?.trim()
+    const code = trackingCodes[id]?.trim();
     if (!code) {
-      Alert.alert('Validation', 'Please enter a tracking code.')
-      return
+      Alert.alert("Validation", "Please enter a tracking code.");
+      return;
     }
-    setUpdatingId(id)
+    setUpdatingId(id);
     try {
-      await patchRequest(id, {
-        status: 'SHIPPED',
-        trackingCode: code,
-      })
-      setRequests(r =>
-        r.map(x => x.id === id ? { ...x, status: 'shipped', trackingCode: code } : x)
-      )
+      await patchRequest(id, { status: "SHIPPED", trackingCode: code });
+      setRequests((rs) =>
+        rs.map((r) =>
+          r.id === id ? { ...r, status: "shipped", trackingCode: code } : r
+        )
+      );
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert("Error", e.message);
     } finally {
-      setUpdatingId(null)
+      setUpdatingId(null);
     }
-  }
+  };
 
-  const handleDelete = (id: string) => {
-    Alert.alert(
-      'Delete Request',
-      'Are you sure you want to delete?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete', style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await AuthService.getStoredToken()
-              if (!token) throw new Error('Auth required.')
-              const resp = await fetch(`${API_BASE_URL}/requests/${id}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` },
-              })
-              if (!resp.ok) {
-                const err = await resp.json().catch(() => ({}))
-                throw new Error(err.message || 'Delete failed.')
-              }
-              setRequests(r => r.filter(x => x.id !== id))
-            } catch (e: any) {
-              Alert.alert('Error', e.message)
-            }
-          }
-        }
-      ]
-    )
-  }
+  const handleOcrScan = async (requestId: string) => {
+    setOcrLoadingId(requestId);
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "We need photo library access.");
+        return;
+      }
 
-  // ---- RENDER ----
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets.length) return;
 
-  const getStatusIcon = (status: DonationRequest['status']) => {
+      const uri = result.assets[0].uri;
+      const b64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const dataUri = `data:image/jpeg;base64,${b64}`;
+
+      const token = await AuthService.getStoredToken();
+      const res = await fetch(`${API_BASE_URL}/ocr-ai`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageUrl: dataUri }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "OCR failed.");
+
+      setTrackingCodes((c) => ({ ...c, [requestId]: json.trackingNumber }));
+      Alert.alert("Success", "Tracking code auto‑filled!");
+    } catch (e: any) {
+      Alert.alert("Scan Error", e.message);
+    } finally {
+      setOcrLoadingId(null);
+    }
+  };
+
+  const getStatusIcon = (status: DonationRequest["status"]) => {
     switch (status) {
-      case 'pending':   return <Clock color={Colors.warning[500]} size={20}/>
-      case 'accepted':  return <CheckCircle color={Colors.success[500]} size={20}/>
-      case 'rejected':  return <XCircle color={Colors.error[500]} size={20}/>
-      case 'completed': return <CheckCircle color={Colors.success[700]} size={20}/>
-      default:          return <Clock color={Colors.gray[500]} size={20}/>
+      case "pending":
+        return <Clock color={Colors.warning[500]} size={20} />;
+      case "accepted":
+      case "completed":
+        return (
+          <CheckCircle
+            color={Colors.success[status === "completed" ? 700 : 500]}
+            size={20}
+          />
+        );
+      case "rejected":
+        return <XCircle color={Colors.error[500]} size={20} />;
+      default:
+        return <Clock color={Colors.gray[500]} size={20} />;
     }
-  }
+  };
 
-  const renderItem = ({ item }: {item: DonationRequest}) => {
-    const incoming = !item.isOutgoing
+  const getStatusColor = (status: DonationRequest["status"]) => {
+    switch (status) {
+      case "pending":
+        return Colors.warning[500];
+      case "accepted":
+        return Colors.success[500];
+      case "completed":
+        return Colors.success[700];
+      case "rejected":
+        return Colors.error[500];
+      default:
+        return Colors.gray[500];
+    }
+  };
 
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const renderItem = ({ item }: { item: DonationRequest }) => {
+    const incoming = !item.isOutgoing;
     return (
       <View style={styles.card}>
-        <Image source={{ uri: item.post.images[0] }} style={styles.image} />
+        {item.post.images?.[0] ? (
+          <Image source={{ uri: item.post.images[0] }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Text style={styles.placeholderText}>No Image</Text>
+          </View>
+        )}
 
         <View style={styles.content}>
           <View style={styles.row}>
-            <Text style={styles.title} numberOfLines={2}>{item.post.title}</Text>
-            {item.isOutgoing && (
-              <TouchableOpacity onPress={() => handleDelete(item.id)}>
-                <X color={Colors.text.tertiary} size={16}/>
+            <Text style={styles.title} numberOfLines={2}>
+              {item.post.title}
+            </Text>
+            {item.isOutgoing && item.status === "pending" && (
+              <TouchableOpacity
+                onPress={() => {
+                  /* delete logic */
+                }}
+              >
+                <X color={Colors.text.tertiary} size={16} />
               </TouchableOpacity>
             )}
           </View>
 
           <View style={styles.row}>
             {getStatusIcon(item.status)}
-            <Text style={[styles.status, { color: getStatusColor(item.status) }]}>
+            <Text
+              style={[styles.status, { color: getStatusColor(item.status) }]}
+            >
               {capitalize(item.status)}
             </Text>
           </View>
 
-          {incoming && item.status === 'pending' && (
-            <View style={styles.actionsRow}>
-              <Button
-                title="Accept"
-                onPress={() => handleAccept(item.id)}
-                loading={updatingId===item.id}
-                size="sm"
-                style={styles.btnAccept}
-              />
-              <Button
-                title="Reject"
-                onPress={() => handleReject(item.id)}
-                loading={updatingId===item.id}
-                size="sm"
-                variant="outline"
-                style={styles.btnReject}
-              />
-            </View>
-          )}
-
-          {incoming && item.status === 'accepted' && (
+          {incoming && item.status === "accepted" && (
             <View style={styles.shipRow}>
               <TextInput
                 placeholder="Tracking code"
-                value={trackingCodes[item.id] || ''}
-                onChangeText={text =>
-                  setTrackingCodes(c => ({ ...c, [item.id]: text }))
+                value={trackingCodes[item.id] || ""}
+                onChangeText={(t) =>
+                  setTrackingCodes((c) => ({ ...c, [item.id]: t }))
                 }
                 style={styles.input}
                 maxLength={MAX_TRACKING_LENGTH}
               />
+
+              <TouchableOpacity
+                style={styles.ocrButton}
+                onPress={() => handleOcrScan(item.id)}
+                disabled={!!ocrLoadingId}
+              >
+                {ocrLoadingId === item.id ? (
+                  <ActivityIndicator size="small" color={Colors.primary[600]} />
+                ) : (
+                  <Sparkles size={20} color={Colors.primary[600]} />
+                )}
+              </TouchableOpacity>
+
               <Button
-                title="Submit Ship"
+                title="Submit"
                 onPress={() => handleShip(item.id)}
-                loading={updatingId===item.id}
+                loading={updatingId === item.id}
                 disabled={!trackingCodes[item.id]?.trim()}
                 size="sm"
                 style={styles.btnShip}
@@ -307,83 +308,150 @@ export default function RequestsScreen() {
           )}
         </View>
       </View>
-    )
-  }
+    );
+  };
+
+  const displayed = requests.filter((r) =>
+    viewMode === "outgoing" ? r.isOutgoing : !r.isOutgoing
+  );
 
   const renderContent = () => {
-    if (isLoading) {
-      return <ActivityIndicator style={styles.centered} size="large" color={Colors.primary[600]}/>
-    }
-    if (error) {
+    if (isLoading)
+      return (
+        <ActivityIndicator
+          style={styles.centered}
+          size="large"
+          color={Colors.primary[600]}
+        />
+      );
+    if (error)
       return (
         <View style={styles.centered}>
           <Text style={styles.error}>{error}</Text>
-          <Button title="Retry" onPress={fetchRequests}/>
+          <Button title="Retry" onPress={fetchRequests} />
         </View>
-      )
-    }
-    if (!requests.length) {
+      );
+    if (!displayed.length)
       return (
         <View style={styles.centered}>
-          <Text style={styles.empty}>No requests yet.</Text>
+          <Text style={styles.empty}>
+            {viewMode === "outgoing"
+              ? "You haven't made any requests yet."
+              : "No one has requested your items yet."}
+          </Text>
         </View>
-      )
-    }
+      );
     return (
       <FlatList
-        data={requests}
+        data={displayed}
         renderItem={renderItem}
-        keyExtractor={i=>i.id}
+        keyExtractor={(i) => i.id}
         contentContainerStyle={styles.list}
       />
-    )
-  }
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Requests</Text>
+      <View style={styles.tabsContainer}>
+        {(["outgoing", "incoming"] as const).map((mode) => (
+          <TouchableOpacity
+            key={mode}
+            style={[styles.tab, viewMode === mode && styles.tabActive]}
+            onPress={() => setViewMode(mode)}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                viewMode === mode && styles.tabTextActive,
+              ]}
+            >
+              {mode === "outgoing" ? "My Requests" : "Incoming"}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       {renderContent()}
     </SafeAreaView>
-  )
-}
-
-// helper
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
-
-const getStatusColor = (status: DonationRequest['status']) => {
-  switch (status) {
-    case 'pending':   return Colors.warning[500]
-    case 'accepted':  return Colors.success[500]
-    case 'rejected':  return Colors.error[500]
-    case 'completed': return Colors.success[700]
-    default:          return Colors.gray[500]
-  }
+  );
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, backgroundColor: Colors.background },
-  header:    { fontSize:24, fontWeight:'700', padding:16, color:Colors.text.primary },
-  list:      { paddingHorizontal:16, paddingBottom:24 },
-  card:      { flexDirection:'row', marginVertical:8, backgroundColor:Colors.surface, borderRadius:12, overflow:'hidden' },
-  image:     { width:80, height:80 },
-  content:   { flex:1, padding:12 },
-  row:       { flexDirection:'row', alignItems:'center', justifyContent:'space-between' },
-  title:     { flex:1, fontSize:16, fontWeight:'600', color:Colors.text.primary, marginRight:8 },
-  status:    { fontSize:14, fontWeight:'600', marginLeft:6 },
-  actionsRow:{ flexDirection:'row', marginTop:8 },
-  btnAccept: { marginRight:8 },
-  btnReject: {},
-  shipRow:   { flexDirection:'row', alignItems:'center', marginTop:8 },
-  input:     {
-    flex:1,
-    borderWidth:1,
-    borderColor:Colors.border,
-    borderRadius:8,
-    padding: Platform.OS==='ios'?12:8,
-    marginRight:8,
+  container: { flex: 1, backgroundColor: Colors.background },
+  header: {
+    fontSize: 24,
+    fontWeight: "700",
+    padding: 16,
+    color: Colors.text.primary,
   },
-  btnShip:   {},
-  centered:  { flex:1, justifyContent:'center', alignItems:'center' },
-  error:     { color:Colors.error[600], marginBottom:12 },
-  empty:     { color:Colors.text.secondary },
-})
+  tabsContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderColor: Colors.border,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderBottomWidth: 2,
+    borderColor: "transparent",
+  },
+  tabActive: { borderColor: Colors.primary[600] },
+  tabText: { fontSize: 16, color: Colors.text.secondary },
+  tabTextActive: { color: Colors.primary[600], fontWeight: "600" },
+  list: { paddingHorizontal: 16, paddingBottom: 24, flexGrow: 1 },
+  card: {
+    flexDirection: "row",
+    marginVertical: 8,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  image: { width: 80, height: 80 },
+  imagePlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.border,
+  },
+  placeholderText: { fontSize: 12, color: Colors.text.secondary },
+  content: { flex: 1, padding: 12 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  title: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text.primary,
+    marginRight: 8,
+  },
+  status: { fontSize: 14, fontWeight: "600", marginLeft: 6 },
+  shipRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    padding: Platform.OS === "ios" ? 12 : 8,
+    marginRight: 8,
+  },
+  ocrButton: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderColor: Colors.border,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  btnShip: {},
+  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  error: { color: Colors.error[600], marginBottom: 12 },
+  empty: { color: Colors.text.secondary },
+});

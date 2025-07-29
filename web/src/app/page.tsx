@@ -1,43 +1,28 @@
-"use client";
-
-import { getPosts } from "@/actions/action";
+import { PostModel } from "@/models/post";
 import Banner from "@/components/home/Banner";
 import PostCards from "@/components/home/PostCards";
-import Stories from "@/components/home/Stories";
 import Witness from "@/components/home/Witness";
-import { IPost } from "@/types/types";
-import { useEffect, useState } from "react";
+import TalkingSection from "@/components/home/Stories";
 
-export default function Home() {
-  const [data, setData] = useState<IPost[]>([]);
+async function getPostsData() {
+  try {
+    const { posts } = await PostModel.getAllPosts({ limit: 8 });
+    return posts;
+  } catch (error) {
+    console.error("Failed to fetch posts for homepage:", error);
+    return [];
+  }
+}
 
-  const fetchData = async () => {
-    const dataJson = await getPosts();
-
-    setData(dataJson.posts || []);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+export default async function HomePage() {
+  const posts = await getPostsData();
 
   return (
-    <main className="overflow-x-hidden">
-      <section>
-        <Banner />
-      </section>
-
-      <section>
-        <Witness />
-      </section>
-
-      <section>
-        <Stories />
-      </section>
-
-      <section>
-        <PostCards data={data} />
-      </section>
+    <main>
+      <Banner />
+      <Witness />
+      <PostCards data={JSON.parse(JSON.stringify(posts))} />
+      <TalkingSection />
     </main>
   );
 }

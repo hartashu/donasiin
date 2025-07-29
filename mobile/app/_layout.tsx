@@ -1,12 +1,28 @@
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useFrameworkReady } from '../hooks/useFrameworkReady';
-import { AuthProvider, useAuth } from '../context/AuthContext';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Slot, Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { AuthProvider, useAuth } from "../context/AuthContext";
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-function RootLayoutNav() {
+function InitialLayout() {
   const { user, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+    const onWelcomeOrAuth = segments.length === 0 || inAuthGroup;
+
+    if (user && onWelcomeOrAuth) {
+      router.replace("/(tabs)/home");
+    } else if (!user && !onWelcomeOrAuth) {
+      router.replace("/");
+    }
+  }, [user, isLoading, segments, router]);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -14,25 +30,23 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {user ? (
-        <Stack.Screen name="(tabs)" />
-      ) : (
-        <Stack.Screen name="(auth)" />
-      )}
-      <Stack.Screen name="+not-found" />
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="post/[slug]" />
     </Stack>
   );
 }
 
 export default function RootLayout() {
-  useFrameworkReady();
-
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <RootLayoutNav />
-        <StatusBar style="auto" />
-      </AuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <InitialLayout />
+          <StatusBar style="auto" />
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

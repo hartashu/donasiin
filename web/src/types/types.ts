@@ -158,6 +158,7 @@ export interface IRequestWithPostDetails {
     title: string;
     slug: string;
     thumbnailUrl: string;
+    author: IAuthor; // 🔥 Tambahkan ini
   };
 }
 

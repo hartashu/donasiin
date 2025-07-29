@@ -24,18 +24,18 @@ export default function DonationsLayout({
 
   const categories = [
     { name: "All", path: "/donations" },
-    { name: "Elektronik", path: "/donations/elektronik" },
-    { name: "Fashion & Pakaian", path: "/donations/fashion" },
-    { name: "Rumah & Dapur", path: "/donations/rumah-dapur" },
-    { name: "Kesehatan & Kecantikan", path: "/donations/kesehatan-kecantikan" },
-    { name: "Olahraga & Luar Ruangan", path: "/donations/olahraga-luar" },
-    { name: "Bayi & Anak", path: "/donations/bayi-anak" },
-    { name: "Otomotif & Peralatan", path: "/donations/otomotif-peralatan" },
-    { name: "Buku, Musik & Media", path: "/donations/buku-musik-media" },
-    { name: "Perlengkapan Hewan Peliharaan", path: "/donations/hewan" },
+    { name: "Electronics", path: "/donations/electronics" },
+    { name: "Fashion & Apparel", path: "/donations/fashion-apparel" },
+    { name: "Home & Kitchen", path: "/donations/home-kitchen" },
+    { name: "Health & Beauty", path: "/donations/health-beauty" },
+    { name: "Sports & Outdoors", path: "/donations/sports-outdoors" },
+    { name: "Baby & Kids", path: "/donations/baby-kids" },
+    { name: "Automotive & Tools", path: "/donations/automotive-tools" },
+    { name: "Books, Music & Media", path: "/donations/books-music-media" },
+    { name: "Pet Supplies", path: "/donations/pet-supplies" },
     {
-      name: "Perlengkapan Kantor & Alat Tulis",
-      path: "/donations/kantor-alat-tulis",
+      name: "Office Supplies & Stationery",
+      path: "/donations/office-supplies-stationery",
     },
   ];
 

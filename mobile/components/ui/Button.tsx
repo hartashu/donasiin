@@ -1,12 +1,19 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
-import { Colors } from '../../constants/Colors';
+import React from "react";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ViewStyle,
+  TextStyle,
+  ActivityIndicator,
+} from "react-native";
+import { Colors } from "../../constants/Colors";
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
@@ -16,8 +23,8 @@ interface ButtonProps {
 export function Button({
   title,
   onPress,
-  variant = 'primary',
-  size = 'md',
+  variant = "primary",
+  size = "md",
   disabled = false,
   loading = false,
   style,
@@ -47,7 +54,9 @@ export function Button({
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? Colors.white : Colors.primary[600]} />
+        <ActivityIndicator
+          color={variant === "primary" ? Colors.white : Colors.primary[600]}
+        />
       ) : (
         <Text style={textStyleCombined}>{title}</Text>
       )}
@@ -58,9 +67,9 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
   },
   primary: {
     backgroundColor: Colors.primary[600],
@@ -74,12 +83,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.secondary[100],
   },
   outline: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
     borderColor: Colors.primary[600],
   },
   ghost: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   sm: {
     paddingHorizontal: 12,
@@ -102,7 +111,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   text: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
   primaryText: {
     color: Colors.white,
