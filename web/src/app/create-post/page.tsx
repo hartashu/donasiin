@@ -2,8 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image"; // FIX: Import Image component
-import { FileUp, LoaderCircle, Tag, Text, Type, X } from "lucide-react";
+import Image from "next/image";
+import {
+  FileUp,
+  ImagePlus,
+  LoaderCircle,
+  Tag,
+  Text,
+  Type,
+  X,
+} from "lucide-react";
 import RecommendationModal from "@/components/createPost/Recommendation";
 
 // FIX: Added 'distance' property to match the type expected by RecommendationModal
@@ -12,21 +20,23 @@ interface IRecommendedUser {
   fullName: string;
   username: string;
   avatarUrl?: string;
-  distance: number; // This property was missing
-  // Add any other properties you expect from the API
+  distance: number;
 }
 
 export default function CreatePost() {
   const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
-  // FIX: Use the specific type for state
-  const [recommendedUsers, setRecommendedUsers] = useState<IRecommendedUser[]>([]);
+  const [recommendedUsers, setRecommendedUsers] = useState<IRecommendedUser[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
+  // MERGED: Added 'thumbnailUrl' to the form state
   const [formData, setFormData] = useState({
     title: "",
+    thumbnailUrl: "",
     description: "",
     category: "",
   });
@@ -43,12 +53,15 @@ export default function CreatePost() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      setSelectedFiles((prev) => [...prev, ...Array.from(files)]);
+      // Using more descriptive variable names from one of the branches
+      setSelectedFiles((prevFiles) => [...prevFiles, ...Array.from(files)]);
     }
   };
 
-  const handleRemoveFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveFile = (indexToRemove: number) => {
+    setSelectedFiles((prevFiles) =>
+      prevFiles.filter((_, index) => index !== indexToRemove)
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -58,6 +71,8 @@ export default function CreatePost() {
     try {
       const form = new FormData();
       form.append("title", formData.title);
+      // MERGED: Appending the new 'thumbnailUrl' field
+      form.append("thumbnailUrl", formData.thumbnailUrl);
       form.append("description", formData.description);
       form.append("category", formData.category);
       selectedFiles.forEach((file) => form.append("itemImages", file));
@@ -91,7 +106,6 @@ export default function CreatePost() {
 
   return (
     <>
-      {/* Modal di luar form */}
       {showModal && (
         <RecommendationModal
           users={recommendedUsers}
@@ -117,7 +131,7 @@ export default function CreatePost() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Title */}
+              {/* Title Input */}
               <div className="space-y-2">
                 <label
                   htmlFor="title"
@@ -139,7 +153,29 @@ export default function CreatePost() {
                 </div>
               </div>
 
-              {/* Description */}
+              {/* MERGED: Added Thumbnail URL Input */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="thumbnailUrl"
+                  className="font-medium text-sm text-gray-600"
+                >
+                  Thumbnail URL
+                </label>
+                <div className="relative">
+                  <ImagePlus className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                  <input
+                    id="thumbnailUrl"
+                    required
+                    name="thumbnailUrl"
+                    value={formData.thumbnailUrl}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-2 bg-white/40 border border-gray-300/50 rounded-md text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#2a9d8f] focus:border-[#2a9d8f] outline-none transition"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+              </div>
+
+              {/* Description Input */}
               <div className="space-y-2">
                 <label
                   htmlFor="description"
@@ -161,7 +197,7 @@ export default function CreatePost() {
                 </div>
               </div>
 
-              {/* Category */}
+              {/* Category Select - Kept Indonesian version */}
               <div className="space-y-2">
                 <label
                   htmlFor="category"
@@ -225,12 +261,11 @@ export default function CreatePost() {
                 </div>
               </div>
 
-              {/* Preview Images */}
+              {/* Preview Images - Kept version with next/image */}
               {selectedFiles.length > 0 && (
                 <div className="flex gap-3 mt-2 mb-3 flex-wrap">
                   {selectedFiles.map((file, idx) => (
                     <div key={idx} className="relative">
-                      {/* FIX: Replaced <img> with next/image <Image> for optimization */}
                       <Image
                         src={URL.createObjectURL(file)}
                         alt="preview"

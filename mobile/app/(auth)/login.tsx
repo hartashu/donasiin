@@ -33,7 +33,7 @@ export default function LoginScreen() {
 
     try {
       await login(email, password);
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/home');
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
     } finally {

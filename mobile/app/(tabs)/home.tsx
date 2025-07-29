@@ -1,0 +1,347 @@
+// mobile/app/(your-stack)/HomeScreen.tsx
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  ScrollView,
+  Image,
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Search, ArrowUp, ArrowDown, Plus } from 'lucide-react-native';
+import { Colors } from '../../constants/Colors';
+import { Input } from '../../components/ui/Input';
+import { DonationCard } from '../../components/DonationCard';
+import { DonationPost } from '../../types';
+
+const API_BASE_URL = 'http://localhost:3000/api';
+const categories = [
+  'All',
+  'Baby & Kids',
+  'Books, Music & Media',
+  'Electronics',
+  'Fashion & Apparel',
+  'Health & Beauty',
+  'Sports & Outdoors',
+  'Automotive & Tools',
+  'Pet Supplies',
+  'Office Supplies & Stationery',
+  'Home & Kitchen'
+];
+
+export default function HomeScreen() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [rawPosts, setRawPosts] = useState<DonationPost[]>([]);
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const fetchPosts = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (selectedCategory !== 'All') params.append('category', selectedCategory);
+
+      const response = await fetch(`${API_BASE_URL}/posts?${params.toString()}`);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ message: 'Failed to fetch posts.' }));
+        throw new Error(err.message || 'Unknown error.');
+      }
+      const result = await response.json();
+      const mapped = result.data.posts.map((p: any) => ({
+        id: p._id,
+        slug: p.slug,
+        title: p.title,
+        description: p.description,
+        images: [p.thumbnailUrl, ...(p.imageUrls || [])].filter(Boolean),
+        tags: [p.category.toLowerCase()],
+        ownerId: p.userId,
+        owner: {
+          id: p.author._id,
+          username: p.author.username,
+          fullName: p.author.fullName,
+          email: p.author.email || '',
+          address: p.author.address,
+          avatarUrl: p.author.avatarUrl || 'https://via.placeholder.com/150',
+          dailyRequestLimit: 0,
+          usedRequests: 0,
+          createdAt: new Date(p.author.createdAt || Date.now()),
+        },
+        isAvailable: p.isAvailable,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt),
+      }));
+      setRawPosts(mapped);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, selectedCategory]);
+
+  const sortedPosts = useMemo(() => {
+    return [...rawPosts].sort((a, b) => {
+      const dateA = a.createdAt.getTime();
+      const dateB = b.createdAt.getTime();
+      if (sortOrder === 'newest') {
+        return dateB - dateA;
+      }
+      return dateA - dateB;
+    });
+  }, [rawPosts, sortOrder]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const handler = setTimeout(fetchPosts, 500);
+      return () => clearTimeout(handler);
+    }, [searchQuery, selectedCategory, fetchPosts])
+  );
+
+  const handlePostPress = (post: DonationPost) => router.push(`/post/${post.slug}`);
+  const handleCreatePost = () => router.push('/create-post');
+  const handleSortToggle = () => setSortOrder(prev => (prev === 'newest' ? 'oldest' : 'newest'));
+
+  // Renderers for empty/error/loading
+  const renderEmpty = () => (
+    <View style={styles.centered}>
+      <Text style={styles.emptyText}>No items found.</Text>
+      <Text style={styles.emptySubText}>Try adjusting your search or filters.</Text>
+    </View>
+  );
+  const renderError = () => (
+    <View style={styles.centered}>
+      <Text style={styles.errorText}>{error}</Text>
+      <TouchableOpacity onPress={fetchPosts} style={styles.retryButton}>
+        <Text style={styles.retryButtonText}>Try Again</Text>
+      </TouchableOpacity>
+    </View>
+  );
+  const renderLoading = () => (
+    <ActivityIndicator size="large" color={Colors.primary[600]} style={styles.centered} />
+  );
+
+  // Final FlatList for normal state
+  const renderList = () => (
+    <FlatList
+      data={sortedPosts}
+      renderItem={({ item }) => <DonationCard post={item} onPress={() => handlePostPress(item)} />}
+      keyExtractor={(item) => item.id}
+      showsVerticalScrollIndicator={false}
+      onRefresh={fetchPosts}
+      refreshing={isLoading}
+      contentContainerStyle={[
+        styles.postsContent,
+        { paddingBottom: insets.bottom + 16 }
+      ]}
+      style={styles.postsList}
+    />
+  );
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Image source={require('../../assets/logo2.png')} style={styles.logo} />
+        <TouchableOpacity onPress={handleCreatePost} style={styles.createButton}>
+          <Plus color={Colors.primary[600]} size={24} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Search + Filter */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputContainer}>
+          <Search color={Colors.text.tertiary} size={20} style={styles.searchIcon} />
+          <Input
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search for items..."
+            style={styles.searchInput}
+            containerStyle={styles.searchInputWrapper}
+          />
+        </View>
+        <TouchableOpacity style={styles.filterButton} onPress={handleSortToggle}>
+          {sortOrder === 'newest' ? (
+            <ArrowDown color={Colors.primary[600]} size={20} />
+          ) : (
+            <ArrowUp color={Colors.primary[600]} size={20} />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Categories */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoriesScrollView}
+        contentContainerStyle={styles.categoriesContainer}
+      >
+        {categories.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.categoryButton,
+              selectedCategory === cat && styles.categoryButtonActive
+            ]}
+            onPress={() => setSelectedCategory(cat)}
+          >
+            <Text
+              style={[
+                styles.categoryText,
+                selectedCategory === cat && styles.categoryTextActive
+              ]}
+            >
+              {cat}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Content */}
+      {isLoading && rawPosts.length === 0
+        ? renderLoading()
+        : error
+        ? renderError()
+        : !isLoading && rawPosts.length === 0
+        ? renderEmpty()
+        : renderList() }
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  logo: {
+    width: 190,
+    height: 60,
+    resizeMode: 'contain',
+  },
+  createButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    gap: 12,
+    alignItems: 'center',
+  },
+  searchInputContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 16,
+    top: 14,
+    zIndex: 1,
+  },
+  searchInputWrapper: {
+    marginBottom: 0,
+  },
+  searchInput: {
+    paddingLeft: 48,
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoriesScrollView: {
+    marginBottom: 16,
+    flexGrow: 0,
+  },
+  categoriesContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  categoryButtonActive: {
+    backgroundColor: Colors.primary[600],
+    borderColor: Colors.primary[600],
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text.secondary,
+  },
+  categoryTextActive: {
+    color: Colors.white,
+  },
+  postsList: {
+    flex: 1,
+  },
+  postsContent: {
+    paddingHorizontal: 24,
+    flexGrow: 1,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.error[600],
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: Colors.primary[600],
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: Colors.white,
+    fontWeight: '600',
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+});

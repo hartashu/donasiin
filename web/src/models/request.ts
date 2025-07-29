@@ -131,11 +131,34 @@ const POST_COLLECTION = "posts";
 const USER_COLLECTION = "users";
 
 export class RequestModel {
+  // models/request.ts
+
   static async createRequest(
     postId: ObjectId,
     userId: ObjectId
-  ): Promise<InsertOneResult<IRequest>> {
+  ): Promise<InsertOneResult<IRequest> | string> {
     const db = await connectToDb();
+    const usersCollection = db.collection("users");
+    const requestsCollection = db.collection("requests");
+
+    // 1. Cari user dan cek limitnya
+    const user = await usersCollection.findOne({ _id: userId });
+
+    if (!user) {
+      return "USER_NOT_FOUND";
+    }
+
+    if (user.dailyLimit <= 0) {
+      return "LIMIT_EXCEEDED";
+    }
+
+    // 2. Kurangi dailyLimit sebesar 1
+    await usersCollection.updateOne(
+      { _id: userId },
+      { $inc: { dailyLimit: -1 } }
+    );
+
+    // 3. Buat dokumen request baru
     const requestDoc: Omit<IRequest, "_id"> = {
       postId,
       userId,
@@ -145,9 +168,7 @@ export class RequestModel {
       updatedAt: new Date(),
     };
 
-    return db
-      .collection<Omit<IRequest, "_id">>(REQUEST_COLLECTION)
-      .insertOne(requestDoc);
+    return requestsCollection.insertOne(requestDoc);
   }
 
   static async getRequestById(
@@ -281,5 +302,13 @@ export class RequestModel {
     }
 
     return result.modifiedCount > 0;
+  }
+
+  static async deleteRequestById(requestId: string): Promise<boolean> {
+    const db = await connectToDb();
+    const result = await db.collection(REQUEST_COLLECTION).deleteOne({
+      _id: new ObjectId(requestId),
+    });
+    return result.deletedCount > 0;
   }
 }
