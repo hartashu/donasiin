@@ -137,7 +137,13 @@ export default function CreatePostScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerTitle: 'Create Donation', headerBackTitle: 'Back' }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTitle: 'Create Donation',
+          headerBackTitle: 'Back',
+        }}
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Text style={styles.label}>Images (up to {MAX_IMAGES})</Text>

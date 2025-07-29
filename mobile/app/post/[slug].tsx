@@ -1,5 +1,5 @@
 // mobile/app/(your-stack)/PostDetailScreen.tsx
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,8 @@ import {
   FlatList,
   Dimensions,
   Alert,
-  TextInput,
-  Platform,
 } from "react-native";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import { DonationPost } from "../../types";
@@ -23,11 +21,11 @@ import { useAuth } from "../../context/AuthContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
 
-const { width } = Dimensions.get("window");
+// Single local API base URL
 const API_BASE_URL = "http://localhost:3000/api";
-const MAX_TRACKING_LENGTH = 50;
 
-// Helper to format “x ago”
+const { width } = Dimensions.get("window");
+
 const formatDistanceToNow = (date: Date): string => {
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -57,7 +55,6 @@ export default function PostDetailScreen() {
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Fetch post details
   const fetchPostDetails = useCallback(async () => {
     if (!slug) return;
     setLoading(true);
@@ -70,28 +67,28 @@ export default function PostDetailScreen() {
       }
       const { data: apiPost } = await res.json();
       setPost({
-        id:           apiPost._id,
-        slug:         apiPost.slug,
-        title:        apiPost.title,
-        description:  apiPost.description,
-        images:       apiPost.imageUrls || [],
-        tags:         [apiPost.category.toLowerCase()],
-        ownerId:      apiPost.author._id,
+        id: apiPost._id,
+        slug: apiPost.slug,
+        title: apiPost.title,
+        description: apiPost.description,
+        images: apiPost.imageUrls || [],
+        tags: [apiPost.category.toLowerCase()],
+        ownerId: apiPost.author._id,
         owner: {
-          id:                 apiPost.author._id,
-          username:           apiPost.author.username,
-          fullName:           apiPost.author.fullName,
-          avatarUrl:          apiPost.author.avatarUrl || "https://via.placeholder.com/150",
-          address:            apiPost.author.address,
-          email:              "",
-          dailyRequestLimit:  0,
-          usedRequests:       0,
-          createdAt:          new Date(),
+          id: apiPost.author._id,
+          username: apiPost.author.username,
+          fullName: apiPost.author.fullName,
+          avatarUrl: apiPost.author.avatarUrl || "https://via.placeholder.com/150",
+          address: apiPost.author.address,
+          email: "",
+          dailyRequestLimit: 0,
+          usedRequests: 0,
+          createdAt: new Date(),
         },
-        isAvailable:  apiPost.isAvailable,
-        aiAnalysis:   apiPost.aiAnalysis,
-        createdAt:    new Date(apiPost.createdAt),
-        updatedAt:    new Date(apiPost.updatedAt),
+        isAvailable: apiPost.isAvailable,
+        aiAnalysis: apiPost.aiAnalysis,
+        createdAt: new Date(apiPost.createdAt),
+        updatedAt: new Date(apiPost.updatedAt),
       });
     } catch (e: any) {
       setError(e.message);
@@ -104,7 +101,6 @@ export default function PostDetailScreen() {
     fetchPostDetails();
   }, [fetchPostDetails]);
 
-  // --- Request Item Flow ---
   const handleRequestItem = () => {
     if (!post) return;
     Alert.alert(
@@ -116,25 +112,22 @@ export default function PostDetailScreen() {
       ]
     );
   };
-
   const submitRequest = async () => {
     if (!post) return;
     setIsRequesting(true);
     try {
       const token = await AuthService.getStoredToken();
       if (!token) throw new Error("You must be logged in to request an item.");
-
       const res = await fetch(`${API_BASE_URL}/requests`, {
-        method:  "POST",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization:   `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ postId: post.id }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Failed to submit request.");
-
       Alert.alert(
         "Request Sent!",
         "Your request has been sent to the owner. You can check its status in your history.",
@@ -154,7 +147,6 @@ export default function PostDetailScreen() {
     }
   };
 
-  // --- Chat Flow ---
   const handleStartChat = async () => {
     if (!post?.owner) return;
     setIsStartingChat(true);
@@ -167,24 +159,22 @@ export default function PostDetailScreen() {
         ]);
         return;
       }
-
       const res = await fetch(`${API_BASE_URL}/chat/messages`, {
-        method:  "POST",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization:   `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           receiverId: post.owner.id,
-          text:       `Hi, I'm interested in your donation: "${post.title}"`,
+          text: `Hi, I'm interested in your donation: "${post.title}"`,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Failed to start chat.");
-
       router.push({
-        pathname: `/chat/${json.conversationId}`,
-        params:   { otherUser: JSON.stringify(post.owner) },
+        pathname: `/chat/${json.data.conversationId}`,
+        params: { otherUser: JSON.stringify(post.owner) },
       });
     } catch (err: any) {
       Alert.alert("Error", err.message);
@@ -193,7 +183,6 @@ export default function PostDetailScreen() {
     }
   };
 
-  // --- Image Carousel Logic ---
   const onViewableItemsChanged = useCallback(({ viewableItems }) => {
     if (viewableItems.length > 0) {
       setActiveIndex(viewableItems[0].index ?? 0);
@@ -201,7 +190,6 @@ export default function PostDetailScreen() {
   }, []);
   const viewabilityConfig = { itemVisiblePercentThreshold: 50 };
 
-  // Custom back button
   const headerLeft = useCallback(
     () => (
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -210,15 +198,17 @@ export default function PostDetailScreen() {
     ),
     [router]
   );
-  const screenOptions = useMemo(() => ({
-    headerShown:              true,
-    headerTransparent:        true,
-    headerTitle:              "",
-    headerLeft,
-    headerLeftContainerStyle: { paddingTop: Math.max(insets.top, 16) }
-  }), [headerLeft, insets.top]);
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: true,
+      headerTransparent: true,
+      headerTitle: "",
+      headerLeft,
+      headerLeftContainerStyle: { paddingTop: Math.max(insets.top, 16) },
+    }),
+    [headerLeft, insets.top]
+  );
 
-  // Loading & Error states
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
@@ -239,64 +229,67 @@ export default function PostDetailScreen() {
 
   return (
     <>
-      {/* 1) Full‑bleed images */}
-      <SafeAreaView edges={["top","left","right"]} style={styles.imageWrapper}>
-        <Stack.Screen options={screenOptions} />
+      <Stack.Screen options={screenOptions} />
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.imageWrapper}>
         <FlatList
           data={post.images}
-          renderItem={({ item }) => <Image source={{uri:item}} style={styles.headerImage}/>}
-          keyExtractor={(_,i)=>`${i}`}
+          renderItem={({ item }) => <Image source={{ uri: item }} style={styles.headerImage} />}
+          keyExtractor={(_, i) => `${i}`}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
         />
-        {post.images.length>1 && (
+        {post.images.length > 1 && (
           <View style={styles.paginationContainer}>
-            {post.images.map((_,i)=>(
-              <View key={i} style={[
-                styles.paginationDot,
-                i===activeIndex && styles.paginationDotActive
-              ]}/>
+            {post.images.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.paginationDot,
+                  i === activeIndex && styles.paginationDotActive,
+                ]}
+              />
             ))}
           </View>
         )}
       </SafeAreaView>
 
-      {/* 2) Details & footer */}
-      <SafeAreaView edges={["left","right","bottom"]} style={styles.container}>
+      <SafeAreaView edges={["left", "right", "bottom"]} style={styles.container}>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>{post.title}</Text>
           <View style={styles.metaRow}>
-            <View style={styles.tagBox}><Text style={styles.tag}>{post.tags[0]}</Text></View>
+            <View style={styles.tagBox}>
+              <Text style={styles.tag}>{post.tags[0]}</Text>
+            </View>
             <Text style={styles.metaText}>• Posted {formatDistanceToNow(post.createdAt)}</Text>
           </View>
-          <View style={styles.separator}/>
+          <View style={styles.separator} />
 
           <View style={styles.ownerInfo}>
-            <Image source={{uri:post.owner.avatarUrl}} style={styles.ownerAvatar}/>
-            <View style={{flex:1}}>
+            <Image source={{ uri: post.owner.avatarUrl }} style={styles.ownerAvatar} />
+            <View style={{ flex: 1 }}>
               <Text style={styles.ownerName}>{post.owner.fullName}</Text>
               <Text style={styles.ownerUsername}>@{post.owner.username}</Text>
               {post.owner.address && (
                 <View style={styles.addressRow}>
-                  <MapPin size={14} color={Colors.text.secondary}/>
+                  <MapPin size={14} color={Colors.text.secondary} />
                   <Text style={styles.addressText}>{post.owner.address}</Text>
                 </View>
               )}
             </View>
           </View>
-          <View style={styles.separator}/>
+          <View style={styles.separator} />
 
           {post.aiAnalysis && (
             <>
               <View style={styles.sectionHeader}>
-                <Sparkles size={20} color={Colors.primary[600]}/>
-                <Text style={styles.sectionTitle}>AI Carbon Analysis</Text>
+                <Sparkles size={20} color={Colors.primary[600]} />
+              <Text style={styles.sectionTitle}>AI Carbon Analysis</Text>
               </View>
               <Text style={styles.description}>{post.aiAnalysis}</Text>
-              <View style={styles.separator}/>
+              <View style={styles.separator} />
             </>
           )}
 
@@ -306,7 +299,7 @@ export default function PostDetailScreen() {
 
         <View style={styles.footer}>
           {!user ? (
-            <Button title="Login to Request or Chat" onPress={()=>router.push('/(auth)/login')}/>
+            <Button title="Login to Request or Chat" onPress={() => router.push("/(auth)/login")} />
           ) : isOwner ? (
             <Text style={styles.ownerNotice}>You are the owner of this item.</Text>
           ) : (
@@ -316,16 +309,16 @@ export default function PostDetailScreen() {
                 onPress={handleStartChat}
                 loading={isStartingChat}
                 variant="outline"
-                icon={<MessageSquare size={18} color={Colors.primary[600]}/>}
-                style={{flex:1, marginRight:8}}
-                disabled={isRequesting||isStartingChat||!post.isAvailable}
+                icon={<MessageSquare size={18} color={Colors.primary[600]} />}
+                style={{ flex: 1, marginRight: 8 }}
+                disabled={isRequesting || isStartingChat || !post.isAvailable}
               />
               <Button
                 title="Request Item"
                 onPress={handleRequestItem}
                 loading={isRequesting}
-                style={{flex:1}}
-                disabled={!post.isAvailable||isRequesting||isStartingChat}
+                style={{ flex: 1 }}
+                disabled={!post.isAvailable || isRequesting || isStartingChat}
               />
             </>
           )}
@@ -336,46 +329,84 @@ export default function PostDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:           { flex: 1, backgroundColor: Colors.background },
-  imageWrapper:        { backgroundColor: Colors.background },
-  headerImage:         { width, height: width * 0.8, resizeMode: "cover" },
+  container: { flex: 1, backgroundColor: Colors.background },
+  imageWrapper: { backgroundColor: Colors.background },
+  headerImage: { width, height: width * 0.8, resizeMode: "cover" },
   paginationContainer: {
-    position: "absolute", bottom: 16, flexDirection: "row",
-    alignSelf: "center", backgroundColor: "rgba(0,0,0,0.3)",
-    paddingVertical: 6, paddingHorizontal: 8, borderRadius: 16,
+    position: "absolute",
+    bottom: 16,
+    flexDirection: "row",
+    alignSelf: "center",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 16,
   },
-  paginationDot:       { width:8, height:8, borderRadius:4, backgroundColor:"rgba(255,255,255,0.5)", marginHorizontal:4 },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.5)",
+    marginHorizontal: 4,
+  },
   paginationDotActive: { backgroundColor: Colors.white },
 
-  contentContainer:   { paddingHorizontal:24, paddingTop:16, paddingBottom:24 },
-  title:               { fontSize:28, fontWeight:"bold", color:Colors.text.primary, marginBottom:8 },
-  metaRow:             { flexDirection:"row", alignItems:"center", marginBottom:16, gap:8 },
-  tagBox:              { backgroundColor:Colors.primary[100], paddingHorizontal:12, paddingVertical:4, borderRadius:16 },
-  tag:                 { color:Colors.primary[700], fontWeight:"600", textTransform:"capitalize" },
-  metaText:            { fontSize:14, color:Colors.text.secondary },
-  separator:           { height:1, backgroundColor:Colors.border, marginVertical:24 },
-
-  ownerInfo:           { flexDirection:"row", alignItems:"flex-start" },
-  ownerAvatar:         { width:50, height:50, borderRadius:25, marginRight:16 },
-  ownerName:           { fontSize:18, fontWeight:"600", color:Colors.text.primary },
-  ownerUsername:       { fontSize:14, color:Colors.text.secondary },
-  addressRow:          { flexDirection:"row", alignItems:"center", marginTop:4, gap:4 },
-  addressText:         { fontSize:14, color:Colors.text.secondary, flexShrink:1 },
-
-  sectionHeader:       { flexDirection:"row", alignItems:"center", gap:8, marginBottom:12 },
-  sectionTitle:        { fontSize:20, fontWeight:"bold", color:Colors.text.primary },
-  description:         { fontSize:16, lineHeight:24, color:Colors.text.secondary },
-
-  footer:              {
-    padding:24, borderTopWidth:1, borderColor:Colors.border,
-    backgroundColor:Colors.background, flexDirection:"row", alignItems:"center",
+  contentContainer: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 8,
   },
-  backButton:          {
-    backgroundColor:"rgba(0,0,0,0.4)", width:40, height:40,
-    borderRadius:20, justifyContent:"center", alignItems:"center",
+  metaRow: { flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 8 },
+  tagBox: {
+    backgroundColor: Colors.primary[100],
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
   },
-  errorText:           { flex:1, textAlign:"center", color:Colors.error[600], fontSize:16, marginTop:20 },
-  ownerNotice:         { flex:1, textAlign:"center", color:Colors.text.secondary, fontStyle:"italic" },
+  tag: { color: Colors.primary[700], fontWeight: "600", textTransform: "capitalize" },
+  metaText: { fontSize: 14, color: Colors.text.secondary },
+  separator: { height: 1, backgroundColor: Colors.border, marginVertical: 24 },
 
-  centered:            { flex:1, justifyContent:"center", alignItems:"center" },
+  ownerInfo: { flexDirection: "row", alignItems: "flex-start" },
+  ownerAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 16 },
+  ownerName: { fontSize: 18, fontWeight: "600", color: Colors.text.primary },
+  ownerUsername: { fontSize: 14, color: Colors.text.secondary },
+  addressRow: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 4 },
+  addressText: { fontSize: 14, color: Colors.text.secondary, flexShrink: 1 },
+
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
+  sectionTitle: { fontSize: 20, fontWeight: "bold", color: Colors.text.primary },
+  description: { fontSize: 16, lineHeight: 24, color: Colors.text.secondary },
+
+  footer: {
+    padding: 24,
+    borderTopWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backButton: {
+    backgroundColor: "rgba(0,0,0,0.4)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    flex: 1,
+    textAlign: "center",
+    color: Colors.error[600],
+    fontSize: 16,
+    marginTop: 20,
+  },
+  ownerNotice: {
+    flex: 1,
+    textAlign: "center",
+    color: Colors.text.secondary,
+    fontStyle: "italic",
+  },
 });

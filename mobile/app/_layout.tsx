@@ -1,4 +1,4 @@
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Slot, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '../context/AuthContext';
@@ -18,14 +18,11 @@ function InitialLayout() {
 
     const inAuthGroup = segments[0] === '(auth)';
     
-    // The root route is the welcome screen, which is not in any group.
     const onWelcomeOrAuth = segments.length === 0 || inAuthGroup;
 
     if (user && onWelcomeOrAuth) {
-      // User is logged in but is on the welcome/auth screen. Redirect to the main app.
       router.replace('/(tabs)/home');
     } else if (!user && !onWelcomeOrAuth) {
-      // User is not logged in and trying to access a protected route. Redirect to welcome.
       router.replace('/');
     }
   }, [user, isLoading, segments, router]);
@@ -34,9 +31,13 @@ function InitialLayout() {
     return <LoadingSpinner />;
   }
 
-  // Slot renders the current child route (welcome, auth, or tabs).
   return (
-    <Slot />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="post/[slug]" />
+    </Stack>
   );
 }
 

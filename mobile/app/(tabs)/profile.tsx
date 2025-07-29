@@ -137,7 +137,7 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.settingsButton}
-            onPress={handleSettings}
+            // onPress={handleSettings}
           >
             <Settings color={Colors.text.secondary} size={24} />
           </TouchableOpacity>
@@ -155,7 +155,7 @@ export default function ProfileScreen() {
             />
             <TouchableOpacity
               style={styles.editAvatarButton}
-              onPress={handleEditProfile}
+              // onPress={handleEditProfile}
             >
               <Edit color={Colors.white} size={16} />
             </TouchableOpacity>
@@ -164,7 +164,7 @@ export default function ProfileScreen() {
           <Text style={styles.fullName}>{user.fullName}</Text>
           <Text style={styles.username}>@{user.username}</Text>
 
-          <View style={styles.actionButtons}>
+          {/* <View style={styles.actionButtons}>
             <Button
               title="Edit Profile"
               onPress={handleEditProfile}
@@ -174,10 +174,9 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.messageButton}>
               <MessageCircle color={Colors.primary[600]} size={20} />
             </TouchableOpacity>
-          </View>
+          </View> */}
         </View>
-
-        <View style={styles.statsSection}>
+        {/* <View style={styles.statsSection}>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>12</Text>
             <Text style={styles.statLabel}>Items Donated</Text>
@@ -190,7 +189,7 @@ export default function ProfileScreen() {
             <Text style={styles.statNumber}>4.9</Text>
             <Text style={styles.statLabel}>C02 Saved</Text>
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.infoSection}>
           <Text style={styles.sectionTitle}>Account Information</Text>

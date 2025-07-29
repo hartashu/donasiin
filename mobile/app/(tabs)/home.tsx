@@ -1,36 +1,48 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// mobile/app/(your-stack)/HomeScreen.tsx
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  ScrollView,
+  Image,
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Search, Filter, Plus } from 'lucide-react-native';
+import { Search, ArrowUp, ArrowDown, Plus } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { Input } from '../../components/ui/Input';
 import { DonationCard } from '../../components/DonationCard';
-import { DonationPost } from '../../types'; // Assuming types/index.ts exists
+import { DonationPost } from '../../types';
 
 const API_BASE_URL = 'http://localhost:3000/api';
-
 const categories = [
-'All',
-'Baby & Kids',
-'Books, Music & Media',
-'Electronics',
-'Fashion & Apparel',
-'Health & Beauty',
-'Sports & Outdoors',
-'Automotive & Tools',
-'Pet Supplies',
-'Office Supplies & Stationery',
-'Home & Kitchen'
+  'All',
+  'Baby & Kids',
+  'Books, Music & Media',
+  'Electronics',
+  'Fashion & Apparel',
+  'Health & Beauty',
+  'Sports & Outdoors',
+  'Automotive & Tools',
+  'Pet Supplies',
+  'Office Supplies & Stationery',
+  'Home & Kitchen'
 ];
 
 export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [posts, setPosts] = useState<DonationPost[]>([]);
+  const [rawPosts, setRawPosts] = useState<DonationPost[]>([]);
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const fetchPosts = useCallback(async () => {
     setIsLoading(true);
@@ -42,36 +54,34 @@ export default function HomeScreen() {
 
       const response = await fetch(`${API_BASE_URL}/posts?${params.toString()}`);
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to fetch posts. Please try again later.' }));
-        throw new Error(errorData.message || 'An unknown error occurred.');
+        const err = await response.json().catch(() => ({ message: 'Failed to fetch posts.' }));
+        throw new Error(err.message || 'Unknown error.');
       }
       const result = await response.json();
-      
-      // Map API data to the DonationPost type used by the component
-      const mappedPosts = result.data.posts.map((post: any) => ({
-        id: post._id,
-        slug: post.slug,
-        title: post.title,
-        description: post.description,
-        images: [post.thumbnailUrl, ...(post.imageUrls || [])].filter(Boolean), // Ensure no null/undefined URLs
-        tags: [post.category.toLowerCase()],
-        ownerId: post.userId,
+      const mapped = result.data.posts.map((p: any) => ({
+        id: p._id,
+        slug: p.slug,
+        title: p.title,
+        description: p.description,
+        images: [p.thumbnailUrl, ...(p.imageUrls || [])].filter(Boolean),
+        tags: [p.category.toLowerCase()],
+        ownerId: p.userId,
         owner: {
-          id: post.author._id,
-          username: post.author.username,
-          fullName: post.author.fullName,
-          email: post.author.email || '',
-          avatarUrl: post.author.avatarUrl || 'https://via.placeholder.com/150',
+          id: p.author._id,
+          username: p.author.username,
+          fullName: p.author.fullName,
+          email: p.author.email || '',
+          address: p.author.address,
+          avatarUrl: p.author.avatarUrl || 'https://via.placeholder.com/150',
           dailyRequestLimit: 0,
           usedRequests: 0,
-          createdAt: new Date(post.author.createdAt || Date.now()),
+          createdAt: new Date(p.author.createdAt || Date.now()),
         },
-        isAvailable: post.isAvailable,
-        createdAt: new Date(post.createdAt),
-        updatedAt: new Date(post.updatedAt),
+        isAvailable: p.isAvailable,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt),
       }));
-
-      setPosts(mappedPosts);
+      setRawPosts(mapped);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -79,80 +89,75 @@ export default function HomeScreen() {
     }
   }, [searchQuery, selectedCategory]);
 
+  const sortedPosts = useMemo(() => {
+    return [...rawPosts].sort((a, b) => {
+      const dateA = a.createdAt.getTime();
+      const dateB = b.createdAt.getTime();
+      if (sortOrder === 'newest') {
+        return dateB - dateA;
+      }
+      return dateA - dateB;
+    });
+  }, [rawPosts, sortOrder]);
+
   useFocusEffect(
     useCallback(() => {
-      // This effect runs when the screen comes into focus, and also when search/category changes.
-      // A simple debounce is used to prevent API calls on every keystroke.
-      const handler = setTimeout(() => {
-        fetchPosts();
-      }, 500); // 500ms delay
-
-      // Cleanup the timeout if the screen loses focus or dependencies change
+      const handler = setTimeout(fetchPosts, 500);
       return () => clearTimeout(handler);
     }, [searchQuery, selectedCategory, fetchPosts])
   );
 
-  const handlePostPress = (post: DonationPost) => {
-    router.push(`/post/${post.slug}`);
-  };
+  const handlePostPress = (post: DonationPost) => router.push(`/post/${post.slug}`);
+  const handleCreatePost = () => router.push('/create-post');
+  const handleSortToggle = () => setSortOrder(prev => (prev === 'newest' ? 'oldest' : 'newest'));
 
-  const handleCreatePost = () => {
-    router.push('/create-post');
-  };
-
-  const renderPost = ({ item }: { item: DonationPost }) => (
-    <DonationCard post={item} onPress={() => handlePostPress(item)} />
+  // Renderers for empty/error/loading
+  const renderEmpty = () => (
+    <View style={styles.centered}>
+      <Text style={styles.emptyText}>No items found.</Text>
+      <Text style={styles.emptySubText}>Try adjusting your search or filters.</Text>
+    </View>
+  );
+  const renderError = () => (
+    <View style={styles.centered}>
+      <Text style={styles.errorText}>{error}</Text>
+      <TouchableOpacity onPress={fetchPosts} style={styles.retryButton}>
+        <Text style={styles.retryButtonText}>Try Again</Text>
+      </TouchableOpacity>
+    </View>
+  );
+  const renderLoading = () => (
+    <ActivityIndicator size="large" color={Colors.primary[600]} style={styles.centered} />
   );
 
-  const renderContent = () => {
-    if (isLoading && posts.length === 0) { // Only show full-screen loader on initial load
-      return <ActivityIndicator size="large" color={Colors.primary[600]} style={styles.centered} />;
-    }
-
-    if (error) {
-      return (
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => fetchPosts()} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    if (!isLoading && posts.length === 0) {
-      return (
-        <View style={styles.centered}>
-          <Text style={styles.emptyText}>No items found.</Text>
-          <Text style={styles.emptySubText}>Try adjusting your search or filters.</Text>
-        </View>
-      );
-    }
-
-    return (
-      <FlatList
-        data={posts}
-        renderItem={renderPost}
-        keyExtractor={(item) => item.id}
-        style={styles.postsList}
-        contentContainerStyle={styles.postsContent}
-        showsVerticalScrollIndicator={false}
-        // Add pull-to-refresh functionality
-        onRefresh={fetchPosts}
-        refreshing={isLoading}
-      />
-    );
-  };
+  // Final FlatList for normal state
+  const renderList = () => (
+    <FlatList
+      data={sortedPosts}
+      renderItem={({ item }) => <DonationCard post={item} onPress={() => handlePostPress(item)} />}
+      keyExtractor={(item) => item.id}
+      showsVerticalScrollIndicator={false}
+      onRefresh={fetchPosts}
+      refreshing={isLoading}
+      contentContainerStyle={[
+        styles.postsContent,
+        { paddingBottom: insets.bottom + 16 }
+      ]}
+      style={styles.postsList}
+    />
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Donasiin</Text>
+        <Image source={require('../../assets/logo2.png')} style={styles.logo} />
         <TouchableOpacity onPress={handleCreatePost} style={styles.createButton}>
           <Plus color={Colors.primary[600]} size={24} />
         </TouchableOpacity>
       </View>
 
+      {/* Search + Filter */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Search color={Colors.text.tertiary} size={20} style={styles.searchIcon} />
@@ -164,37 +169,51 @@ export default function HomeScreen() {
             containerStyle={styles.searchInputWrapper}
           />
         </View>
-        <TouchableOpacity style={styles.filterButton}>
-          <Filter color={Colors.primary[600]} size={20} />
+        <TouchableOpacity style={styles.filterButton} onPress={handleSortToggle}>
+          {sortOrder === 'newest' ? (
+            <ArrowDown color={Colors.primary[600]} size={20} />
+          ) : (
+            <ArrowUp color={Colors.primary[600]} size={20} />
+          )}
         </TouchableOpacity>
       </View>
 
+      {/* Categories */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.categoriesScrollView}
         contentContainerStyle={styles.categoriesContainer}
       >
-        {categories.map((category) => (
+        {categories.map((cat) => (
           <TouchableOpacity
-            key={category}
+            key={cat}
             style={[
               styles.categoryButton,
-              selectedCategory === category && styles.categoryButtonActive
+              selectedCategory === cat && styles.categoryButtonActive
             ]}
-            onPress={() => setSelectedCategory(category)}
+            onPress={() => setSelectedCategory(cat)}
           >
-            <Text style={[
-              styles.categoryText,
-              selectedCategory === category && styles.categoryTextActive
-            ]}>
-              {category}
+            <Text
+              style={[
+                styles.categoryText,
+                selectedCategory === cat && styles.categoryTextActive
+              ]}
+            >
+              {cat}
             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {renderContent()}
+      {/* Content */}
+      {isLoading && rawPosts.length === 0
+        ? renderLoading()
+        : error
+        ? renderError()
+        : !isLoading && rawPosts.length === 0
+        ? renderEmpty()
+        : renderList() }
     </SafeAreaView>
   );
 }
@@ -211,10 +230,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.text.primary,
+  logo: {
+    width: 190,
+    height: 60,
+    resizeMode: 'contain',
   },
   createButton: {
     width: 40,
@@ -259,7 +278,7 @@ const styles = StyleSheet.create({
   },
   categoriesScrollView: {
     marginBottom: 16,
-    flexGrow: 0, // Prevent ScrollView from taking up all available space
+    flexGrow: 0,
   },
   categoriesContainer: {
     flexDirection: 'row',
@@ -291,8 +310,7 @@ const styles = StyleSheet.create({
   },
   postsContent: {
     paddingHorizontal: 24,
-    paddingBottom: 16,
-    flexGrow: 1, // Ensures the container can grow to fill space for centered content
+    flexGrow: 1,
   },
   centered: {
     flex: 1,
