@@ -1,14 +1,22 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { Colors } from '../../constants/Colors';
-import { Chat, User } from '../../types';
-import { useAuth } from '../../context/AuthContext';
-import { AuthService } from '../../services/auth';
-import { Button } from '../../components/ui/Button';
+import React, { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect, useRouter } from "expo-router";
+import { Colors } from "../../constants/Colors";
+import { Chat, User } from "../../types";
+import { useAuth } from "../../context/AuthContext";
+import { AuthService } from "../../services/auth";
+import { Button } from "../../components/ui/Button";
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = "http://localhost:3000/api";
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -19,14 +27,14 @@ export default function ChatScreen() {
 
   const getOtherParticipant = (chat: Chat) => {
     if (!user) return null;
-    return chat.participants.find(p => p.id !== user.id);
+    return chat.participants.find((p) => p.id !== user.id);
   };
 
   const formatTime = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    
+
     if (hours < 1) {
       const minutes = Math.floor(diff / (1000 * 60));
       return `${minutes}m`;
@@ -48,16 +56,15 @@ export default function ChatScreen() {
 
       const response = await fetch(`${API_BASE_URL}/chat/conversations`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to fetch conversations.");
       }
-      
+
       const result = await response.json();
 
       const conversations = Array.isArray(result) ? result : result.data;
@@ -75,10 +82,11 @@ export default function ChatScreen() {
       const mappedChats: Chat[] = conversations.map((convo: any) => {
         const otherUser: User = {
           id: convo.otherUser._id,
-          username: convo.otherUser.username || 'unknown',
+          username: convo.otherUser.username || "unknown",
           fullName: convo.otherUser.fullName,
-          email: '',
-          avatarUrl: convo.otherUser.avatarUrl || 'https://via.placeholder.com/150',
+          email: "",
+          avatarUrl:
+            convo.otherUser.avatarUrl || "https://via.placeholder.com/150",
           dailyRequestLimit: 0,
           usedRequests: 0,
           createdAt: new Date(),
@@ -88,7 +96,9 @@ export default function ChatScreen() {
 
         let lastMessage = undefined;
         if (convo.lastMessageText) {
-          const sender = participants.find(p => p.id === convo.lastMessageSenderId) || otherUser;
+          const sender =
+            participants.find((p) => p.id === convo.lastMessageSenderId) ||
+            otherUser;
           lastMessage = {
             id: convo.lastMessageId || convo.conversationId,
             chatId: convo.conversationId,
@@ -117,8 +127,6 @@ export default function ChatScreen() {
   }, []);
 
   useFocusEffect(
-    // This useCallback + useFocusEffect pattern ensures that conversations
-    // are refetched every time the user navigates to this tab.
     useCallback(() => {
       fetchConversations();
     }, [fetchConversations])
@@ -139,13 +147,13 @@ export default function ChatScreen() {
     if (!otherUser) return null;
 
     return (
-      <TouchableOpacity 
-        style={styles.chatItem} 
+      <TouchableOpacity
+        style={styles.chatItem}
         onPress={() => handleChatPress(item)}
         activeOpacity={0.8}
       >
         <Image source={{ uri: otherUser.avatarUrl }} style={styles.avatar} />
-        
+
         <View style={styles.chatContent}>
           <View style={styles.chatHeader}>
             <Text style={styles.userName}>{otherUser.fullName}</Text>
@@ -153,30 +161,40 @@ export default function ChatScreen() {
               {item.lastMessage && formatTime(item.lastMessage.createdAt)}
             </Text>
           </View>
-          
+
           {item.lastMessage && (
-            <Text 
+            <Text
               style={[
                 styles.lastMessage,
-                !item.lastMessage.isRead && item.lastMessage.senderId !== user?.id && styles.unreadMessage
-              ]} 
+                !item.lastMessage.isRead &&
+                  item.lastMessage.senderId !== user?.id &&
+                  styles.unreadMessage,
+              ]}
               numberOfLines={2}
             >
               {item.lastMessage.content}
             </Text>
           )}
         </View>
-        
-        {item.lastMessage && !item.lastMessage.isRead && item.lastMessage.senderId !== user?.id && (
-          <View style={styles.unreadDot} />
-        )}
+
+        {item.lastMessage &&
+          !item.lastMessage.isRead &&
+          item.lastMessage.senderId !== user?.id && (
+            <View style={styles.unreadDot} />
+          )}
       </TouchableOpacity>
     );
   };
 
   const renderContent = () => {
     if (isLoading) {
-      return <ActivityIndicator size="large" color={Colors.primary[600]} style={styles.emptyContainer} />;
+      return (
+        <ActivityIndicator
+          size="large"
+          color={Colors.primary[600]}
+          style={styles.emptyContainer}
+        />
+      );
     }
 
     if (error) {
@@ -193,7 +211,8 @@ export default function ChatScreen() {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No messages yet</Text>
           <Text style={styles.emptySubText}>
-            When you request an item or someone requests yours, your chat will appear here.
+            When you request an item or someone requests yours, your chat will
+            appear here.
           </Text>
         </View>
       );
@@ -236,7 +255,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.text.primary,
     marginBottom: 4,
   },
@@ -244,8 +263,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chatItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -263,14 +282,14 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   chatHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   userName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.text.primary,
   },
   timestamp: {
@@ -283,7 +302,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   unreadMessage: {
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.text.primary,
   },
   unreadDot: {
@@ -295,25 +314,25 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.text.primary,
     marginBottom: 8,
   },
   emptySubText: {
     fontSize: 14,
     color: Colors.text.secondary,
-    textAlign: 'center',
+    textAlign: "center",
   },
   errorText: {
     fontSize: 16,
     color: Colors.error[600],
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
   },
 });

@@ -1,29 +1,26 @@
-import { Slot, Stack, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import { AuthProvider, useAuth } from '../context/AuthContext';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Slot, Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { AuthProvider, useAuth } from "../context/AuthContext";
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-// This component handles the redirection logic based on auth state
 function InitialLayout() {
   const { user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    // Don't run the redirect logic until the auth state is loaded.
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    
+    const inAuthGroup = segments[0] === "(auth)";
     const onWelcomeOrAuth = segments.length === 0 || inAuthGroup;
 
     if (user && onWelcomeOrAuth) {
-      router.replace('/(tabs)/home');
+      router.replace("/(tabs)/home");
     } else if (!user && !onWelcomeOrAuth) {
-      router.replace('/');
+      router.replace("/");
     }
   }, [user, isLoading, segments, router]);
 

@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { AuthService } from '../services/auth';
-import { User, RegisterData, AuthContextType } from '../types';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { AuthService } from "../services/auth";
+import { User, RegisterData, AuthContextType } from "../types";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -21,7 +27,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const currentUser = await AuthService.getCurrentUser();
       setUser(currentUser);
     } catch (error) {
-      console.error('Failed to load user:', error);
+      console.error("Failed to load user:", error);
     } finally {
       setIsLoading(false);
     }
@@ -30,11 +36,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // The login service now handles storing the token and user data securely
       const user = await AuthService.login(email, password);
       setUser(user);
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -44,20 +49,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
     try {
-      // This logic should be in AuthService.register, but we'll correct it here.
-      const API_BASE_URL = 'http://localhost:3000/api';
+      const API_BASE_URL = "http://localhost:3000/api";
       const response = await fetch(`${API_BASE_URL}/account/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || result.message || 'An unknown error occurred.');
+        throw new Error(
+          result.error || result.message || "An unknown error occurred."
+        );
       }
     } catch (error: any) {
-      console.error('Registration failed:', error);
+      console.error("Registration failed:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -69,15 +75,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await AuthService.removeToken();
       setUser(null);
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
   const verifyEmail = async (code: string) => {
-    if (!user) throw new Error('No user to verify');
+    if (!user) throw new Error("No user to verify");
     const isValid = await AuthService.verifyEmail(user.email, code);
     if (!isValid) {
-      throw new Error('Invalid verification code');
+      throw new Error("Invalid verification code");
     }
   };
 
@@ -96,7 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

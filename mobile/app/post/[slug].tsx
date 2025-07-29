@@ -13,10 +13,18 @@ import {
   Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import { DonationPost } from "../../types";
-import { MessageSquare, ChevronLeft, MapPin, Sparkles } from "lucide-react-native";
+import {
+  MessageSquare,
+  ChevronLeft,
+  MapPin,
+  Sparkles,
+} from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
@@ -78,7 +86,8 @@ export default function PostDetailScreen() {
           id: apiPost.author._id,
           username: apiPost.author.username,
           fullName: apiPost.author.fullName,
-          avatarUrl: apiPost.author.avatarUrl || "https://via.placeholder.com/150",
+          avatarUrl:
+            apiPost.author.avatarUrl || "https://via.placeholder.com/150",
           address: apiPost.author.address,
           email: "",
           dailyRequestLimit: 0,
@@ -154,10 +163,14 @@ export default function PostDetailScreen() {
     try {
       const token = await AuthService.getStoredToken();
       if (!token) {
-        Alert.alert("Login Required", "You must be logged in to start a chat.", [
-          { text: "Cancel", style: "cancel" },
-          { text: "Login", onPress: () => router.push("/(auth)/login") },
-        ]);
+        Alert.alert(
+          "Login Required",
+          "You must be logged in to start a chat.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Login", onPress: () => router.push("/(auth)/login") },
+          ]
+        );
         return;
       }
       const res = await fetch(`${API_BASE_URL}/chat/messages`, {
@@ -174,7 +187,7 @@ export default function PostDetailScreen() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Failed to start chat.");
       router.push({
-        pathname: `/chat/${json.data.conversationId}`,
+        pathname: `/chat/${json.conversationId}`,
         params: { otherUser: JSON.stringify(post.owner) },
       });
     } catch (err: any) {
@@ -231,10 +244,15 @@ export default function PostDetailScreen() {
   return (
     <>
       <Stack.Screen options={screenOptions} />
-      <SafeAreaView edges={["top", "left", "right"]} style={styles.imageWrapper}>
+      <SafeAreaView
+        edges={["top", "left", "right"]}
+        style={styles.imageWrapper}
+      >
         <FlatList
           data={post.images}
-          renderItem={({ item }) => <Image source={{ uri: item }} style={styles.headerImage} />}
+          renderItem={({ item }) => (
+            <Image source={{ uri: item }} style={styles.headerImage} />
+          )}
           keyExtractor={(_, i) => `${i}`}
           horizontal
           pagingEnabled
@@ -257,19 +275,30 @@ export default function PostDetailScreen() {
         )}
       </SafeAreaView>
 
-      <SafeAreaView edges={["left", "right", "bottom"]} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <SafeAreaView
+        edges={["left", "right", "bottom"]}
+        style={styles.container}
+      >
+        <ScrollView
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.title}>{post.title}</Text>
           <View style={styles.metaRow}>
             <View style={styles.tagBox}>
               <Text style={styles.tag}>{post.tags[0]}</Text>
             </View>
-            <Text style={styles.metaText}>• Posted {formatDistanceToNow(post.createdAt)}</Text>
+            <Text style={styles.metaText}>
+              • Posted {formatDistanceToNow(post.createdAt)}
+            </Text>
           </View>
           <View style={styles.separator} />
 
           <View style={styles.ownerInfo}>
-            <Image source={{ uri: post.owner.avatarUrl }} style={styles.ownerAvatar} />
+            <Image
+              source={{ uri: post.owner.avatarUrl }}
+              style={styles.ownerAvatar}
+            />
             <View style={{ flex: 1 }}>
               <Text style={styles.ownerName}>{post.owner.fullName}</Text>
               <Text style={styles.ownerUsername}>@{post.owner.username}</Text>
@@ -287,7 +316,7 @@ export default function PostDetailScreen() {
             <>
               <View style={styles.sectionHeader}>
                 <Sparkles size={20} color={Colors.primary[600]} />
-              <Text style={styles.sectionTitle}>AI Carbon Analysis</Text>
+                <Text style={styles.sectionTitle}>AI Carbon Analysis</Text>
               </View>
               <Text style={styles.description}>{post.aiAnalysis}</Text>
               <View style={styles.separator} />
@@ -300,9 +329,14 @@ export default function PostDetailScreen() {
 
         <View style={styles.footer}>
           {!user ? (
-            <Button title="Login to Request or Chat" onPress={() => router.push("/(auth)/login")} />
+            <Button
+              title="Login to Request or Chat"
+              onPress={() => router.push("/(auth)/login")}
+            />
           ) : isOwner ? (
-            <Text style={styles.ownerNotice}>You are the owner of this item.</Text>
+            <Text style={styles.ownerNotice}>
+              You are the owner of this item.
+            </Text>
           ) : (
             <>
               <Button
@@ -352,21 +386,34 @@ const styles = StyleSheet.create({
   },
   paginationDotActive: { backgroundColor: Colors.white },
 
-  contentContainer: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 },
+  contentContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     color: Colors.text.primary,
     marginBottom: 8,
   },
-  metaRow: { flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 8 },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    gap: 8,
+  },
   tagBox: {
     backgroundColor: Colors.primary[100],
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 16,
   },
-  tag: { color: Colors.primary[700], fontWeight: "600", textTransform: "capitalize" },
+  tag: {
+    color: Colors.primary[700],
+    fontWeight: "600",
+    textTransform: "capitalize",
+  },
   metaText: { fontSize: 14, color: Colors.text.secondary },
   separator: { height: 1, backgroundColor: Colors.border, marginVertical: 24 },
 
@@ -374,11 +421,25 @@ const styles = StyleSheet.create({
   ownerAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 16 },
   ownerName: { fontSize: 18, fontWeight: "600", color: Colors.text.primary },
   ownerUsername: { fontSize: 14, color: Colors.text.secondary },
-  addressRow: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 4 },
+  addressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    gap: 4,
+  },
   addressText: { fontSize: 14, color: Colors.text.secondary, flexShrink: 1 },
 
-  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-  sectionTitle: { fontSize: 20, fontWeight: "bold", color: Colors.text.primary },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+  },
   description: { fontSize: 16, lineHeight: 24, color: Colors.text.secondary },
 
   footer: {

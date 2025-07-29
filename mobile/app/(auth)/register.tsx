@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,46 +8,48 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Colors } from '../../constants/Colors';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { useAuth } from '../../context/AuthContext';
+} from "react-native";
+import { useRouter } from "expo-router";
+import { Colors } from "../../constants/Colors";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { useAuth } from "../../context/AuthContext";
 
 export default function RegisterScreen() {
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
-  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
 
   const handleRegister = async () => {
-    setError(null); // Clear previous errors
+    setError(null);
     if (!fullName || !username || !email || !password || !address) {
-      setError('Please fill in all fields');
+      setError("Please fill in all fields");
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError("Password must be at least 6 characters long");
       return;
     }
 
     setLoading(true);
     try {
       await register({ fullName, username, email, password, address });
-      Alert.alert( // Keep alert for success as it's a final action before redirect
-        'Registration Successful',
-        'You can now log in with your new account.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+      Alert.alert(
+        "Registration Successful",
+        "You can now log in with your new account.",
+        [{ text: "OK", onPress: () => router.replace("/(auth)/login") }]
       );
     } catch (error: any) {
-      setError(error.message || 'An unknown error occurred during registration.');
+      setError(
+        error.message || "An unknown error occurred during registration."
+      );
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,7 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
       <ScrollView
@@ -147,54 +149,54 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   content: {
     paddingHorizontal: 24,
     paddingVertical: 32,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.text.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: Colors.text.secondary,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
   },
   form: {
     marginBottom: 32,
   },
   errorContainer: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: "#fef2f2",
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: "#fecaca",
   },
   errorText: {
-    color: '#dc2626',
+    color: "#dc2626",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   registerButton: {
     marginTop: 8,
   },
   footer: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   footerText: {
     fontSize: 14,
@@ -202,6 +204,6 @@ const styles = StyleSheet.create({
   },
   signInLink: {
     color: Colors.primary[600],
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

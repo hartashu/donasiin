@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TextInputProps, ViewStyle } from 'react-native';
-import { Colors } from '../../constants/Colors';
+import React, { useState } from "react";
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  TextInputProps,
+  ViewStyle,
+} from "react-native";
+import { Colors } from "../../constants/Colors";
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -8,7 +15,13 @@ interface InputProps extends TextInputProps {
   containerStyle?: ViewStyle;
 }
 
-export function Input({ label, error, containerStyle, style, ...props }: InputProps) {
+export function Input({
+  label,
+  error,
+  containerStyle,
+  style,
+  ...props
+}: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
@@ -43,7 +56,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.text.primary,
     marginBottom: 8,
   },
