@@ -27,14 +27,9 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   const handleRegister = async () => {
-<<<<<<< HEAD
-    if (!fullName || !username || !email || !password || !address) {
-      Alert.alert('Error', 'Please fill in all fields');
-=======
     setError(null); // Clear previous errors
     if (!fullName || !username || !email || !password || !address) {
       setError('Please fill in all fields');
->>>>>>> petrusanthonychaim
       return;
     }
 
@@ -46,16 +41,6 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await register({ fullName, username, email, password, address });
-<<<<<<< HEAD
-      Alert.alert(
-        'Verification Required',
-        'A verification email has been sent. Please check your inbox to complete registration.',
-        [{ text: 'OK', onPress: () => router.push('/(auth)/verify-email') }]
-      );
-    } catch (error: any) {
-      const errorMessage = error.message || 'An unknown error occurred during registration.';
-      Alert.alert('Registration Failed', errorMessage);
-=======
       Alert.alert( // Keep alert for success as it's a final action before redirect
         'Registration Successful',
         'You can now log in with your new account.',
@@ -63,7 +48,6 @@ export default function RegisterScreen() {
       );
     } catch (error: any) {
       setError(error.message || 'An unknown error occurred during registration.');
->>>>>>> petrusanthonychaim
     } finally {
       setLoading(false);
     }
