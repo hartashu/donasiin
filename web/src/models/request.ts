@@ -136,4 +136,12 @@ export class RequestModel {
     ];
     return db.collection("requests").aggregate(pipeline).toArray();
   }
+
+  static async deleteRequestById(requestId: string): Promise<boolean> {
+    const db = await connectToDb();
+    const result = await db.collection(REQUEST_COLLECTION).deleteOne({
+      _id: new ObjectId(requestId),
+    });
+    return result.deletedCount > 0;
+  }
 }

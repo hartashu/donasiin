@@ -82,3 +82,40 @@ export async function PATCH(
     return handleError(error);
   }
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 1. Cari permintaan yang akan dihapus
+    const requestToDelete = await RequestModel.getRequestById(params.id);
+    if (!requestToDelete) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+
+    // 2. Otorisasi: Pastikan hanya pembuat request yang bisa menghapus
+    const isRequester = requestToDelete.userId.toString() === session.user.id;
+    if (!isRequester) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only delete your own requests." },
+        { status: 403 }
+      );
+    }
+
+    // 3. Hapus permintaan dari database
+    const isDeleted = await RequestModel.deleteRequestById(params.id);
+    if (!isDeleted) {
+      throw new Error("Failed to delete the request.");
+    }
+
+    return NextResponse.json({ message: "Request deleted successfully" });
+  } catch (error) {
+    return handleError(error);
+  }
+}
