@@ -117,13 +117,18 @@
 //   }
 // }
 
-
 import { connectToDb } from "@/config/mongo";
-import { IRequest, IPost, RequestStatus } from "@/types/types";
+import {
+  IRequest,
+  IPost,
+  RequestStatus,
+  IRequestWithPostDetails,
+} from "@/types/types";
 import { ObjectId, WithId, InsertOneResult } from "mongodb";
 
 const REQUEST_COLLECTION = "requests";
-const POST_COLLECTION = "posts"; // <-- Tambahkan ini
+const POST_COLLECTION = "posts";
+const USER_COLLECTION = "users";
 
 export class RequestModel {
   static async createRequest(
@@ -140,38 +145,104 @@ export class RequestModel {
       updatedAt: new Date(),
     };
 
-    return db.collection<Omit<IRequest, "_id">>(REQUEST_COLLECTION).insertOne(requestDoc);
+    return db
+      .collection<Omit<IRequest, "_id">>(REQUEST_COLLECTION)
+      .insertOne(requestDoc);
   }
 
   static async getRequestById(
     requestId: string
   ): Promise<WithId<IRequest> | null> {
     const db = await connectToDb();
-    return db.collection<IRequest>(REQUEST_COLLECTION).findOne({ _id: new ObjectId(requestId) });
+    return db
+      .collection<IRequest>(REQUEST_COLLECTION)
+      .findOne({ _id: new ObjectId(requestId) });
   }
 
-  static async findUserRequests(userId: string): Promise<any[]> {
+  static async findUserRequests(
+    userId: string
+  ): Promise<IRequestWithPostDetails[]> {
     const db = await connectToDb();
     const userObjectId = new ObjectId(userId);
     const pipeline = [
       { $match: { userId: userObjectId } },
-      { $lookup: { from: "posts", localField: "postId", foreignField: "_id", as: "postDetails" } },
+      {
+        $lookup: {
+          from: POST_COLLECTION,
+          localField: "postId",
+          foreignField: "_id",
+          as: "postDetails",
+        },
+      },
       { $unwind: { path: "$postDetails", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: USER_COLLECTION,
+          localField: "postDetails.userId",
+          foreignField: "_id",
+          as: "authorDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$authorDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          "postDetails.author": "$authorDetails",
+        },
+      },
       { $sort: { createdAt: -1 } },
     ];
-    return db.collection("requests").aggregate(pipeline).toArray();
+    return db
+      .collection<IRequest>(REQUEST_COLLECTION)
+      .aggregate<IRequestWithPostDetails>(pipeline)
+      .toArray();
   }
 
-  static async getIncomingRequestsForMyPosts(userId: string): Promise<any[]> {
+  static async getIncomingRequestsForMyPosts(
+    userId: string
+  ): Promise<IRequestWithPostDetails[]> {
     const db = await connectToDb();
     const userObjectId = new ObjectId(userId);
     const pipeline = [
-      { $lookup: { from: "posts", localField: "postId", foreignField: "_id", as: "post" } },
-      { $unwind: "$post" },
-      { $match: { "post.userId": userObjectId } },
+      {
+        $lookup: {
+          from: POST_COLLECTION,
+          localField: "postId",
+          foreignField: "_id",
+          as: "postDetails",
+        },
+      },
+      { $unwind: "$postDetails" },
+      { $match: { "postDetails.userId": userObjectId } },
+      {
+        $lookup: {
+          from: USER_COLLECTION,
+          localField: "postDetails.userId",
+          foreignField: "_id",
+          as: "authorDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$authorDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          "postDetails.author": "$authorDetails",
+        },
+      },
       { $sort: { createdAt: -1 } },
     ];
-    return db.collection(REQUEST_COLLECTION).aggregate(pipeline).toArray();
+    return db
+      .collection<IRequest>(REQUEST_COLLECTION)
+      .aggregate<IRequestWithPostDetails>(pipeline)
+      .toArray();
   }
 
   static async updateRequestStatus(
@@ -192,9 +263,14 @@ export class RequestModel {
       { $set: updateData }
     );
 
-    // --- LOGIKA BARU DITAMBAHKAN DI SINI ---
-    if (result.modifiedCount > 0 && (status === RequestStatus.ACCEPTED || status === RequestStatus.COMPLETED)) {
-      const updatedRequest = await requestCollection.findOne({ _id: new ObjectId(requestId) });
+    // Auto set isAvailable: false
+    if (
+      result.modifiedCount > 0 &&
+      (status === RequestStatus.ACCEPTED || status === RequestStatus.COMPLETED)
+    ) {
+      const updatedRequest = await requestCollection.findOne({
+        _id: new ObjectId(requestId),
+      });
       if (updatedRequest) {
         const postCollection = db.collection<IPost>(POST_COLLECTION);
         await postCollection.updateOne(
@@ -203,7 +279,6 @@ export class RequestModel {
         );
       }
     }
-    // ------------------------------------
 
     return result.modifiedCount > 0;
   }

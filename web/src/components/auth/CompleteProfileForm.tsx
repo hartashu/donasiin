@@ -8,8 +8,11 @@ import { completeGoogleRegistration } from "@/lib/actions/user.actions";
 import { UserRound, MapPin } from "lucide-react";
 import type { IIncompleteProfile } from "@/types/types";
 
+// FIX: Update the props interface to expect a plain object
+// where '_id' is a string, not an ObjectId.
+// This matches the data structure passed from the Server Component.
 interface CompleteProfileFormProps {
-    profile: IIncompleteProfile;
+    profile: Omit<IIncompleteProfile, '_id'> & { _id: string };
 }
 
 export function CompleteProfileForm({ profile }: CompleteProfileFormProps) {

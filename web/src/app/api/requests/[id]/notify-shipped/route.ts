@@ -10,7 +10,8 @@ export async function POST(
     { params }: { params: { id: string } }
 ) {
     try {
-        const session = await getSession(request);
+        // FIX: The getSession function likely doesn't require the `request` argument.
+        const session = await getSession();
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }

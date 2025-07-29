@@ -32,23 +32,23 @@ export async function PATCH(
     const isDonor = post.userId.toString() === session.user.id;
     const isRequester = currentRequest.userId.toString() === session.user.id;
 
-    // Logika untuk Donatur
+    // Donor logic
     if (isDonor) {
       const body = await request.json();
       const { status, trackingCode } = updateRequestStatusSchema.parse(body);
 
-      // Donatur hanya bisa: ACCEPT, REJECT, atau SHIPPED
+      // Donors can only: ACCEPT, REJECT, or SHIPPED
       if (
         status === RequestStatus.ACCEPTED ||
         status === RequestStatus.REJECTED ||
         status === RequestStatus.SHIPPED
       ) {
         await RequestModel.updateRequestStatus(
-          currentRequest._id,
+          currentRequest._id.toString(), // <-- FIX: Convert ObjectId to string
           status,
           trackingCode
         );
-        // Jika diterima, update status post menjadi tidak tersedia
+        // If accepted, update post status to unavailable
         if (status === RequestStatus.ACCEPTED) {
           await PostModel.updatePost(post.slug, { isAvailable: false });
         }
@@ -58,16 +58,16 @@ export async function PATCH(
       }
     }
 
-    // Logika untuk Penerima
+    // Requester logic
     if (isRequester) {
       const body = await request.json();
-      // Penerima hanya bisa: COMPLETED
+      // Requesters can only: COMPLETED
       if (
         body.status === RequestStatus.COMPLETED &&
         currentRequest.status === RequestStatus.SHIPPED
       ) {
         await RequestModel.updateRequestStatus(
-          currentRequest._id,
+          currentRequest._id.toString(), // <-- FIX: Convert ObjectId to string
           RequestStatus.COMPLETED
         );
         return NextResponse.json({ message: "Request completed successfully" });

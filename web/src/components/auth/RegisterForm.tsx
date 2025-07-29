@@ -7,6 +7,7 @@ import { RegisterSchema, type RegisterInput } from "@/utils/validations/auth";
 import { signIn } from 'next-auth/react';
 import Link from "next/link";
 import { Mail, Lock, UserRound, MapPin } from "lucide-react";
+import Image from "next/image"; // FIX: Import Image component
 
 export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +120,8 @@ export function RegisterForm() {
         </div>
 
         <button onClick={handleGoogleSignIn} disabled={isPending} className="w-full flex items-center justify-center gap-3 bg-white/30 text-gray-800 border border-gray-400/50 font-semibold py-2.5 rounded-md hover:bg-white/50 transition disabled:opacity-70 disabled:cursor-not-allowed">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" className="w-5 h-5" />
+          {/* FIX: Replaced <img> with <Image> component */}
+          <Image src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" width={20} height={20} />
           Sign up with Google
         </button>
 

@@ -2,6 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image"; // FIX: Import the Image component
 
 const leftMessages = [
   "Have you donated today?",
@@ -59,10 +60,12 @@ export default function TalkingSection() {
     >
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
+        {/* FIX: Replaced <img> with next/image <Image> component */}
+        <Image
           src="https://img.freepik.com/premium-photo/cartoon-illustration-park-with-wooden-bench-center-city-skyline-background_14117-893721.jpg"
           alt="background"
-          className="w-full h-full object-cover brightness-95"
+          fill
+          className="object-cover brightness-95"
         />
         <div className="absolute inset-0 bg-white/30 backdrop-blur-xs"></div>
       </div>
@@ -99,9 +102,7 @@ export default function TalkingSection() {
           transition={{ duration: 0.8 }}
           className="w-full md:w-1/3 relative flex justify-center"
         >
-          <motion.img
-            src="https://static.vecteezy.com/system/resources/previews/037/168/909/original/people-doing-charity-volunteer-holding-donation-box-cartoon-character-png.png"
-            alt="Person A"
+          <motion.div
             animate={
               showLeft
                 ? {
@@ -112,7 +113,16 @@ export default function TalkingSection() {
                 : {}
             }
             className="w-full max-w-[260px]"
-          />
+          >
+            {/* FIX: Replaced <img> with next/image <Image> component */}
+            <Image
+              src="https://static.vecteezy.com/system/resources/previews/037/168/909/original/people-doing-charity-volunteer-holding-donation-box-cartoon-character-png.png"
+              alt="Person A"
+              width={260}
+              height={300}
+              className="w-full h-auto"
+            />
+          </motion.div>
           {showLeft && (
             <motion.div
               key={leftIndex}
@@ -120,7 +130,7 @@ export default function TalkingSection() {
               animate={{ opacity: 1, y: -20, scale: 1 }}
               transition={{ duration: 0.5 }}
               className="absolute -top-5 -right-4 bg-[#e0f7f4] px-5 py-3 rounded-xl shadow-md border border-[#2a9d8f] text-sm text-[#2a9d8f] max-w-[300px]
-              before:content-[''] before:absolute before:top-full before:left-6 before:border-8 before:border-transparent before:border-t-[#e0f7f4]"
+                     before:content-[''] before:absolute before:top-full before:left-6 before:border-8 before:border-transparent before:border-t-[#e0f7f4]"
             >
               {leftMessages[leftIndex]}
             </motion.div>
@@ -134,9 +144,7 @@ export default function TalkingSection() {
           transition={{ duration: 0.8 }}
           className="w-full md:w-1/3 relative flex justify-center"
         >
-          <motion.img
-            src="https://static.vecteezy.com/system/resources/previews/037/168/906/original/people-doing-charity-volunteer-holding-donation-box-cartoon-character-png.png"
-            alt="Person B"
+          <motion.div
             animate={
               showRight
                 ? {
@@ -147,7 +155,16 @@ export default function TalkingSection() {
                 : {}
             }
             className="w-full max-w-[260px]"
-          />
+          >
+            {/* FIX: Replaced <img> with next/image <Image> component */}
+            <Image
+              src="https://static.vecteezy.com/system/resources/previews/037/168/906/original/people-doing-charity-volunteer-holding-donation-box-cartoon-character-png.png"
+              alt="Person B"
+              width={260}
+              height={300}
+              className="w-full h-auto"
+            />
+          </motion.div>
           {showRight && (
             <motion.div
               key={rightIndex}
@@ -155,7 +172,7 @@ export default function TalkingSection() {
               animate={{ opacity: 1, y: -20, scale: 1 }}
               transition={{ duration: 0.5 }}
               className="absolute -top-4 -left-4 bg-[#edf4ff] px-5 py-3 rounded-xl shadow-md border border-[#3b82f6] text-sm text-[#3b82f6] max-w-[220px]
-              before:content-[''] before:absolute before:top-full before:right-6 before:border-8 before:border-transparent before:border-t-[#edf4ff]"
+                     before:content-[''] before:absolute before:top-full before:right-6 before:border-8 before:border-transparent before:border-t-[#edf4ff]"
             >
               {rightMessages[rightIndex]}
             </motion.div>
@@ -165,23 +182,3 @@ export default function TalkingSection() {
     </section>
   );
 }
-
-
-// "use client";
-
-// import { motion } from "framer-motion";
-
-// export default function TalkingSection() {
-//   return (
-//     <section className="relative py-24 text-black overflow-hidden bg-gray-50">
-//       <div className="container mx-auto px-6 text-center">
-//         <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="relative text-4xl md:text-5xl font-extrabold text-brand-dark mb-4 tracking-tight">
-//           Conversations that Matter
-//         </motion.h2>
-//         <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }} className="text-gray-600 text-lg max-w-2xl mx-auto">
-//           Connect directly with donors and recipients. Our secure chat ensures that every item finds a grateful new home, fostering a community of trust and support.
-//         </motion.p>
-//       </div>
-//     </section>
-//   );
-// }

@@ -2,14 +2,26 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image"; // FIX: Import Image component
 import { FileUp, LoaderCircle, Tag, Text, Type, X } from "lucide-react";
 import RecommendationModal from "@/components/createPost/Recommendation";
+
+// FIX: Added 'distance' property to match the type expected by RecommendationModal
+interface IRecommendedUser {
+  _id: string;
+  fullName: string;
+  username: string;
+  avatarUrl?: string;
+  distance: number; // This property was missing
+  // Add any other properties you expect from the API
+}
 
 export default function CreatePost() {
   const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
-  const [recommendedUsers, setRecommendedUsers] = useState<any[]>([]);
+  // FIX: Use the specific type for state
+  const [recommendedUsers, setRecommendedUsers] = useState<IRecommendedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
@@ -218,9 +230,12 @@ export default function CreatePost() {
                 <div className="flex gap-3 mt-2 mb-3 flex-wrap">
                   {selectedFiles.map((file, idx) => (
                     <div key={idx} className="relative">
-                      <img
+                      {/* FIX: Replaced <img> with next/image <Image> for optimization */}
+                      <Image
                         src={URL.createObjectURL(file)}
                         alt="preview"
+                        width={96}
+                        height={96}
                         className="w-24 h-24 object-cover rounded-md border-2 border-white/50 shadow-md"
                       />
                       <button

@@ -111,9 +111,8 @@ export default function DonationsLayout({
                         pathname: item.path,
                         query: params.toString(),
                       }}
-                      className={`block px-2 py-1 rounded hover:bg-gray-100 ${
-                        isActive ? "bg-gray-200 font-semibold" : ""
-                      }`}
+                      className={`block px-2 py-1 rounded hover:bg-gray-100 ${isActive ? "bg-gray-200 font-semibold" : ""
+                        }`}
                     >
                       {item.name}
                     </Link>
