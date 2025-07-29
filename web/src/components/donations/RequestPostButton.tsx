@@ -49,7 +49,7 @@ export default function RequestPostButton({
       <button
         onClick={handleRequest}
         disabled={loading}
-        className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded"
+        className="w-full bg-[#2a9d8f] hover:bg-[#24786f] text-white font-semibold py-2 px-4 rounded shadow-sm transition duration-200 disabled:opacity-50"
       >
         {loading ? "Requesting..." : "Request This Item"}
       </button>

@@ -6,6 +6,10 @@ import { updatePostSchema } from "@/utils/validations/post";
 import { WithId } from "mongodb";
 import { NextResponse } from "next/server";
 
+// Andy
+import { RequestModel } from "@/models/request";
+import { ObjectId } from "mongodb";
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ slug: string }> }
@@ -21,8 +25,28 @@ export async function GET(
       );
     }
 
-    return NextResponse.json<IJsonResponse<WithId<IPost>>>(
-      { statusCode: 200, data: post },
+    // return NextResponse.json<IJsonResponse<WithId<IPost>>>(
+    //   { statusCode: 200, data: post },
+    //   { status: 200 }
+    // );
+
+    // Andy
+      // 🟡 Ambil session user
+    const session = await getSession();
+    const userId = session?.user?.id;
+
+    // 🟡 Default tidak me-request
+    let hasRequested = false;
+
+    // 🟢 Cek apakah user sudah pernah request post ini
+    if (userId) {
+      const myRequests = await RequestModel.getMyRequests(new ObjectId(userId));
+      hasRequested = myRequests.some((req) => req.postId.equals(post._id));
+    }
+
+    // 🟢 Tambahkan properti baru: hasRequested
+    return NextResponse.json<IJsonResponse<any>>(
+      { statusCode: 200, data: { ...post, hasRequested } },
       { status: 200 }
     );
   } catch (error) {

@@ -1,144 +1,175 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { IPost } from "@/types/types";
-import { getPosts } from "@/actions/action";
 import Link from "next/link";
-import { Minimize2 } from "lucide-react";
+import { MapPin, Tags } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
+import InfiniteScroll from "react-infinite-scroll-component";
+
+import { getPosts } from "@/actions/action";
+import { toTitleCase } from "@/lib/titleCase";
+import { IPost } from "@/types/types";
+import DonationCardSkeleton from "./DonationCardSkeleton";
+import { LoadingDots } from "../Loading";
 
 export default function DonationCards({ category }: { category?: string }) {
   const [data, setData] = useState<IPost[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+
   const searchParams = useSearchParams();
-  const search = searchParams.get("search") || "";
+  const search = useMemo(
+    () => searchParams.get("search") || "",
+    [searchParams]
+  );
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    setPage(1);
+    setData([]);
+    setTotalPages(1);
+    setLoading(true);
+    setIsSearching(!!search);
+  }, [category, search]);
+
+  useEffect(() => {
+    const fetchInitial = async () => {
       try {
-        const response = await getPosts(category, search, page, 12);
-        setData(response.posts);
-        setTotalPages(response.totalPages);
-      } catch (err) {
+        const res = await getPosts(category, search, 1, 12);
+        setData(res.posts);
+        setTotalPages(res.totalPages);
+      } catch {
         setData([]);
       } finally {
         setLoading(false);
+        setIsSearching(false);
       }
     };
+    fetchInitial();
+  }, [category, search]);
 
-    fetchData();
-  }, [category, search, page]);
-
-  const handlePrev = () => {
-    if (page > 1) setPage((prev) => prev - 1);
+  const fetchMoreData = async () => {
+    const nextPage = page + 1;
+    const res = await getPosts(category, search, nextPage, 12);
+    setData((prev) => [...prev, ...res.posts]);
+    setPage(nextPage);
+    setTotalPages(res.totalPages);
   };
 
-  const handleNext = () => {
-    if (page < totalPages) setPage((prev) => prev + 1);
-  };
+  const hasMore = page < totalPages;
 
   return (
     <section className="bg-[#f8fdfc] text-black min-h-screen">
       <div className="container mx-auto px-6 py-6">
-        {loading ? (
-          <p className="text-center">Loading...</p>
+        {isSearching && loading ? (
+          <LoadingDots />
+        ) : !isSearching && loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <DonationCardSkeleton key={i} />
+            ))}
+          </div>
         ) : data.length === 0 ? (
-          <p className="text-center text-gray-500">No donations found.</p>
+          <div className="text-center py-20">
+            <p className="text-gray-500 text-lg">No donations found</p>
+          </div>
         ) : (
-          <>
+          <InfiniteScroll
+            dataLength={data.length}
+            next={fetchMoreData}
+            hasMore={hasMore}
+            loader={
+              !isSearching && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <DonationCardSkeleton key={i} />
+                  ))}
+                </div>
+              )
+            }
+            endMessage={
+              <p className="text-center text-sm text-gray-400 mt-8">
+                You've reached the end!
+              </p>
+            }
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {data.map((d, idx) => (
-                <div
+                <Link
                   key={idx}
-                  className="group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+                  href={`/donations/${d.category}/detail?slug=${d.slug}`}
+                  className="group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] block"
                 >
-                  <div className="relative h-44">
+                  <div className="relative h-60">
                     <img
-                      src={d.thumbnailUrl}
+                      src={d.thumbnailUrl || "/placeholder.jpg"}
                       alt={d.title}
                       className="w-full h-full object-cover object-center"
                     />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition duration-300">
-                      <div className="opacity-0 group-hover:opacity-100 transition">
-                        <Link
-                          href={`/donations/${d.category}/detail?slug=${d.slug}`}
-                          className="backdrop-blur-sm bg-white/70 px-4 py-2 rounded-full flex items-center gap-2 shadow-md text-sm"
-                        >
-                          <Minimize2 className="w-3" />
-                          View Details
-                        </Link>
-                      </div>
-                    </div>
-                    <span className="absolute top-2 right-2 bg-[#2a9d8f] text-white text-xs font-bold px-2 py-1 rounded-full">
+                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-[#d0f2ee] text-[#1c695f] text-[11px] font-medium px-3 py-1 rounded-full w-fit shadow-sm">
+                      <div className="w-2 h-2 rounded-full bg-[#1c695f] animate-pulse" />
                       Available
-                    </span>
+                    </div>
                   </div>
 
-                  <div className="p-4 flex flex-col justify-between h-[180px]">
-                    <h3 className="text-lg font-bold text-[#1f2d28] mb-1 line-clamp-1">
-                      {d.title}
+                  <div className="p-4 flex flex-col justify-between h-[180px] space-y-1">
+                    <h3 className="text-base font-semibold text-[#1f2d28] line-clamp-1">
+                      {toTitleCase(d.title)}
                     </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-2 text-justify">
-                      {d.description}
+
+                    <p className="text-sm text-gray-600 line-clamp-1 mb-2 ">
+                      {d.description.charAt(0).toUpperCase() +
+                        d.description.slice(1)}
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-auto pt-2 border-t border-gray-100">
-                      <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden">
+
+                    <div className="flex items-center gap-1 text-[11px] text-[#1c695f] font-medium mb-1">
+                      <Tags className="w-3.5 h-3.5" />
+                      <span>{toTitleCase(d.category)}</span>
+                    </div>
+
+                    {d.author?.address && (
+                      <div className="flex items-center gap-1 text-[11px] text-gray-500 mb-2">
+                        <MapPin className="w-3 h-3 text-[#1c695f]" />
+                        <span className="line-clamp-1">
+                          {toTitleCase(d.author.address)}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 mt-auto pt-2 border-t border-gray-100">
+                      <div className="w-7 h-7 rounded-full bg-gray-200 overflow-hidden">
                         {d.author?.avatarUrl ? (
                           <img
                             src={d.author.avatarUrl}
                             alt={d.author?.fullName ?? "Author"}
-                            width={24}
-                            height={24}
-                            className="rounded-full object-cover"
+                            className="w-full h-full object-cover rounded-full"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[10px] font-bold bg-[#13796f] text-white rounded-full">
+                          <div className="w-full h-full flex items-center justify-center text-[10px] font-bold bg-[#1c695f] text-white rounded-full">
                             {d.author?.fullName?.charAt(0).toUpperCase() ?? "?"}
                           </div>
                         )}
                       </div>
-                      <span className="truncate">
-                        {d.author?.fullName ?? "Unknown"}
-                      </span>
-                      <span className="text-gray-400">•</span>
-                      <span>
-                        {d.createdAt
-                          ? formatDistanceToNowStrict(new Date(d.createdAt), {
-                              addSuffix: true,
-                            })
-                          : "Unknown time"}
-                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-semibold text-sm text-gray-800">
+                          {toTitleCase(d.author?.fullName ?? "Unknown")}
+                        </span>
+                        <span className="text-[9px] text-gray-400">
+                          {d.createdAt
+                            ? formatDistanceToNowStrict(new Date(d.createdAt), {
+                                addSuffix: true,
+                              })
+                            : "Unknown time"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-
-            {/* Pagination */}
-            <div className="flex justify-center items-center gap-4">
-              <button
-                onClick={handlePrev}
-                disabled={page === 1}
-                className="px-4 py-2 bg-[#ccc] text-black rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-600">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={handleNext}
-                disabled={page === totalPages}
-                className="px-4 py-2 bg-[#2a9d8f] text-white rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </>
+          </InfiniteScroll>
         )}
       </div>
     </section>

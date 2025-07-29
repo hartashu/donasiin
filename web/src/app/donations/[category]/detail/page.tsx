@@ -7,6 +7,10 @@ import Link from "next/link";
 import { IPost } from "@/types/types";
 import DeletePostButton from "@/components/donations/DeletePostButton";
 import RequestPostButton from "@/components/donations/RequestPostButton";
+import { Calendar, Tag, Leaf, CheckCircle, BookImage } from "lucide-react";
+import ImageGallery from "@/components/donations/ImageGallery";
+import { toTitleCase } from "@/lib/titleCase";
+import DonationDetailSkeleton from "@/components/donations/DonationDetailSkeleton";
 
 export default function DonationDetailPage() {
   const router = useRouter();
@@ -15,7 +19,6 @@ export default function DonationDetailPage() {
 
   const [post, setPost] = useState<IPost>();
   const [loading, setLoading] = useState(true);
-  const [currentImage, setCurrentImage] = useState(0);
   const [sessionUserId, setSessionUserId] = useState<string>("");
   const [chatLoading, setChatLoading] = useState(false);
   const [hasRequested, setHasRequested] = useState(false);
@@ -26,6 +29,7 @@ export default function DonationDetailPage() {
         const res = await fetch(`/api/posts/${slug}`);
         const json = await res.json();
         setPost(json?.data || null);
+        setHasRequested(json?.data?.hasRequested || false);
       } catch (err) {
         console.error("Failed to fetch post", err);
       } finally {
@@ -49,18 +53,6 @@ export default function DonationDetailPage() {
     }
   }, [slug]);
 
-  const nextImage = () => {
-    if (!post?.imageUrls) return;
-    setCurrentImage((prev) => (prev + 1) % post.imageUrls.length);
-  };
-
-  const prevImage = () => {
-    if (!post?.imageUrls) return;
-    setCurrentImage((prev) =>
-      prev === 0 ? post.imageUrls.length - 1 : prev - 1
-    );
-  };
-
   const handleStartChat = async (title: string) => {
     if (!post?.author?._id) return;
     setChatLoading(true);
@@ -71,6 +63,7 @@ export default function DonationDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           receiverId: post.author._id,
+          text: `Hi, I'm interested in your item: "${title}"`,
         }),
       });
 
@@ -85,7 +78,7 @@ export default function DonationDetailPage() {
     }
   };
 
-  if (loading) return <p className="text-center py-10">Loading...</p>;
+  if (loading) return <DonationDetailSkeleton />;
   if (!post) return <p className="text-center py-10">Post not found.</p>;
 
   const isOwner = post.userId.toString() === sessionUserId;
@@ -93,36 +86,55 @@ export default function DonationDetailPage() {
   return (
     <main className="container mx-auto py-8 px-4">
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Carousel Image */}
-        <div className="relative w-full h-80 md:h-[400px] rounded-lg overflow-hidden">
-          <Image
-            src={post.imageUrls?.[currentImage] || "/placeholder.svg"}
-            alt={`Image ${currentImage + 1}`}
-            fill
-            className="object-cover object-center"
-          />
-          {post.imageUrls?.length > 1 && (
-            <>
-              <button
-                onClick={prevImage}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2"
-              >
-                ‹
-              </button>
-              <button
-                onClick={nextImage}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2"
-              >
-                ›
-              </button>
-            </>
-          )}
-        </div>
+        <ImageGallery imageUrls={post.imageUrls || []} />
 
         {/* Info Section */}
         <div className="flex flex-col gap-4">
-          <h1 className="text-3xl font-bold text-green-800">{post.title}</h1>
-          <p className="text-gray-700 text-lg">{post.description}</p>
+          <h1 className="text-3xl font-bold text-[#1c695f]">{post.title}</h1>
+          <p className="text-[#0e3430] text-lg">{post.description}</p>
+
+          <div className="space-y-2 text-sm text-gray-700 mt-2">
+            <div className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-[#1c695f]" />
+              <span>
+                <span className="font-semibold text-[#1c695f]">Category:</span>{" "}
+                {toTitleCase(post.category)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#1c695f]" />
+              <span>
+                <span className="font-semibold text-[#1c695f]">Posted On:</span>{" "}
+                {new Date(post.createdAt ?? new Date()).toLocaleDateString(
+                  "en-US",
+                  {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }
+                )}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Leaf className="w-4 h-4 text-[#1c695f]" />
+              <span>
+                <span className="font-semibold text-[#1c695f]">
+                  Carbon Saved:
+                </span>{" "}
+                {post.carbonKg} kg CO₂
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <BookImage className="w-4 h-4 text-[#1c695f] mt-0.5" />
+              <span>
+                <span className="font-semibold text-[#1c695f]">Images:</span>{" "}
+                {post.imageUrls.length} photos
+              </span>
+            </div>
+          </div>
 
           {/* Author */}
           <div className="flex items-center gap-3 mt-4">
@@ -134,20 +146,25 @@ export default function DonationDetailPage() {
               className="rounded-full object-cover"
             />
             <div>
-              <p className="font-semibold">{post.author?.fullName}</p>
-              <p className="text-sm text-gray-500">{post.author?.address}</p>
+              <p className="font-semibold">
+                {toTitleCase(post.author?.fullName || "")}
+              </p>
+              <p className="text-sm text-gray-500">
+                {toTitleCase(post.author?.address || "")}
+              </p>
             </div>
           </div>
 
           {/* Status */}
           {post.isAvailable && (
-            <div className="bg-green-100 text-green-700 px-3 py-1 rounded w-fit mt-2 font-medium">
+            <div className="flex items-center gap-2 bg-[#d0f2ee] text-[#1c695f] px-3 py-1 rounded-full w-fit mt-2 font-medium shadow-sm">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#1c695f] animate-pulse" />
               Available
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="mt-6 space-y-3">
+          <div className="mt-2 space-y-3">
             {!sessionUserId ? (
               <div className="p-4 bg-yellow-50 text-yellow-700 border rounded">
                 You must{" "}
@@ -163,21 +180,24 @@ export default function DonationDetailPage() {
                 </div>
                 <DeletePostButton slug={slug!} />
               </>
-            ) : hasRequested ? (
-              <div className="p-4 bg-green-50 text-green-700 border rounded text-center font-medium">
-                You have already requested this item.
-              </div>
             ) : (
               <>
-                <RequestPostButton
-                  postId={post._id.toString()}
-                  onSuccess={() => setHasRequested(true)} // update state ketika request berhasil
-                />
+                {hasRequested ? (
+                  <div className="flex items-center justify-center gap-2 px-4 py-3 border border-[#2a9d8f] bg-[#e6f7f6] text-[#1c695f] rounded-md font-medium shadow-sm">
+                    <CheckCircle className="w-5 h-5 text-[#2a9d8f]" />
+                    <span>You have already requested this item.</span>
+                  </div>
+                ) : (
+                  <RequestPostButton
+                    postId={post._id.toString()}
+                    onSuccess={() => setHasRequested(true)}
+                  />
+                )}
 
                 <button
                   onClick={() => handleStartChat(post.title)}
                   disabled={chatLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+                  className="w-full border border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#f1f8f8] font-semibold py-2 rounded transition-colors duration-200 disabled:opacity-50"
                 >
                   {chatLoading ? "Starting Chat..." : "Chat with Owner"}
                 </button>

@@ -35,42 +35,34 @@ import handleError from '@/errorHandler/errorHandler';
 import { pusherServer } from '@/lib/pusher';
 
 export async function POST(request: Request) {
-    try {
-        const session = await getSession();
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const body = await request.json();
-        const { receiverId, text } = body;
-
-        // if (!receiverId || !text) {
-        //     return NextResponse.json({ error: 'Missing receiverId or text' }, { status: 400 });
-        // }
-
-        // const newMessage = await ChatModel.createMessage(session.user.id, receiverId, text);
-
-        // // Siarkan pesan baru ke channel yang relevan
-        // await pusherServer.trigger(newMessage.conversationId, 'messages:new', newMessage);
-
-        // return NextResponse.json(newMessage, { status: 201 });
-
-        if (!receiverId) {
-            return NextResponse.json({ error: 'Missing receiverId' }, { status: 400 });
-        }
-
-        if (!text) {
-        const { conversationId } = await ChatModel.getOrCreateConversation(session.user.id, receiverId);
-        return NextResponse.json({ conversationId }, { status: 201 });
-        }
-
-        // Jika text ada, langsung kirim message
-        const newMessage = await ChatModel.createMessage(session.user.id, receiverId, text);
-
-        await pusherServer.trigger(newMessage.conversationId, 'messages:new', newMessage);
-
-        return NextResponse.json(newMessage, { status: 201 });
-    } catch (error) {
-        return handleError(error);
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const body = await request.json();
+    const { receiverId, text } = body;
+
+    if (!receiverId) {
+      return NextResponse.json({ error: 'Missing receiverId' }, { status: 400 });
+    }
+
+    // 🔹 Jika text tidak ada → hanya ambil/membuat conversation
+    if (!text) {
+      const { conversationId } = await ChatModel.getOrCreateConversation(
+        session.user.id,
+        receiverId
+      );
+      return NextResponse.json({ conversationId }, { status: 201 });
+    }
+
+    // 🔹 Jika text ada → buat pesan & broadcast via pusher
+    const newMessage = await ChatModel.createMessage(session.user.id, receiverId, text);
+    await pusherServer.trigger(newMessage.conversationId, 'messages:new', newMessage);
+
+    return NextResponse.json(newMessage, { status: 201 });
+  } catch (error) {
+    return handleError(error);
+  }
 }

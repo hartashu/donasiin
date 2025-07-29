@@ -3,6 +3,7 @@
 import { deletePostAction } from "@/actions/action";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 interface DeletePostButtonProps {
   slug: string;
@@ -36,8 +37,9 @@ export default function DeletePostButton({ slug }: DeletePostButtonProps) {
     <button
       onClick={handleDeletePost}
       disabled={loading}
-      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded"
+      className="w-full flex items-center justify-center gap-2 bg-[#f9423a] hover:bg-[#d32f2f] text-white font-medium py-2 px-4 rounded transition duration-200 shadow-sm hover:shadow-md disabled:opacity-50"
     >
+      <Trash2 size={18} />
       {loading ? "Deleting..." : "Delete Post"}
     </button>
   );
