@@ -311,4 +311,13 @@ export class RequestModel {
     });
     return result.deletedCount > 0;
   }
+
+  static async getMyRequests(userId: ObjectId): Promise<WithId<IRequest>[]> {
+    const db = await connectToDb();
+    return db
+      .collection<IRequest>(REQUEST_COLLECTION)
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .toArray();
+  }
 }
