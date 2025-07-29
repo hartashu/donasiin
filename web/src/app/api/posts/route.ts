@@ -1,6 +1,7 @@
 import { IJsonResponse, IPost } from "@/types/types";
 import { ObjectId, WithId } from "mongodb";
 
+<<<<<<< HEAD
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/utils/getSession";
 import handleError from "@/errorHandler/errorHandler";
@@ -29,6 +30,23 @@ export async function GET(request: NextRequest) {
       search,
     });
 
+=======
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = request.nextUrl;
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const category = searchParams.get("category") || undefined;
+    const search = searchParams.get("search") || undefined;
+
+    const { posts, total } = await PostModel.getAllPosts({
+      page,
+      limit,
+      category,
+      search,
+    });
+
+>>>>>>> petrusanthonychaim
     return NextResponse.json<
       IJsonResponse<{
         posts: WithId<IPost>[];

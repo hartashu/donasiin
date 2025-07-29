@@ -78,7 +78,7 @@ export default function ChatScreen() {
           username: convo.otherUser.username || 'unknown',
           fullName: convo.otherUser.fullName,
           email: '',
-          avatar: convo.otherUser.avatarUrl || 'https://via.placeholder.com/150',
+          avatarUrl: convo.otherUser.avatarUrl || 'https://via.placeholder.com/150',
           dailyRequestLimit: 0,
           usedRequests: 0,
           createdAt: new Date(),
@@ -144,7 +144,7 @@ export default function ChatScreen() {
         onPress={() => handleChatPress(item)}
         activeOpacity={0.8}
       >
-        <Image source={{ uri: otherUser.avatar }} style={styles.avatar} />
+        <Image source={{ uri: otherUser.avatarUrl }} style={styles.avatar} />
         
         <View style={styles.chatContent}>
           <View style={styles.chatHeader}>

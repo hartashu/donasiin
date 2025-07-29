@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  TextInput,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, Stack } from 'expo-router'
@@ -21,129 +22,74 @@ import { AuthService } from '../services/auth'
 import { Plus, X } from 'lucide-react-native'
 
 const API_BASE_URL = 'http://localhost:3000/api'
+const MAX_IMAGES = 5
 
-// Same categories as HomeScreen, without 'All'
 const categories = [
-  'Bayi & Anak',
-  'Buku, Musik & Media',
-  'Elektronik',
-  'Fashion & Pakaian',
-  'Kesehatan & Kecantikan',
-  'Olahraga & Luar Ruangan',
-  'Otomotif & Peralatan',
-  'Perlengkapan Hewan Peliharaan',
-  'Perlengkapan Kantor & Alat Tulis',
-  'Rumah & Dapur',
+'Baby & Kids',
+'Books, Music & Media',
+'Electronics',
+'Fashion & Apparel',
+'Health & Beauty',
+'Sports & Outdoors',
+'Automotive & Tools',
+'Pet Supplies',
+'Office Supplies & Stationery',
+'Home & Kitchen'
 ]
 
-type AnalysisResult = {
-  itemName: string
-  quantity: number
-  carbonKg: number
-  aiAnalysis: string
-  imageUrl: string
-}
+type Asset = { uri: string; fileName?: string; type?: string }
 
 export default function CreatePostScreen() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState(categories[0])
-
-  // we no longer keep raw ImagePicker assets for upload
-  const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([])
-
+  const [itemImages, setItemImages] = useState<Asset[]>([])
   const [loadingPick, setLoadingPick] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
 
-  // call your backend analyze-item endpoint
-  const analyzeImage = async (
-    uri: string,
-    filename: string,
-    mimeType: string
-  ): Promise<AnalysisResult> => {
-    const token = await AuthService.getStoredToken()
-    if (!token) throw new Error('Not authenticated')
-
-    const formData = new FormData()
-    formData.append('itemImage', {
-      uri,
-      name: filename,
-      type: mimeType,
-    } as any)
-
-    const res = await fetch(`${API_BASE_URL}/analyze-item`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.message || 'Analysis failed')
-    }
-
-    const json = await res.json()
-    return json.data as AnalysisResult
-  }
-
   const handleImagePick = async () => {
     setLoadingPick(true)
     try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync()
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission Denied',
-          'We need photo library permissions to analyze an item!'
-        )
+        Alert.alert('Permission denied', 'We need photo access to pick images!')
         return
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: true,
-        selectionLimit: 5 - analysisResults.length,
+        allowsMultipleSelection: true, // iOS only, but harmless everywhere
         quality: 0.8,
       })
 
-      if (!result.canceled) {
-        // for each new asset, call analyzeImage
-        const promises = result.assets.map(async (asset) => {
-          const uri = asset.uri
-          const parts = uri.split('.')
-          const ext = parts[parts.length - 1]
-          const name = `photo.${ext}`
-          const mime = `image/${ext}`
+      console.log('🎨 picker result:', result)
+      if (result.canceled) return
 
-          return await analyzeImage(uri, name, mime)
-        })
+      const picks: Asset[] =
+        Array.isArray((result as any).assets) && (result as any).assets.length > 0
+          ? (result as any).assets.map((a: any) => ({
+              uri: a.uri,
+              fileName: a.fileName,
+              type: a.type,
+            }))
+          : [{ uri: (result as any).uri }]
 
-        const newAnalyses = await Promise.all(promises)
-        setAnalysisResults((prev) => [...prev, ...newAnalyses].slice(0, 5))
-      }
+      setItemImages(prev => [...prev, ...picks].slice(0, MAX_IMAGES))
     } catch (err: any) {
-      console.error(err)
-      Alert.alert('Image Analysis Error', err.message || '')
+      console.error('Image picker error:', err)
+      Alert.alert('Picker Error', err.message || 'Could not open image picker.')
     } finally {
       setLoadingPick(false)
     }
   }
 
-  const handleRemoveImage = (index: number) => {
-    setAnalysisResults((prev) =>
-      prev.filter((_, idx) => idx !== index)
-    )
-  }
+  const handleRemoveImage = (idx: number) =>
+    setItemImages(prev => prev.filter((_, i) => i !== idx))
 
   const handleSubmit = async () => {
-    if (!title || !description || analysisResults.length === 0) {
-      Alert.alert(
-        'Incomplete Form',
-        'Please fill in title, description, and add at least one image.'
-      )
+    if (!title || !description || itemImages.length === 0) {
+      Alert.alert('Incomplete', 'Please fill title, description, and add at least one image.')
       return
     }
 
@@ -152,34 +98,38 @@ export default function CreatePostScreen() {
       const token = await AuthService.getStoredToken()
       if (!token) throw new Error('You must be logged in.')
 
-      // gather just the hosted URLs
-      const imageUrls = analysisResults.map((r) => r.imageUrl)
+      const formData = new FormData()
+      formData.append('title', title)
+      formData.append('description', description)
+      formData.append('category', category)
+
+      itemImages.forEach(asset => {
+        const parts = asset.uri.split('.')
+        const ext = parts[parts.length - 1]
+        formData.append(
+          'itemImages',
+          {
+            uri: asset.uri,
+            name: asset.fileName ?? `photo.${ext}`,
+            type: asset.type ?? `image/${ext}`,
+          } as any
+        )
+      })
 
       const res = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          category,
-          images: imageUrls,
-        }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       })
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.message || 'Failed to create post.')
-      }
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || json.message || 'Upload failed.')
 
       Alert.alert('Success', 'Your donation has been posted!', [
         { text: 'OK', onPress: () => router.back() },
       ])
     } catch (err: any) {
-      console.error(err)
-      Alert.alert('Submission Error', err.message || '')
+      console.error('Submit error:', err)
+      Alert.alert('Error', err.message)
     } finally {
       setSubmitting(false)
     }
@@ -189,59 +139,34 @@ export default function CreatePostScreen() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen
         options={{
-          headerTitle: 'Create New Donation',
+          headerShown: true,
+          headerTitle: 'Create Donation',
           headerBackTitle: 'Back',
         }}
       />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.form}>
-          <Text style={styles.label}>Images & AI Analysis (up to 5)</Text>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.imageScrollView}
-          >
-            {analysisResults.map((r, idx) => (
-              <View key={idx} style={styles.imageContainer}>
-                <Image
-                  source={{ uri: r.imageUrl }}
-                  style={styles.image}
-                />
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => handleRemoveImage(idx)}
-                >
-                  <X size={16} color={Colors.white} />
-                </TouchableOpacity>
-              </View>
-            ))}
-
-            {loadingPick ? (
-              <View style={styles.imageContainer}>
-                <ActivityIndicator size="small" color={Colors.primary[600]} />
-              </View>
-            ) : analysisResults.length < 5 ? (
-              <TouchableOpacity
-                style={styles.addImageButton}
-                onPress={handleImagePick}
-              >
-                <Plus size={24} color={Colors.primary[600]} />
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <Text style={styles.label}>Images (up to {MAX_IMAGES})</Text>
+        <ScrollView horizontal style={styles.imageScrollView} showsHorizontalScrollIndicator={false}>
+          {itemImages.map((img, i) => (
+            <View key={i} style={styles.imageContainer}>
+              <Image source={{ uri: img.uri }} style={styles.image} />
+              <TouchableOpacity style={styles.removeBtn} onPress={() => handleRemoveImage(i)}>
+                <X size={16} color={Colors.white} />
               </TouchableOpacity>
-            ) : null}
-          </ScrollView>
-
-          {/* show aiAnalysis under each image */}
-          {analysisResults.map((r, idx) => (
-            <Text key={idx} style={styles.analysisText}>
-              📊 {r.aiAnalysis}
-            </Text>
+            </View>
           ))}
+
+          {loadingPick ? (
+            <View style={styles.addBtn}>
+              <ActivityIndicator />
+            </View>
+          ) : itemImages.length < MAX_IMAGES ? (
+            <TouchableOpacity style={styles.addBtn} onPress={handleImagePick}>
+              <Plus size={24} color={Colors.primary[600]} />
+            </TouchableOpacity>
+          ) : null}
+        </ScrollView>
 
         <Input
           label="Item Title"
@@ -260,26 +185,16 @@ export default function CreatePostScreen() {
           style={styles.descriptionInput}
         />
 
-          <Text style={styles.label}>Category</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={category}
-              onValueChange={(v) => setCategory(v)}
-              style={styles.picker}
-            >
-              {categories.map((cat) => (
-                <Picker.Item key={cat} label={cat} value={cat} />
-              ))}
-            </Picker>
-          </View>
-
-          <Button
-            title="Submit Donation"
-            onPress={handleSubmit}
-            loading={submitting}
-            style={styles.submitButton}
-          />
+        <Text style={styles.label}>Category</Text>
+        <View style={styles.pickerContainer}>
+          <Picker selectedValue={category} onValueChange={setCategory} style={styles.picker}>
+            {categories.map(cat => (
+              <Picker.Item key={cat} label={cat} value={cat} />
+            ))}
+          </Picker>
         </View>
+
+        <Button title="Submit Donation" onPress={handleSubmit} loading={submitting} />
       </ScrollView>
     </SafeAreaView>
   )
@@ -287,28 +202,12 @@ export default function CreatePostScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scrollView: { flex: 1 },
   scrollContent: { padding: 24 },
-  form: {},
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text.primary,
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  imageScrollView: { marginBottom: 16 },
-  imageContainer: {
-    position: 'relative',
-    marginRight: 10,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
-    backgroundColor: Colors.gray[200],
-  },
-  removeImageButton: {
+  label: { fontSize: 14, fontWeight: '500', color: Colors.text.primary, marginTop: 16 },
+  imageScrollView: { marginTop: 8, marginBottom: 16 },
+  imageContainer: { position: 'relative', marginRight: 10 },
+  image: { width: 100, height: 100, borderRadius: 12, backgroundColor: Colors.gray[200] },
+  removeBtn: {
     position: 'absolute',
     top: 4,
     right: 4,
@@ -339,11 +238,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   picker: { height: Platform.OS === 'ios' ? undefined : 50 },
-  submitButton: { marginTop: 16 },
-  analysisText: {
-    fontSize: 12,
-    color: Colors.text.secondary,
-    marginBottom: 8,
-    paddingHorizontal: 8,
-  },
 })

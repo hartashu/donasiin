@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, MessageCircle, User, Heart } from 'lucide-react-native';
+import { House as Home, MessageCircle, User, Handshake } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 
 export default function TabLayout() {
@@ -22,7 +22,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
@@ -31,8 +31,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="requests"
         options={{
-          title: 'My Requests',
-          tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
+          title: 'Requests',
+          tabBarIcon: ({ color, size }) => <Handshake color={color} size={size} />,
         }}
       />
       <Tabs.Screen
