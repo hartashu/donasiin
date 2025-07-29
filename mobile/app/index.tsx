@@ -12,9 +12,9 @@ import { useRouter } from "expo-router";
 import { Colors } from "../constants/Colors";
 import { Button } from "../components/ui/Button";
 import { Leaf, Users, Package } from "lucide-react-native";
-import { BlurView } from "expo-blur"; // 👈 Import BlurView
+import { BlurView } from "expo-blur";
 
-const API_BASE_URL = 'http://localhost:3000/api'
+const API_BASE_URL = "http://localhost:3000/api";
 
 type Stats = {
   totalCarbonSavedKg: string;
@@ -36,7 +36,11 @@ export default function WelcomeScreen() {
         setStats(result.data);
       } catch (error) {
         console.error("Error fetching stats:", error);
-        setStats({ totalCarbonSavedKg: "10340.9", totalUsers: 14, totalPosts: 32 });
+        setStats({
+          totalCarbonSavedKg: "10340.9",
+          totalUsers: 14,
+          totalPosts: 32,
+        });
       } finally {
         setLoading(false);
       }
@@ -74,7 +78,8 @@ export default function WelcomeScreen() {
                   <View style={styles.statBox}>
                     <Leaf color={Colors.white} size={24} />
                     <Text style={styles.statNumber}>
-                      {parseFloat(stats?.totalCarbonSavedKg || '0').toFixed(1)} kg
+                      {parseFloat(stats?.totalCarbonSavedKg || "0").toFixed(1)}{" "}
+                      kg
                     </Text>
                     <Text style={styles.statLabel}>Carbon avoidance</Text>
                   </View>
@@ -103,31 +108,31 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary[700], // Fallback background
+    backgroundColor: Colors.primary[700],
   },
   earthImage: {
     width: "100%",
     height: "100%",
     position: "absolute",
-    resizeMode: "cover", // Cover the whole screen
+    resizeMode: "cover",
   },
   safeArea: {
     flex: 1,
   },
   contentWrapper: {
     flex: 1,
-    justifyContent: "center", // Center vertically
+    justifyContent: "center",
     padding: 16,
   },
   blurContainer: {
     padding: 24,
-    borderRadius: 24, // Softer, rounded corners
-    overflow: "hidden", // Ensures the blur effect respects the border radius
-    borderColor: 'rgba(255, 255, 255, 0.2)', // Subtle border
+    borderRadius: 24,
+    overflow: "hidden",
+    borderColor: "rgba(255, 255, 255, 0.2)",
     borderWidth: 1,
   },
   title: {
-    fontSize: 32, // Slightly smaller to fit better
+    fontSize: 32,
     fontWeight: "bold",
     color: Colors.white,
     marginBottom: 8,
@@ -137,14 +142,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.primary[200],
     textAlign: "center",
-    marginBottom: 24, // Adjusted spacing
+    marginBottom: 24,
     lineHeight: 24,
   },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: 32, // Adjusted spacing
-    // Background color is no longer needed here
+    marginBottom: 32,
     paddingVertical: 10,
   },
   statBox: {
@@ -162,7 +166,7 @@ const styles = StyleSheet.create({
     color: Colors.primary[200],
     marginTop: 4,
     textTransform: "uppercase",
-    textAlign: 'center',
+    textAlign: "center",
   },
   button: {
     backgroundColor: Colors.primary[500],

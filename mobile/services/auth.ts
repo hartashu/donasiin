@@ -17,9 +17,9 @@ export class AuthService {
       body: JSON.stringify(userData),
     });
 
-    console.log(`⚠️ registration response`, response);
+    // console.log(`⚠️ registration response`, response);
     const data = await response.json();
-    console.log(`⚠️ registration data`, data);
+    // console.log(`⚠️ registration data`, data);
 
     if (!response.ok) {
       throw new Error(
@@ -35,7 +35,6 @@ export class AuthService {
       );
     }
 
-    // Store both the token and user object securely, same as in login
     await SecureStore.setItemAsync(TOKEN_KEY, token);
     await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
     console.log(`⚠️ registration data`, user);
@@ -67,7 +66,6 @@ export class AuthService {
       throw new Error("Invalid response from server.");
     }
 
-    // Store both the token and user object securely
     await SecureStore.setItemAsync(TOKEN_KEY, token);
     await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
 
@@ -79,7 +77,6 @@ export class AuthService {
   }
 
   static async removeToken(): Promise<void> {
-    // Remove both token and user data on logout
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(USER_KEY);
   }
@@ -88,7 +85,6 @@ export class AuthService {
     const token = await this.getStoredToken();
     if (!token) return null;
 
-    // If a token exists, we assume the user data is also in SecureStore
     const userJson = await SecureStore.getItemAsync(USER_KEY);
     if (!userJson) return null;
 
@@ -96,7 +92,6 @@ export class AuthService {
       return JSON.parse(userJson) as User;
     } catch (e) {
       console.error("Failed to parse stored user data:", e);
-      // If parsing fails, clear the bad data to prevent login loops
       await this.removeToken();
       return null;
     }

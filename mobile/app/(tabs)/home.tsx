@@ -1,5 +1,4 @@
-// mobile/app/(your-stack)/HomeScreen.tsx
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,35 +8,38 @@ import {
   ActivityIndicator,
   ScrollView,
   Image,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { Search, ArrowUp, ArrowDown, Plus } from 'lucide-react-native';
-import { Colors } from '../../constants/Colors';
-import { Input } from '../../components/ui/Input';
-import { DonationCard } from '../../components/DonationCard';
-import { DonationPost } from '../../types';
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useRouter, useFocusEffect } from "expo-router";
+import { Search, ArrowUp, ArrowDown, Plus } from "lucide-react-native";
+import { Colors } from "../../constants/Colors";
+import { Input } from "../../components/ui/Input";
+import { DonationCard } from "../../components/DonationCard";
+import { DonationPost } from "../../types";
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = "http://localhost:3000/api";
 const categories = [
-  'All',
-  'Baby & Kids',
-  'Books, Music & Media',
-  'Electronics',
-  'Fashion & Apparel',
-  'Health & Beauty',
-  'Sports & Outdoors',
-  'Automotive & Tools',
-  'Pet Supplies',
-  'Office Supplies & Stationery',
-  'Home & Kitchen'
+  "All",
+  "Baby & Kids",
+  "Books, Music & Media",
+  "Electronics",
+  "Fashion & Apparel",
+  "Health & Beauty",
+  "Sports & Outdoors",
+  "Automotive & Tools",
+  "Pet Supplies",
+  "Office Supplies & Stationery",
+  "Home & Kitchen",
 ];
 
 export default function HomeScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [rawPosts, setRawPosts] = useState<DonationPost[]>([]);
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,13 +51,18 @@ export default function HomeScreen() {
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (selectedCategory !== 'All') params.append('category', selectedCategory);
+      if (searchQuery) params.append("search", searchQuery);
+      if (selectedCategory !== "All")
+        params.append("category", selectedCategory);
 
-      const response = await fetch(`${API_BASE_URL}/posts?${params.toString()}`);
+      const response = await fetch(
+        `${API_BASE_URL}/posts?${params.toString()}`
+      );
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ message: 'Failed to fetch posts.' }));
-        throw new Error(err.message || 'Unknown error.');
+        const err = await response
+          .json()
+          .catch(() => ({ message: "Failed to fetch posts." }));
+        throw new Error(err.message || "Unknown error.");
       }
       const result = await response.json();
       const mapped = result.data.posts.map((p: any) => ({
@@ -70,9 +77,9 @@ export default function HomeScreen() {
           id: p.author._id,
           username: p.author.username,
           fullName: p.author.fullName,
-          email: p.author.email || '',
+          email: p.author.email || "",
           address: p.author.address,
-          avatarUrl: p.author.avatarUrl || 'https://via.placeholder.com/150',
+          avatarUrl: p.author.avatarUrl || "https://via.placeholder.com/150",
           dailyRequestLimit: 0,
           usedRequests: 0,
           createdAt: new Date(p.author.createdAt || Date.now()),
@@ -93,7 +100,7 @@ export default function HomeScreen() {
     return [...rawPosts].sort((a, b) => {
       const dateA = a.createdAt.getTime();
       const dateB = b.createdAt.getTime();
-      if (sortOrder === 'newest') {
+      if (sortOrder === "newest") {
         return dateB - dateA;
       }
       return dateA - dateB;
@@ -107,15 +114,19 @@ export default function HomeScreen() {
     }, [searchQuery, selectedCategory, fetchPosts])
   );
 
-  const handlePostPress = (post: DonationPost) => router.push(`/post/${post.slug}`);
-  const handleCreatePost = () => router.push('/create-post');
-  const handleSortToggle = () => setSortOrder(prev => (prev === 'newest' ? 'oldest' : 'newest'));
+  const handlePostPress = (post: DonationPost) =>
+    router.push(`/post/${post.slug}`);
+  const handleCreatePost = () => router.push("/create-post");
+  const handleSortToggle = () =>
+    setSortOrder((prev) => (prev === "newest" ? "oldest" : "newest"));
 
   // Renderers for empty/error/loading
   const renderEmpty = () => (
     <View style={styles.centered}>
       <Text style={styles.emptyText}>No items found.</Text>
-      <Text style={styles.emptySubText}>Try adjusting your search or filters.</Text>
+      <Text style={styles.emptySubText}>
+        Try adjusting your search or filters.
+      </Text>
     </View>
   );
   const renderError = () => (
@@ -127,32 +138,41 @@ export default function HomeScreen() {
     </View>
   );
   const renderLoading = () => (
-    <ActivityIndicator size="large" color={Colors.primary[600]} style={styles.centered} />
+    <ActivityIndicator
+      size="large"
+      color={Colors.primary[600]}
+      style={styles.centered}
+    />
   );
 
   // Final FlatList for normal state
   const renderList = () => (
     <FlatList
       data={sortedPosts}
-      renderItem={({ item }) => <DonationCard post={item} onPress={() => handlePostPress(item)} />}
+      renderItem={({ item }) => (
+        <DonationCard post={item} onPress={() => handlePostPress(item)} />
+      )}
       keyExtractor={(item) => item.id}
       showsVerticalScrollIndicator={false}
       onRefresh={fetchPosts}
       refreshing={isLoading}
       contentContainerStyle={[
         styles.postsContent,
-        { paddingBottom: insets.bottom + 16 }
+        { paddingBottom: insets.bottom + 16 },
       ]}
       style={styles.postsList}
     />
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <View style={styles.header}>
-        <Image source={require('../../assets/logo2.png')} style={styles.logo} />
-        <TouchableOpacity onPress={handleCreatePost} style={styles.createButton}>
+        <Image source={require("../../assets/logo2.png")} style={styles.logo} />
+        <TouchableOpacity
+          onPress={handleCreatePost}
+          style={styles.createButton}
+        >
           <Plus color={Colors.primary[600]} size={24} />
         </TouchableOpacity>
       </View>
@@ -160,7 +180,11 @@ export default function HomeScreen() {
       {/* Search + Filter */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Search color={Colors.text.tertiary} size={20} style={styles.searchIcon} />
+          <Search
+            color={Colors.text.tertiary}
+            size={20}
+            style={styles.searchIcon}
+          />
           <Input
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -169,8 +193,11 @@ export default function HomeScreen() {
             containerStyle={styles.searchInputWrapper}
           />
         </View>
-        <TouchableOpacity style={styles.filterButton} onPress={handleSortToggle}>
-          {sortOrder === 'newest' ? (
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={handleSortToggle}
+        >
+          {sortOrder === "newest" ? (
             <ArrowDown color={Colors.primary[600]} size={20} />
           ) : (
             <ArrowUp color={Colors.primary[600]} size={20} />
@@ -190,14 +217,14 @@ export default function HomeScreen() {
             key={cat}
             style={[
               styles.categoryButton,
-              selectedCategory === cat && styles.categoryButtonActive
+              selectedCategory === cat && styles.categoryButtonActive,
             ]}
             onPress={() => setSelectedCategory(cat)}
           >
             <Text
               style={[
                 styles.categoryText,
-                selectedCategory === cat && styles.categoryTextActive
+                selectedCategory === cat && styles.categoryTextActive,
               ]}
             >
               {cat}
@@ -213,7 +240,7 @@ export default function HomeScreen() {
         ? renderError()
         : !isLoading && rawPosts.length === 0
         ? renderEmpty()
-        : renderList() }
+        : renderList()}
     </SafeAreaView>
   );
 }
@@ -224,38 +251,38 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
   logo: {
     width: 190,
     height: 60,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   createButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: Colors.primary[100],
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   searchContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 24,
     marginBottom: 16,
     gap: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   searchInputContainer: {
     flex: 1,
-    position: 'relative',
+    position: "relative",
   },
   searchIcon: {
-    position: 'absolute',
+    position: "absolute",
     left: 16,
     top: 14,
     zIndex: 1,
@@ -273,15 +300,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   categoriesScrollView: {
     marginBottom: 16,
     flexGrow: 0,
   },
   categoriesContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 24,
     gap: 8,
   },
@@ -299,7 +326,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.text.secondary,
   },
   categoryTextActive: {
@@ -314,14 +341,14 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   errorText: {
     fontSize: 16,
     color: Colors.error[600],
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
   },
   retryButton: {
@@ -332,11 +359,11 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: Colors.white,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.text.primary,
     marginBottom: 8,
   },
