@@ -167,8 +167,8 @@ export default function ChatScreen() {
               style={[
                 styles.lastMessage,
                 !item.lastMessage.isRead &&
-                  item.lastMessage.senderId !== user?.id &&
-                  styles.unreadMessage,
+                item.lastMessage.senderId !== user?.id &&
+                styles.unreadMessage,
               ]}
               numberOfLines={2}
             >

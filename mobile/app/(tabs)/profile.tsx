@@ -134,7 +134,7 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.settingsButton}
-            // onPress={handleSettings}
+          // onPress={handleSettings}
           >
             <Settings color={Colors.text.secondary} size={24} />
           </TouchableOpacity>
@@ -152,7 +152,7 @@ export default function ProfileScreen() {
             />
             <TouchableOpacity
               style={styles.editAvatarButton}
-              // onPress={handleEditProfile}
+            // onPress={handleEditProfile}
             >
               <Edit color={Colors.white} size={16} />
             </TouchableOpacity>

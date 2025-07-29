@@ -116,12 +116,12 @@ export default function CreatePostScreen() {
 
       const picks: Asset[] =
         Array.isArray((result as any).assets) &&
-        (result as any).assets.length > 0
+          (result as any).assets.length > 0
           ? (result as any).assets.map((a: any) => ({
-              uri: a.uri,
-              fileName: a.fileName,
-              type: a.type,
-            }))
+            uri: a.uri,
+            fileName: a.fileName,
+            type: a.type,
+          }))
           : [{ uri: (result as any).uri }];
 
       setItemImages((prev) => [...prev, ...picks].slice(0, MAX_IMAGES));

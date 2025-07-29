@@ -237,10 +237,10 @@ export default function HomeScreen() {
       {isLoading && rawPosts.length === 0
         ? renderLoading()
         : error
-        ? renderError()
-        : !isLoading && rawPosts.length === 0
-        ? renderEmpty()
-        : renderList()}
+          ? renderError()
+          : !isLoading && rawPosts.length === 0
+            ? renderEmpty()
+            : renderList()}
     </SafeAreaView>
   );
 }

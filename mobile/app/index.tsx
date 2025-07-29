@@ -53,7 +53,7 @@ export default function WelcomeScreen() {
       <Image
         source={require("../assets/earth.gif")}
         style={styles.earthImage}
-        // source={{ uri: 'https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg' }}
+      // source={{ uri: 'https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg' }}
       />
 
       <SafeAreaView style={styles.safeArea}>
