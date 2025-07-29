@@ -8,9 +8,11 @@ interface StartChatFormProps {
     receiverId: string;
 }
 
-export function StartChatForm({ receiverId }: StartChatFormProps) {
+
+export function StartChatForm({ receiverId, postTitle }: StartChatFormProps) {
+
     const router = useRouter();
-    const [text, setText] = useState('');
+    const [text, setText] = useState(`Hi, I'm interested in your donation: "${postTitle}"`);
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 

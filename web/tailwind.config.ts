@@ -8,25 +8,16 @@ const config: Config = {
     ],
     theme: {
         extend: {
-            fontFamily: {
-                sans: ['Inter', 'sans-serif'],
-                serif: ['Playfair Display', 'serif'],
-            },
             colors: {
-                'brand-darkest': '#01140e',
-                'brand-dark': '#003d2b',
-                'brand': '#2a9d8f', // Warna utama Anda
-                'brand-light': '#9ef01a',
-                'brand-offwhite': '#E6F2EF',
-            },
-            animation: {
-                'gradient-flow': 'gradient-flow 25s ease infinite',
-            },
-            keyframes: {
-                'gradient-flow': {
-                    '0%, 100%': { backgroundPosition: '0% 50%' },
-                    '50%': { backgroundPosition: '100% 50%' },
+                'brand': {
+                    DEFAULT: '#2a9d8f', // Warna utama Anda
+                    dark: '#1c695f',   // Versi lebih gelap untuk hover
+                    light: '#4eada2',   // Versi lebih terang
                 },
+            },
+            fontFamily: {
+                sans: ['var(--font-inter)', 'sans-serif'],
+                serif: ['var(--font-playfair)', 'serif'],
             },
         },
     },

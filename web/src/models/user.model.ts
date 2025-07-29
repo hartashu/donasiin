@@ -204,4 +204,24 @@ export class UserModel {
       { $set: { password: hashedPassword, updatedAt: new Date() } }
     );
   }
+
+  // Tambahkan di dalam class UserModel
+  // Tambahkan di dalam class UserModel
+  static async updateUserProfile(userId: ObjectId, data: Partial<IUser>): Promise<boolean> {
+    const usersCollection = await this.getUsersCollection();
+
+    const updateData: Partial<IUser> = {};
+    if (data.fullName) updateData.fullName = data.fullName;
+    if (data.username) updateData.username = data.username;
+    if (data.address) updateData.address = data.address;
+    if (data.avatarUrl) updateData.avatarUrl = data.avatarUrl;
+    if (data.location) updateData.location = data.location;
+
+    if (Object.keys(updateData).length === 0) return true;
+
+    updateData.updatedAt = new Date();
+
+    const result = await usersCollection.updateOne({ _id: userId }, { $set: updateData });
+    return result.modifiedCount > 0;
+  }
 }
