@@ -178,19 +178,15 @@ export async function POST(request: NextRequest) {
       .replace(/[^\w-]+/g, "");
     let finalSlug = baseSlug;
     let counter = 2;
+    // Loop ini akan terus berjalan sampai menemukan slug yang belum dipakai
     while (await PostModel.isSlugExist(finalSlug)) {
       finalSlug = `${baseSlug}-${counter}`;
       counter++;
     }
     // --- LOGIKA SLUG UNIK SELESAI ---
-
-    const slug = title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]+/g, "");
     const postToSave = {
       title,
-      slug,
+      slug: finalSlug,
       description,
       category,
       thumbnailUrl: imageUrls[0],
