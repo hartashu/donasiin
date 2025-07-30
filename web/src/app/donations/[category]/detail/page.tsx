@@ -12,6 +12,8 @@ import ImageGallery from "@/components/donations/ImageGallery";
 import { toTitleCase } from "@/lib/titleCase";
 import DonationDetailSkeleton from "@/components/donations/DonationDetailSkeleton";
 import { getCategoryLabel } from "@/lib/getCategoryLabel";
+import { mainAddress } from "@/lib/address";
+
 
 export default function DonationDetailPage() {
   const router = useRouter();
@@ -151,7 +153,7 @@ export default function DonationDetailPage() {
                 {toTitleCase(post.author?.fullName || "")}
               </p>
               <p className="text-sm text-gray-500">
-                {toTitleCase(post.author?.address || "")}
+                {mainAddress(post.author?.address || "")}
               </p>
             </div>
           </div>
@@ -179,7 +181,7 @@ export default function DonationDetailPage() {
                 <div className="text-sm text-gray-500">
                   You are the owner of this post.
                 </div>
-                <DeletePostButton slug={slug!} />
+                <DeletePostButton slug={slug!} title={post.title} />
               </>
             ) : (
               <>

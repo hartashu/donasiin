@@ -11,7 +11,7 @@ import { UserModel } from "@/models/user";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await getSession();
@@ -29,7 +29,7 @@ export async function GET(
     }
 
     // Dapatkan kategori dari postingan yang baru dibuat
-    const post = await PostModel.getPostBySlug(params.slug);
+    const post = await PostModel.getPostBySlug((await params).slug);
     if (!post) {
       return NextResponse.json(
         { error: "Postingan tidak ditemukan." },

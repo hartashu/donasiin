@@ -30,21 +30,16 @@ export async function GET(
     //   { status: 200 }
     // );
 
-    // Andy
-      // 🟡 Ambil session user
     const session = await getSession();
     const userId = session?.user?.id;
 
-    // 🟡 Default tidak me-request
     let hasRequested = false;
 
-    // 🟢 Cek apakah user sudah pernah request post ini
     if (userId) {
       const myRequests = await RequestModel.getMyRequests(new ObjectId(userId));
       hasRequested = myRequests.some((req) => req.postId.equals(post._id));
     }
 
-    // 🟢 Tambahkan properti baru: hasRequested
     return NextResponse.json<IJsonResponse<any>>(
       { statusCode: 200, data: { ...post, hasRequested } },
       { status: 200 }
