@@ -1,36 +1,58 @@
-import { Send } from "lucide-react";
+// src/components/layout/Footer.tsx
+
+import Link from "next/link";
+
+const FooterLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
+    <Link href={href} className="text-gray-500 hover:text-gray-900 transition-colors">
+        {children}
+    </Link>
+);
 
 export function Footer() {
     return (
-        <footer className="bg-black/70 backdrop-blur-lg border-t border-white/10 "
-        >
-            <div className="container mx-auto text-white p-8 md:p-12 text-center md:text-left">
-                <div className="md:flex md:justify-between md:items-center">
-                    <div>
-                        <h3 className="text-2xl font-bold mb-1">Donasiin</h3>
-                        <p className="text-gray-300 mb-6 md:mb-0">Berbagi kebaikan, ciptakan perubahan.</p>
-                    </div>
-                    <div className="max-w-sm mx-auto md:mx-0">
-                        <p className="font-light text-md mb-2 text-gray-300">
-                            Berlangganan untuk info terbaru
+        <footer className="bg-white border-t border-gray-200">
+            <div className="container mx-auto px-6 py-12">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Column 1: Logo & Slogan */}
+                    <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Donasiin</h3>
+                        <p className="text-gray-500 max-w-xs">
+                            Sharing kindness, creating change. One item at a time.
                         </p>
-                        <form className="flex items-center">
-                            <input
-                                type="email"
-                                placeholder="Email anda..."
-                                className="border border-white/20 rounded-l-md px-3 py-2 text-white bg-white/10 w-full focus:outline-none focus:ring-2 focus:ring-[#2a9d8f] placeholder:text-gray-400"
-                                aria-label="Email for newsletter"
-                            />
-                            <button type="submit" className="rounded-r-md bg-[#2a9d8f] px-3 py-2 border border-[#2a9d8f] hover:bg-[#268a7e] transition-colors">
-                                <Send className="w-5 h-5 text-white" />
-                            </button>
-                        </form>
+                    </div>
+
+                    {/* Column 2: Navigation Links */}
+                    <div className="flex justify-center">
+                        <div>
+                            <h4 className="font-semibold uppercase text-gray-400 tracking-wider mb-4">Navigation</h4>
+                            <nav className="flex flex-col items-center md:items-start space-y-2">
+                                <FooterLink href="/">Home</FooterLink>
+                                <FooterLink href="/donations">Donations</FooterLink>
+                                <FooterLink href="/#stories">Stories</FooterLink>
+                                <FooterLink href="/#about">About Us</FooterLink>
+                                <FooterLink href="/#stats">Statistics</FooterLink>
+                            </nav>
+                        </div>
+                    </div>
+
+                    {/* Column 3: Account Links */}
+                    <div className="flex justify-center md:justify-end">
+                        <div>
+                            <h4 className="font-semibold uppercase text-gray-400 tracking-wider mb-4">Account</h4>
+                            <nav className="flex flex-col items-center md:items-start space-y-2">
+                                <FooterLink href="/profile">My Profile</FooterLink>
+                                <FooterLink href="/auth/register">Register</FooterLink>
+                                <FooterLink href="/auth/login">Login</FooterLink>
+                                <FooterLink href="/auth/forgot-password">Forgot Password</FooterLink>
+                            </nav>
+                        </div>
                     </div>
                 </div>
-                <div className="border-t border-white/10 mt-8 pt-6 text-center text-sm text-gray-400">
+
+                <div className="border-t border-gray-100 mt-12 pt-6 text-center text-sm text-gray-400">
                     <p>&copy; {new Date().getFullYear()} Donasiin. All Rights Reserved.</p>
                 </div>
             </div>
         </footer>
-    )
+    );
 }

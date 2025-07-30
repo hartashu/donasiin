@@ -425,6 +425,7 @@ export class PostModel {
             isAvailable: 1,
             userId: 1,
             aiAnalysis: 1,
+            carbonKg: 1, // <<<--- PERBAIKAN DI SINI
             createdAt: 1,
             updatedAt: 1,
             "author._id": 1,
@@ -589,6 +590,8 @@ export class PostModel {
           category: 1,
           isAvailable: 1,
           createdAt: 1,
+          description: 1, // Tambahkan description untuk Featured Card
+          carbonKg: 1, // <<<--- PERBAIKAN DI SINI
           "requests._id": 1,
           "requests.status": 1,
           "requests.createdAt": 1,

@@ -11,10 +11,107 @@ import { uploadFile } from "@/utils/cloudinary/cloudinaryService";
 import { ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { sendShippingNotificationEmail } from "@/lib/utils/email";
-import { RequestStatus, IPost } from "@/types/types";
+// import { RequestStatus, IPost } from "@/types/types";
 import { cookies } from "next/headers";
 
+import { IRequestWithPostDetails, RequestStatus, IUser, Achievement, Activity } from "@/types/types";
+
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
+// ==profile
+import { Award, GitMerge, PackagePlus, ShieldCheck, Rocket, Zap, Crown, Users, HeartHands, CalendarCheck, Coffee, Star, Feather, Sun, Moon } from "lucide-react";
+
+const allAchievements: Omit<Achievement, 'unlocked' | 'icon'> & { icon: string }[] = [
+  { id: "FIRST_DONATION", icon: "PackagePlus", title: "First Step", description: "Make your first donation." },
+  { id: "FIVE_DONATIONS", icon: "Award", title: "Generous Giver", description: "Donate 5 items." },
+  { id: "TEN_DONATIONS", icon: "Crown", title: "Donation Champion", description: "Donate 10 items." },
+  { id: "FIRST_REQUEST", icon: "GitMerge", title: "Active Requester", description: "Make your first request." },
+  { id: "FIVE_REQUESTS", icon: "Users", title: "Community Pillar", description: "Make 5 requests." },
+  { id: "HIGH_DEMAND", icon: "Zap", title: "In High Demand", description: "Receive 10 requests on your items." },
+  { id: "GOOD_SAMARITAN", icon: "HeartHands", title: "Good Samaritan", description: "Have 5 of your donations completed." }, // PERBAIKAN DI SINI
+  { id: "FAST_STARTER", icon: "Rocket", title: "Fast Starter", description: "Make a donation within 24 hours of joining." },
+  { id: "NIGHT_OWL", icon: "Moon", title: "Night Owl", description: "Post a donation between 10 PM and 6 AM." },
+  { id: "EARLY_BIRD", icon: "Sun", title: "Early Bird", description: "Post a donation between 6 AM and 9 AM." },
+  { id: "CONSISTENT", icon: "CalendarCheck", title: "Consistent Contributor", description: "Donate at least once a week for a month." },
+  { id: "BOOKWORM", icon: "Feather", title: "Bookworm", description: "Donate a book." },
+  { id: "FASHIONISTA", icon: "Star", title: "Fashionista", description: "Donate a fashion item." },
+  { id: "TECH_SAVVY", icon: "Coffee", title: "Tech Savvy", description: "Donate an electronic item." },
+  { id: "TRUSTED_MEMBER", icon: "ShieldCheck", title: "Trusted Member", description: "Be an active member of the community." },
+];
+
+export async function getMyProfileData() {
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const userId = new ObjectId(session.user.id);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const [userProfile, userPosts, userRequests] = await Promise.all([
+    UserModel.getUserById(session.user.id),
+    PostModel.findUserPostsWithRequesters(userId),
+    RequestModel.findUserRequests(userId.toString()),
+  ]);
+
+  if (!userProfile) throw new Error("User not found");
+
+  const dailyRequestsMade = userRequests.filter(req => new Date(req.createdAt) >= todayStart).length;
+  const totalIncomingRequests = userPosts.reduce((sum, post) => (post.requests as IRequestWithPostDetails[]).length + sum, 0);
+  const completedDonations = userPosts.filter(p => !p.isAvailable).length;
+
+  const stats = {
+    totalPosts: userPosts.length,
+    totalIncomingRequests,
+    totalOutgoingRequests: userRequests.length,
+    totalCarbonSavings: userPosts.filter(p => !p.isAvailable).reduce((sum, p) => sum + (p.carbonKg || 0), 0),
+    completedDonations,
+    dailyRequestsMade,
+  };
+
+  const unlockedAchievements = allAchievements.map(ach => {
+    let unlocked = false;
+    const userJoinedDate = new Date(userProfile.createdAt);
+    switch (ach.id) {
+      case "FIRST_DONATION": unlocked = stats.totalPosts > 0; break;
+      case "FIVE_DONATIONS": unlocked = stats.totalPosts >= 5; break;
+      case "TEN_DONATIONS": unlocked = stats.totalPosts >= 10; break;
+      case "FIRST_REQUEST": unlocked = stats.totalOutgoingRequests > 0; break;
+      case "FIVE_REQUESTS": unlocked = stats.totalOutgoingRequests >= 5; break;
+      case "HIGH_DEMAND": unlocked = stats.totalIncomingRequests >= 10; break;
+      case "GOOD_SAMARITAN": unlocked = stats.completedDonations >= 5; break;
+      case "FAST_STARTER":
+        const firstPostDate = userPosts.length > 0 ? new Date(userPosts[userPosts.length - 1].createdAt) : null;
+        if (firstPostDate) {
+          unlocked = (firstPostDate.getTime() - userJoinedDate.getTime()) < 24 * 60 * 60 * 1000;
+        }
+        break;
+      case "BOOKWORM": unlocked = userPosts.some(p => p.category.toLowerCase() === 'books'); break;
+      case "FASHIONISTA": unlocked = userPosts.some(p => p.category.toLowerCase() === 'fashion'); break;
+      case "TECH_SAVVY": unlocked = userPosts.some(p => p.category.toLowerCase() === 'electronics'); break;
+      case "TRUSTED_MEMBER": unlocked = true; break;
+    }
+    return { ...ach, unlocked };
+  });
+
+  const activityFeed: Activity[] = [];
+  userPosts.forEach(post => {
+    activityFeed.push({ type: 'POST_CREATED', title: post.title, date: post.createdAt });
+    (post.requests as IRequestWithPostDetails[]).forEach(req => {
+      activityFeed.push({ type: 'REQUEST_RECEIVED', title: post.title, user: req.requester.fullName, date: req.createdAt });
+    });
+  });
+  activityFeed.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const { password, ...safeUserProfile } = userProfile;
+  return JSON.parse(JSON.stringify({
+    profile: safeUserProfile,
+    posts: userPosts,
+    requests: userRequests,
+    stats,
+    achievements: unlockedAchievements,
+    activityFeed,
+  }));
+}
 // ----------------------------------------------
 // CREATE POST (AUTH REQUIRED)
 // ----------------------------------------------
@@ -95,29 +192,97 @@ export async function uploadImageAction(formData: FormData): Promise<string[]> {
   return result?.data?.itemUrls || [];
 }
 
-// --- DATA FETCHING ACTIONS ---
+// export async function getMyProfileData() {
+//   const session = await getSession();
+//   if (!session?.user?.id)
+//     throw new Error("Unauthorized: You must be logged in.");
 
-export async function getMyProfileData() {
-  const session = await getSession();
-  if (!session?.user?.id) throw new Error("Unauthorized: You must be logged in.");
+//   const userId = new ObjectId(session.user.id);
 
-  const userId = new ObjectId(session.user.id);
-  const [userProfile, userPosts, userRequests] = await Promise.all([
-    UserModel.getUserById(userId.toString()),
-    PostModel.findUserPostsWithRequesters(userId),
-    RequestModel.findUserRequests(userId.toString()),
-  ]);
+//   let [userProfile, userPosts, userRequests] = await Promise.all([
+//     UserModel.getUserById(session.user.id),
+//     PostModel.findUserPostsWithRequesters(userId),
+//     RequestModel.findUserRequests(userId.toString()),
+//   ]);
 
-  if (!userProfile) throw new Error("User not found");
+//   if (!userProfile) throw new Error("User not found");
 
-  const { password: _, ...safeUserProfile } = userProfile;
+//   const totalIncomingRequests = userPosts.reduce(
+//     (sum, post) => (post.requests as IRequestWithPostDetails[]).length + sum,
+//     0
+//   );
 
-  return JSON.parse(JSON.stringify({
-    profile: safeUserProfile,
-    posts: userPosts,
-    requests: userRequests,
-  }));
-}
+//   const totalCarbonSavings = userPosts
+//     .filter(post => !post.isAvailable)
+//     .reduce((sum, post) => sum + (post.carbonKg || 0), 0);
+
+//   const activityFeed: any[] = [];
+
+//   userPosts.forEach(post => {
+//     activityFeed.push({
+//       type: 'POST_CREATED',
+//       title: post.title,
+//       date: post.createdAt,
+//     });
+//   });
+
+//   userPosts.forEach(post => {
+//     (post.requests as IRequestWithPostDetails[]).forEach(req => {
+//       activityFeed.push({
+//         type: 'REQUEST_RECEIVED',
+//         title: post.title,
+//         user: req.requester.fullName,
+//         date: req.createdAt,
+//       });
+//     });
+//   });
+
+//   activityFeed.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+//   userRequests.sort(
+//     (a, b) =>
+//       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+//   );
+
+//   const { password, ...safeUserProfile } = userProfile;
+
+//   return JSON.parse(
+//     JSON.stringify({
+//       profile: safeUserProfile,
+//       posts: userPosts,
+//       requests: userRequests,
+//       stats: {
+//         totalPosts: userPosts.length,
+//         totalIncomingRequests: totalIncomingRequests,
+//         totalOutgoingRequests: userRequests.length,
+//         totalCarbonSavings: totalCarbonSavings,
+//       },
+//       activityFeed: activityFeed.slice(0, 5),
+//     })
+//   );
+// }
+
+// export async function getMyProfileData() {
+//   const session = await getSession();
+//   if (!session?.user?.id) throw new Error("Unauthorized: You must be logged in.");
+
+//   const userId = new ObjectId(session.user.id);
+//   const [userProfile, userPosts, userRequests] = await Promise.all([
+//     UserModel.getUserById(userId.toString()),
+//     PostModel.findUserPostsWithRequesters(userId),
+//     RequestModel.findUserRequests(userId.toString()),
+//   ]);
+
+//   if (!userProfile) throw new Error("User not found");
+
+//   const { password: _, ...safeUserProfile } = userProfile;
+
+//   return JSON.parse(JSON.stringify({
+//     profile: safeUserProfile,
+//     posts: userPosts,
+//     requests: userRequests,
+//   }));
+// }
 
 export const getPosts = async (
   category?: string,
