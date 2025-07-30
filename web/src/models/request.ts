@@ -164,6 +164,8 @@ export class RequestModel {
       userId,
       status: RequestStatus.PENDING,
       trackingCode: "",
+      trackingCodeUrl: "",
+      trackingCodeUrl: "",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -319,5 +321,24 @@ export class RequestModel {
       .find({ userId })
       .sort({ createdAt: -1 })
       .toArray();
+  }
+
+  static async updateTrackingInfo(
+    requestId: string,
+    trackingCode: string,
+    trackingCodeUrl: string
+  ): Promise<boolean> {
+    const db = await connectToDb();
+    const result = await db.collection("requests").updateOne(
+      { _id: new ObjectId(requestId) },
+      {
+        $set: {
+          trackingCode,
+          trackingCodeUrl,
+          updatedAt: new Date(),
+        },
+      }
+    );
+    return result.modifiedCount > 0;
   }
 }

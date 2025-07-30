@@ -22,6 +22,7 @@ export type DonationPost = {
   isAvailable: boolean;
   createdAt: Date;
   updatedAt: Date;
+  isRequested?: boolean;
 };
 
 export type DonationRequest = {

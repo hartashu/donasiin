@@ -8,13 +8,13 @@ export enum RequestStatus {
   COMPLETED = "COMPLETED", // Saat penerima sudah mengkonfirmasi penerimaan barang
 }
 
+
 export interface IUser {
-  _id?: ObjectId; // Unique user identifier.
+  _id?: ObjectId | string; // Unique user identifier.
   avatarUrl: string; // URL for the user's profile picture.
   username: string; // Unique public username.
   fullName: string; // User's full name.
   email: string; // User's primary email address.
-  // isEmailVerified: boolean; // Indicates if the user's email has been verified.
   password?: string | null; // Securely hashed password.
   address: string; // User's primary address.
   location?: {
@@ -22,12 +22,12 @@ export interface IUser {
     coordinates: [number, number]; // [longitude, latitude]
   };
   dailyLimit: number; // Max daily requests (default: 5).
-  createdAt: Date; // Creation timestamp.
-  updatedAt: Date; // Last update timestamp.
+  createdAt: string; // Creation timestamp.
+  updatedAt: string; // Last update timestamp.
 }
 
 export interface IPost {
-  _id: ObjectId; // Unique post identifier. //ObjectId
+  _id: ObjectId | string; // Unique post identifier. //ObjectId
   title: string; // The title of the post.
   slug: string; // URL-friendly version of the title.
   thumbnailUrl: string; // URL for the post's thumbnail image.
@@ -35,22 +35,62 @@ export interface IPost {
   description: string; // Detailed description of the post's content.
   category: string; // A single category used for filtering, searching, and classification.
   isAvailable: boolean; // Availability status of the item.
-  userId: ObjectId; // Reference to the author's user ID.
+  userId: ObjectId | string; // Reference to the author's user ID.
   aiAnalysis?: string; // AI-generated carbon savings analysis.
   carbonKg?: number;
-  createdAt?: Date; // Creation timestamp.
-  updatedAt?: Date; // Last update timestamp.
+  createdAt: string; // Creation timestamp.
+  updatedAt: string; // Last update timestamp.
   author?: IAuthor;
+  requests: IRequest[];
 }
 
 export interface IRequest {
-  _id?: ObjectId; // Unique request identifier.
-  userId: ObjectId; // ID of the user making the request.
-  postId: ObjectId; // ID of the related post.
+  _id: ObjectId | string; // Unique request identifier.
+  userId: ObjectId | string; // ID of the user making the request.
+  postId: ObjectId | string; // ID of the related post.
   status: RequestStatus; // Status of the request from the enum.
+<<<<<<< HEAD
+  trackingCode?: string; // Shipping tracking code, if applicable.
+  createdAt: string; // Creation timestamp.
+  updatedAt: string; // Last update timestamp.
+  requester: IUser;
+}
+
+export interface IAuthor {
+  _id: ObjectId | string;
+  avatarUrl?: string;
+  fullName?: string;
+  username?: string;
+}
+
+export interface IPostWithRequests extends IPost {
+  requests: IRequestWithPostDetails[];
+}
+
+export interface IRequestWithPostDetails extends IRequest {
+  postDetails: IPost;
+}
+
+// TIPE BARU YANG DITAMBAHKAN UNTUK FITUR PROFIL
+export interface Achievement {
+  id: string;
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  unlocked: boolean;
+}
+
+export interface Activity {
+  type: 'POST_CREATED' | 'REQUEST_RECEIVED';
+  title: string;
+  user?: string;
+  date: string;
+=======
   trackingCode: string; // Shipping tracking code, if applicable.
+  trackingCodeUrl: string;
   createdAt: Date; // Creation timestamp.
   updatedAt: Date; // Last update timestamp.
+>>>>>>> 92628b6a41bbaf4d1dd68c57d16f20c663a4253b
 }
 
 export interface IMessage {
@@ -120,7 +160,7 @@ export interface IVerificationToken {
 }
 
 export interface IAuthor {
-  _id: ObjectId;
+  _id: ObjectId | string;
   avatarUrl?: string;
   fullName?: string;
   username?: string;
@@ -170,5 +210,3 @@ export interface IIncompleteProfile {
   token: string;
   expires: Date;
 }
-
-

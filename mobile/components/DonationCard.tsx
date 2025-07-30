@@ -15,6 +15,7 @@ import {
   Home,
   Tag as DefaultIcon,
   MapPin,
+  Handshake,
 } from "lucide-react-native";
 
 interface DonationCardProps {
@@ -75,19 +76,32 @@ const getCategoryIcon = (category: string) => {
 };
 
 export function DonationCard({ post, onPress }: DonationCardProps) {
+  const imageUrl = post.images && post.images.length > 0 ? post.images[0] : null;
+
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, post.isRequested && styles.requestedContainer]}
       onPress={onPress}
       activeOpacity={0.9}
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: post.images[0] }} style={styles.image} />
-        {post.isAvailable && (
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Text style={styles.placeholderText}>No Image</Text>
+          </View>
+        )}
+        {post.isRequested ? (
+          <View style={[styles.availableTag, styles.requestedTag]}>
+            <Handshake size={12} color={Colors.white} />
+            <Text style={styles.availableText}>Requested</Text>
+          </View>
+        ) : post.isAvailable ? (
           <View style={styles.availableTag}>
             <Text style={styles.availableText}>Available</Text>
           </View>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.content}>
@@ -101,7 +115,7 @@ export function DonationCard({ post, onPress }: DonationCardProps) {
         <View style={styles.ownerInfo}>
           <View style={styles.ownerDetails}>
             <Image
-              source={{ uri: post.owner.avatarUrl }}
+              source={{ uri: post.owner.avatarUrl || 'https://via.placeholder.com/150' }}
               style={styles.avatar}
             />
             <Text style={styles.ownerName} numberOfLines={1}>
@@ -138,15 +152,18 @@ export function DonationCard({ post, onPress }: DonationCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.primary[100],
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
     marginBottom: 16,
+  },
+  requestedContainer: {
+    opacity: 0.7,
   },
   imageContainer: {
     position: "relative",
@@ -156,6 +173,16 @@ const styles = StyleSheet.create({
     height: 200,
     backgroundColor: Colors.gray[200],
   },
+  imagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.border,
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    fontWeight: '500',
+  },
   availableTag: {
     position: "absolute",
     top: 12,
@@ -164,6 +191,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+  },
+  requestedTag: {
+    backgroundColor: Colors.text.secondary,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   availableText: {
     color: Colors.white,

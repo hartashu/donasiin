@@ -45,43 +45,87 @@ export class RequestModel {
     ): Promise<IRequestWithPostDetails[]> {
         const db = await connectToDb();
         const userObjectId = new ObjectId(userId);
+
         const pipeline = [
+            // 1. Cari semua request dari user ini
             { $match: { userId: userObjectId } },
+
+            // 2. Lakukan lookup ke collection 'posts'
             {
                 $lookup: {
                     from: POST_COLLECTION,
                     localField: "postId",
                     foreignField: "_id",
-                    as: "postDetails",
-                },
+                    // Lakukan lookup bersarang untuk mengambil author-nya juga
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: USER_COLLECTION,
+                                localField: "userId",
+                                foreignField: "_id",
+                                as: "authorArr"
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: "$authorArr",
+                                preserveNullAndEmptyArrays: true
+                            }
+                        },
+                        {
+                            $addFields: {
+                                "author": "$authorArr"
+                            }
+                        },
+                        {
+                            $project: { // Pilih hanya field yang kita butuhkan dari post dan author
+                                title: 1, slug: 1, thumbnailUrl: 1, category: 1,
+                                "author._id": 1, "author.fullName": 1, "author.avatarUrl": 1
+                            }
+                        }
+                    ],
+                    as: "postArr"
+                }
             },
-            { $unwind: { path: "$postDetails", preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: USER_COLLECTION,
-                    localField: "postDetails.userId",
-                    foreignField: "_id",
-                    as: "authorDetails",
-                },
-            },
+
+            // 3. Unwind hasil lookup post. Ini penting untuk kasus post yang dihapus.
             {
                 $unwind: {
-                    path: "$authorDetails",
-                    preserveNullAndEmptyArrays: true,
-                },
+                    path: "$postArr",
+                    preserveNullAndEmptyArrays: true
+                }
             },
+
+            // 4. Rapikan nama field menjadi 'postDetails'
             {
                 $addFields: {
-                    "postDetails.author": "$authorDetails",
-                },
+                    postDetails: "$postArr"
+                }
+            },
+
+            // 5. Proyeksi akhir. INI PERBAIKANNYA.
+            // Kita hanya melakukan INKLUSI (memilih field yang akan diambil).
+            // Kita tidak mencampur dengan EKSKLUSI (membuang field).
+            {
+                $project: {
+                    _id: 1,
+                    userId: 1,
+                    postId: 1,
+                    status: 1,
+                    createdAt: 1,
+                    postDetails: 1
+                    // Field 'postArr' otomatis tidak akan terbawa karena tidak disebutkan di sini.
+                }
             },
             { $sort: { createdAt: -1 } },
         ];
+
         return db
             .collection<IRequest>(REQUEST_COLLECTION)
             .aggregate<IRequestWithPostDetails>(pipeline)
             .toArray();
     }
+
 
     static async getIncomingRequestsForMyPosts(
         userId: string

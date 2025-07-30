@@ -19,20 +19,22 @@ import { Colors } from "../../constants/Colors";
 import { Input } from "../../components/ui/Input";
 import { DonationCard } from "../../components/DonationCard";
 import { DonationPost } from "../../types";
+import { AuthService } from "../../services/auth";
 
 const API_BASE_URL = "http://localhost:3000/api";
+
 const categories = [
-  "All",
-  "Baby & Kids",
-  "Books, Music & Media",
-  "Electronics",
-  "Fashion & Apparel",
-  "Health & Beauty",
-  "Sports & Outdoors",
-  "Automotive & Tools",
-  "Pet Supplies",
-  "Office Supplies & Stationery",
-  "Home & Kitchen",
+  { label: "All", value: "All" },
+  { label: "Baby & Kids", value: "baby-kids" },
+  { label: "Books, Music & Media", value: "books-music-media" },
+  { label: "Electronics", value: "electronics" },
+  { label: "Fashion & Apparel", value: "fashion-apparel" },
+  { label: "Health & Beauty", value: "health-beauty" },
+  { label: "Sports & Outdoors", value: "sports-outdoors" },
+  { label: "Automotive & Tools", value: "automotive-tools" },
+  { label: "Pet Supplies", value: "pet-supplies" },
+  { label: "Office Supplies & Stationery", value: "office-supplies-stationery" },
+  { label: "Home & Kitchen", value: "home-kitchen" },
 ];
 
 export default function HomeScreen() {
@@ -50,21 +52,37 @@ export default function HomeScreen() {
     setIsLoading(true);
     setError(null);
     try {
+      const token = await AuthService.getStoredToken();
+      
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
       if (selectedCategory !== "All")
         params.append("category", selectedCategory);
 
-      const response = await fetch(
-        `${API_BASE_URL}/posts?${params.toString()}`
-      );
-      if (!response.ok) {
-        const err = await response
+      const [postsResponse, requestsResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/posts?${params.toString()}`),
+        token
+          ? fetch(`${API_BASE_URL}/users/me/requests`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          : Promise.resolve(null),
+      ]);
+
+      if (!postsResponse.ok) {
+        const err = await postsResponse
           .json()
           .catch(() => ({ message: "Failed to fetch posts." }));
         throw new Error(err.message || "Unknown error.");
       }
-      const result = await response.json();
+
+      let requestedIds = new Set<string>();
+      if (requestsResponse && requestsResponse.ok) {
+        const requestsJson = await requestsResponse.json();
+        const userRequests = requestsJson.data || [];
+        requestedIds = new Set(userRequests.map((req: any) => req.postId));
+      }
+
+      const result = await postsResponse.json();
       const mapped = result.data.posts.map((p: any) => ({
         id: p._id,
         slug: p.slug,
@@ -87,6 +105,7 @@ export default function HomeScreen() {
         isAvailable: p.isAvailable,
         createdAt: new Date(p.createdAt),
         updatedAt: new Date(p.updatedAt),
+        isRequested: requestedIds.has(p._id),
       }));
       setRawPosts(mapped);
     } catch (e: any) {
@@ -214,20 +233,20 @@ export default function HomeScreen() {
       >
         {categories.map((cat) => (
           <TouchableOpacity
-            key={cat}
+            key={cat.value}
             style={[
               styles.categoryButton,
-              selectedCategory === cat && styles.categoryButtonActive,
+              selectedCategory === cat.value && styles.categoryButtonActive,
             ]}
-            onPress={() => setSelectedCategory(cat)}
+            onPress={() => setSelectedCategory(cat.value)}
           >
             <Text
               style={[
                 styles.categoryText,
-                selectedCategory === cat && styles.categoryTextActive,
+                selectedCategory === cat.value && styles.categoryTextActive,
               ]}
             >
-              {cat}
+              {cat.label}
             </Text>
           </TouchableOpacity>
         ))}
@@ -237,10 +256,10 @@ export default function HomeScreen() {
       {isLoading && rawPosts.length === 0
         ? renderLoading()
         : error
-        ? renderError()
-        : !isLoading && rawPosts.length === 0
-        ? renderEmpty()
-        : renderList()}
+          ? renderError()
+          : !isLoading && rawPosts.length === 0
+            ? renderEmpty()
+            : renderList()}
     </SafeAreaView>
   );
 }
