@@ -6,12 +6,14 @@ import Link from "next/link";
 import { MapPin, Tags } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import InfiniteScroll from "react-infinite-scroll-component";
+import { getCategoryLabel } from "@/lib/getCategoryLabel";
 
 import { getPosts } from "@/actions/action";
 import { toTitleCase } from "@/lib/titleCase";
 import { IPost } from "@/types/types";
 import DonationCardSkeleton from "./DonationCardSkeleton";
 import { LoadingDots } from "../Loading";
+import { mainAddress } from "@/lib/address";
 
 export default function DonationCards({ category }: { category?: string }) {
   const [data, setData] = useState<IPost[]>([]);
@@ -126,14 +128,14 @@ export default function DonationCards({ category }: { category?: string }) {
 
                     <div className="flex items-center gap-1 text-[11px] text-[#1c695f] font-medium mb-1">
                       <Tags className="w-3.5 h-3.5" />
-                      <span>{toTitleCase(d.category)}</span>
+                      <span>{getCategoryLabel(d.category)}</span>
                     </div>
 
                     {d.author?.address && (
                       <div className="flex items-center gap-1 text-[11px] text-gray-500 mb-2">
                         <MapPin className="w-3 h-3 text-[#1c695f]" />
                         <span className="line-clamp-1">
-                          {toTitleCase(d.author.address)}
+                          {toTitleCase(mainAddress(d.author.address))}
                         </span>
                       </div>
                     )}

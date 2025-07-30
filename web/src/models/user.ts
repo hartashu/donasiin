@@ -46,11 +46,12 @@ export class UserModel {
       { $match: { "requestedPost.category": postCategory } },
       // 6. Kelompokkan untuk menghindari duplikat pengguna
       {
-        $group: {
+         $group: {
           _id: "$_id",
           username: { $first: "$username" },
           fullName: { $first: "$fullName" },
           avatarUrl: { $first: "$avatarUrl" },
+          address: { $first: "$address" },
           distance: { $first: "$distance" },
         },
       },

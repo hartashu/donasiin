@@ -6,6 +6,7 @@ import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { toTitleCase } from "@/lib/titleCase";
+import { mainAddress } from "@/lib/address";
 
 export default function PostCards({ data }: { data: IPost[] }) {
   return (
@@ -61,7 +62,7 @@ export default function PostCards({ data }: { data: IPost[] }) {
                   <div className="flex items-center gap-1 text-[10px] text-gray-500 mb-1 mt-1">
                     <MapPin className="w-3 h-3 text-[#1c695f]" />
                     <span className="line-clamp-1">
-                      {toTitleCase(d.author.address)}
+                      {toTitleCase(mainAddress(d.author.address))}
                     </span>
                   </div>
                 )}

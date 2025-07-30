@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Filter, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function DonationsLayout({
   children,
@@ -14,7 +15,9 @@ export default function DonationsLayout({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [showSidebar, setShowSidebar] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [showInput, setShowInput] = useState(false);
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
@@ -59,6 +62,16 @@ export default function DonationsLayout({
     router.push(`${pathname}?${params.toString()}`);
   }, [debouncedSearch]);
 
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (showSearchBar) {
+      timeout = setTimeout(() => setShowInput(true), 1700); // Sesuai dengan animasi width
+    } else {
+      setShowInput(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [showSearchBar]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Navbar */}
@@ -68,25 +81,105 @@ export default function DonationsLayout({
             {currentCategory} Donations
           </h1>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search donations..."
-              className="w-full md:w-64 px-4 py-1 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1c695f] transition"
-            />
+          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+            <AnimatePresence mode="wait">
+              {showSearchBar ? (
+                <motion.div
+                  key="search"
+                  layout
+                  initial={{ width: 40, opacity: 0.6 }}
+                  animate={{ width: 480, opacity: 1 }}
+                  exit={{ width: 40, opacity: 0 }}
+                  transition={{ ease: "easeInOut", duration: 1 }}
+                  className="flex items-center bg-white border border-gray-300 shadow px-3 py-2 rounded-full overflow-hidden"
+                >
+                  {/* Search icon tetap langsung muncul */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-500 mr-2 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1111.5 4.5a7.5 7.5 0 015.15 12.15z"
+                    />
+                  </svg>
+
+                  {/* Render input setelah animasi selesai */}
+                  {showInput && (
+                    <>
+                      <motion.input
+                        key="input"
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search donations..."
+                        autoFocus
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="bg-transparent text-sm flex-1 outline-none text-gray-800 placeholder-gray-400"
+                      />
+
+                      <motion.button
+                        onClick={() => {
+                          setSearch("");
+                          setShowSearchBar(false);
+                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="ml-2"
+                      >
+                        <X className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                      </motion.button>
+                    </>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="button"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => setShowSearchBar(true)}
+                  className="p-2 rounded-full hover:bg-gray-100 transition border border-gray-300 bg-white"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1111.5 4.5a7.5 7.5 0 015.15 12.15z"
+                    />
+                  </svg>
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             {isDonationsRoute && (
               <button
                 onClick={() => setShowSidebar((prev) => !prev)}
-                className="flex items-center gap-2 border px-2 py-2 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 transition"
+                className="flex items-center gap-2 border px-3 py-2 rounded-full text-sm font-medium bg-white hover:bg-gray-100 transition shadow"
               >
                 {showSidebar ? (
                   <X className="w-4 h-4" />
                 ) : (
                   <Filter className="w-4 h-4" />
                 )}
-                {/* Text hanya tampil di layar md ke atas */}
                 <span className="hidden md:inline">
                   {showSidebar ? "Hide Filters" : "Show Filters"}
                 </span>
@@ -158,10 +251,10 @@ export default function DonationsLayout({
       <div className="flex flex-1">
         {isDonationsRoute && showSidebar && (
           <aside
-            className="w-64 p-4 border-r bg-white hidden md:block sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto shadow-sm"
+            className="w-64 p-4 border-r bg-white hidden md:block sticky top-[80px] max-h-[calc(100vh-80px)] overflow-y-auto shadow-sm"
             style={{
-              scrollbarWidth: "thin", // Firefox
-              scrollbarColor: "#1c695f transparent", // Firefox
+              scrollbarWidth: "thin",
+              scrollbarColor: "#1c695f transparent",
             }}
           >
             <style jsx>{`
@@ -196,11 +289,12 @@ export default function DonationsLayout({
                 return (
                   <li key={item.path}>
                     <Link
-                      href={{ pathname: item.path, query: params.toString() }}
-                      className={`block px-3 py-2 rounded-md transition font-medium ${
-                        isActive
-                          ? "bg-[#e6f7f6] text-[#1c695f] shadow-sm"
-                          : "text-gray-700 hover:bg-gray-100"
+                      href={{
+                        pathname: item.path,
+                        query: params.toString(),
+                      }}
+                      className={`block px-2 py-1 rounded hover:bg-gray-100 ${
+                        isActive ? "bg-gray-200 font-semibold" : ""
                       }`}
                     >
                       {item.name}
