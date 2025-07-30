@@ -11,6 +11,7 @@ import { Calendar, Tag, Leaf, CheckCircle, BookImage } from "lucide-react";
 import ImageGallery from "@/components/donations/ImageGallery";
 import { toTitleCase } from "@/lib/titleCase";
 import DonationDetailSkeleton from "@/components/donations/DonationDetailSkeleton";
+import { getCategoryLabel } from "@/lib/getCategoryLabel";
 
 export default function DonationDetailPage() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function DonationDetailPage() {
               <Tag className="w-4 h-4 text-[#1c695f]" />
               <span>
                 <span className="font-semibold text-[#1c695f]">Category:</span>{" "}
-                {toTitleCase(post.category)}
+                {getCategoryLabel(post.category)}
               </span>
             </div>
 

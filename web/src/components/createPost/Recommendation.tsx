@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Bell, MapPin, Send, Users, X, Navigation, Mail } from "lucide-react";
+import { mainAddress } from "@/lib/address";
+import { toTitleCase } from "@/lib/titleCase";
+import { motion } from "framer-motion";
 
 interface UserRecommendation {
   _id: string;
@@ -10,37 +13,58 @@ interface UserRecommendation {
   username: string;
   distance: number;
   avatarUrl?: string;
+  address?: string;
 }
 
 interface Props {
   users: UserRecommendation[];
+  category: string;
   onClose: () => void;
+  noRecommendations?: boolean;
 }
 
-export default function RecommendationModal({ users, onClose }: Props) {
-  const router = useRouter();
+export default function RecommendationModal({
+  users,
+  category,
+  onClose,
+  noRecommendations = false,
+}: Props) {
   const [isVisible, setIsVisible] = useState(false);
+  const [sendingAll, setSendingAll] = useState(false);
+  const [sentTo, setSentTo] = useState<string[]>([]);
 
   useEffect(() => {
-    setTimeout(() => setIsVisible(true), 10); // fade-in effect
+    const timeout = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(timeout);
   }, []);
 
-  const handleChat = async (receiverId: string) => {
+  const sendMessage = async (receiverId: string) => {
     try {
       const res = await fetch("/api/chat/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ receiverId }),
+        body: JSON.stringify({
+          receiverId,
+          text: `Hi! There's a new donation posted under "${category}" — it matches something you were looking for earlier. Check it out!`,
+        }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to start chat.");
-
-      router.push(`/chat/${data.conversationId}`);
+      if (!res.ok) throw new Error("Failed to send message.");
+      setSentTo((prev) => [...prev, receiverId]);
     } catch (err) {
-      console.error("Chat Error", err);
+      console.error("Message sending error:", err);
     }
+  };
+
+  const sendAll = async () => {
+    setSendingAll(true);
+    for (const user of users) {
+      if (!sentTo.includes(user._id)) {
+        await sendMessage(user._id);
+      }
+    }
+    setSendingAll(false);
   };
 
   return (
@@ -50,65 +74,183 @@ export default function RecommendationModal({ users, onClose }: Props) {
       }`}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b">
-          <h2 className="text-xl md:text-2xl font-bold text-gray-800">
-            🎉 Pengguna yang butuh barangmu!
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 relative">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 mx-auto flex items-center gap-2">
+            <Users className="w-6 h-6 text-gray-700" />
+            Suggested Recipients
           </h2>
           <button
             onClick={onClose}
-            className="text-2xl text-gray-400 hover:text-red-500 transition"
+            className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition"
           >
-            &times;
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* User List */}
         <div className="overflow-y-auto px-6 py-4 space-y-4">
-          {users.map((user) => (
-            <div
-              key={user._id}
-              className="flex items-center justify-between p-4 bg-gray-100 hover:bg-gray-200 transition rounded-xl border shadow-sm"
-            >
-              <div className="flex items-center gap-4">
-                <Image
-                  src={
-                    user.avatarUrl ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      user.fullName
-                    )}`
-                  }
-                  alt={user.fullName}
-                  width={48}
-                  height={48}
-                  className="rounded-full object-cover"
-                />
-                <div>
-                  <p className="font-semibold text-gray-800">{user.fullName}</p>
-                  <p className="text-sm text-gray-500">@{user.username}</p>
-                  <p className="text-xs text-gray-400">
-                    {(user.distance / 1000).toFixed(1)} km dari kamu
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleChat(user._id)}
-                className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition"
-              >
-                Chat
-              </button>
+          {noRecommendations ? (
+            <div className="text-center text-gray-600 py-12">
+              <p className="text-lg font-medium mb-2">
+                Tidak ada user yang direkomendasikan
+              </p>
+              <p className="text-sm">
+                Kami tidak menemukan pengguna yang sesuai dengan kategori{" "}
+                <strong>{category}</strong>.
+              </p>
             </div>
-          ))}
+          ) : (
+            users.map((user) => (
+              <div
+                key={user._id}
+                className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition rounded-xl border border-gray-200 shadow-sm"
+              >
+                <div className="flex items-center gap-4">
+                  <Image
+                    src={
+                      user.avatarUrl ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        user.fullName
+                      )}`
+                    }
+                    alt={user.fullName}
+                    width={52}
+                    height={52}
+                    className="rounded-full object-cover"
+                  />
+
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      {user.fullName}
+                    </p>
+                    <p className="text-sm text-gray-500">@{user.username}</p>
+
+                    <div className="flex flex-col gap-1 text-xs text-gray-500 pt-1">
+                      <div className="flex items-center w-full gap-4">
+                        {/* Jarak */}
+                        <div className="flex items-center gap-1 flex-shrink-0 min-w-fit mr-1">
+                          <Navigation className="w-3 h-3 text-gray-400" />
+                          <span>{(user.distance / 1000).toFixed(1)} km</span>
+                        </div>
+
+                        {/* Jalur, mobil, dan Jarak */}
+                        <div className="flex items-center flex-1 gap-24">
+                          {/* Rel / Jalan */}
+                          <div className="relative flex-1 h-6">
+                            {/* Mobil animasi */}
+                            <motion.div
+                              className="absolute top-1/2 -translate-y-1/2 z-10 text-gray-600"
+                              initial={{ left: "-20px", opacity: 0 }}
+                              animate={{
+                                left: ["-20px", "82px"], // Gerakan halus dari luar ke dalam
+                                opacity: [0, 1, 1, 0], // Fade in → stay → fade out
+                                scale: [0.9, 1, 1, 0.9], // Smooth zoom in/out
+                              }}
+                              transition={{
+                                duration: 3, // Sedikit lebih panjang untuk kelihatan smooth
+                                ease: "easeInOut",
+                                repeat: Infinity,
+                                repeatType: "loop",
+                              }}
+                            >
+                              <Mail className="w-4 h-4" />
+                            </motion.div>
+                          </div>
+
+                          {/* Alamat */}
+                          <div className="flex items-center gap-1 min-w-0">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            {user.address && (
+                              <span className="truncate max-w-[130px] sm:max-w-[160px]">
+                                {toTitleCase(mainAddress(user.address))}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => sendMessage(user._id)}
+                  disabled={sentTo.includes(user._id)}
+                  className={`p-2 rounded-full shadow-sm transition ${
+                    sentTo.includes(user._id)
+                      ? "text-teal-600 bg-transparent border border-teal-600"
+                      : "bg-teal-600 hover:bg-teal-700 text-white"
+                  }`}
+                >
+                  {sentTo.includes(user._id) ? (
+                    <span className="text-sm font-medium px-2">Sent</span>
+                  ) : (
+                    <Bell className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            ))
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t p-4 text-center">
+        {/* Modal Footer */}
+        <div className="border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4 gap-2 sm:gap-0">
           <button
             onClick={onClose}
             className="text-sm text-gray-500 hover:text-gray-800 underline transition"
           >
-            Lanjut tanpa chat
+            {noRecommendations ? "Kembali" : "Continue without sending"}
           </button>
+
+          <div className="flex flex-col items-start sm:items-end">
+            {!noRecommendations && (
+              <>
+                <button
+                  onClick={sendAll}
+                  disabled={sendingAll || sentTo.length === users.length}
+                  className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium transition shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendingAll ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8H4z"
+                        ></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Send All
+                    </>
+                  )}
+                </button>
+
+                {/* ✅ Status message */}
+                {sentTo.length === users.length && users.length > 0 && (
+                  <p className="text-xs text-gray-400 mt-1 italic">
+                    All messages have been sent.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
