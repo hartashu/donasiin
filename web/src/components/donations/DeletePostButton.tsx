@@ -75,7 +75,10 @@ export default function DeletePostButton({
                 cannot be undone
               </span>
               . To permanently delete this post, type the exact title:
-              <span className="font-semibold text-red-600"> "{title}"</span>
+              <span className="font-semibold text-red-600">
+                {" "}
+                &quot;{title}&quot;
+              </span>
             </p>
 
             <input
