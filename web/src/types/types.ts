@@ -49,8 +49,8 @@ export interface IRequest {
   userId: ObjectId | string; // ID of the user making the request.
   postId: ObjectId | string; // ID of the related post.
   status: RequestStatus; // Status of the request from the enum.
-<<<<<<< HEAD
   trackingCode?: string; // Shipping tracking code, if applicable.
+  trackingCodeUrl: string;
   createdAt: string; // Creation timestamp.
   updatedAt: string; // Last update timestamp.
   requester: IUser;
@@ -85,12 +85,10 @@ export interface Activity {
   title: string;
   user?: string;
   date: string;
-=======
   trackingCode: string; // Shipping tracking code, if applicable.
   trackingCodeUrl: string;
   createdAt: Date; // Creation timestamp.
   updatedAt: Date; // Last update timestamp.
->>>>>>> 92628b6a41bbaf4d1dd68c57d16f20c663a4253b
 }
 
 export interface IMessage {

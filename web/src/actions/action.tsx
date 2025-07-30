@@ -19,7 +19,7 @@ import { IRequestWithPostDetails, RequestStatus, IUser, Achievement, Activity } 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 // ==profile
-import { Award, GitMerge, PackagePlus, ShieldCheck, Rocket, Zap, Crown, Users, HeartHands, CalendarCheck, Coffee, Star, Feather, Sun, Moon } from "lucide-react";
+import { Award, GitMerge, PackagePlus, ShieldCheck, Rocket, Zap, Crown, Users, HeartHandshake, CalendarCheck, Coffee, Star, Feather, Sun, Moon } from "lucide-react";
 
 const allAchievements: Omit<Achievement, 'unlocked' | 'icon'> & { icon: string }[] = [
   { id: "FIRST_DONATION", icon: "PackagePlus", title: "First Step", description: "Make your first donation." },
@@ -28,7 +28,7 @@ const allAchievements: Omit<Achievement, 'unlocked' | 'icon'> & { icon: string }
   { id: "FIRST_REQUEST", icon: "GitMerge", title: "Active Requester", description: "Make your first request." },
   { id: "FIVE_REQUESTS", icon: "Users", title: "Community Pillar", description: "Make 5 requests." },
   { id: "HIGH_DEMAND", icon: "Zap", title: "In High Demand", description: "Receive 10 requests on your items." },
-  { id: "GOOD_SAMARITAN", icon: "HeartHands", title: "Good Samaritan", description: "Have 5 of your donations completed." }, // PERBAIKAN DI SINI
+  { id: "GOOD_SAMARITAN", icon: "HeartHandshake", title: "Good Samaritan", description: "Have 5 of your donations completed." }, // PERBAIKAN DI SINI
   { id: "FAST_STARTER", icon: "Rocket", title: "Fast Starter", description: "Make a donation within 24 hours of joining." },
   { id: "NIGHT_OWL", icon: "Moon", title: "Night Owl", description: "Post a donation between 10 PM and 6 AM." },
   { id: "EARLY_BIRD", icon: "Sun", title: "Early Bird", description: "Post a donation between 6 AM and 9 AM." },
@@ -38,6 +38,16 @@ const allAchievements: Omit<Achievement, 'unlocked' | 'icon'> & { icon: string }
   { id: "TECH_SAVVY", icon: "Coffee", title: "Tech Savvy", description: "Donate an electronic item." },
   { id: "TRUSTED_MEMBER", icon: "ShieldCheck", title: "Trusted Member", description: "Be an active member of the community." },
 ];
+
+
+// 🔥 Tipe Activity baru yang lebih deskriptif
+export interface Activity {
+  type: 'I_CREATED_A_POST' | 'SOMEONE_REQUESTED_MY_ITEM' | 'I_UPDATED_A_REQUEST' | 'I_MADE_A_REQUEST' | 'MY_REQUEST_WAS_UPDATED';
+  title: string;
+  otherUserName?: string;
+  date: string;
+  status?: RequestStatus;
+}
 
 export async function getMyProfileData() {
   const session = await getSession();
@@ -81,10 +91,10 @@ export async function getMyProfileData() {
       case "GOOD_SAMARITAN": unlocked = stats.completedDonations >= 5; break;
       case "FAST_STARTER":
         const firstPostDate = userPosts.length > 0 ? new Date(userPosts[userPosts.length - 1].createdAt) : null;
-        if (firstPostDate) {
-          unlocked = (firstPostDate.getTime() - userJoinedDate.getTime()) < 24 * 60 * 60 * 1000;
-        }
+        if (firstPostDate) { unlocked = (firstPostDate.getTime() - userJoinedDate.getTime()) < 24 * 60 * 60 * 1000; }
         break;
+      case "NIGHT_OWL": unlocked = userPosts.some(p => { const hour = new Date(p.createdAt).getHours(); return hour >= 22 || hour < 6; }); break;
+      case "EARLY_BIRD": unlocked = userPosts.some(p => { const hour = new Date(p.createdAt).getHours(); return hour >= 6 && hour < 9; }); break;
       case "BOOKWORM": unlocked = userPosts.some(p => p.category.toLowerCase() === 'books'); break;
       case "FASHIONISTA": unlocked = userPosts.some(p => p.category.toLowerCase() === 'fashion'); break;
       case "TECH_SAVVY": unlocked = userPosts.some(p => p.category.toLowerCase() === 'electronics'); break;
@@ -94,13 +104,30 @@ export async function getMyProfileData() {
   });
 
   const activityFeed: Activity[] = [];
+
+  // 1. Aktivitas terkait donasi SAYA (userPosts)
   userPosts.forEach(post => {
-    activityFeed.push({ type: 'POST_CREATED', title: post.title, date: post.createdAt });
+    activityFeed.push({ type: 'I_CREATED_A_POST', title: post.title, date: post.createdAt });
     (post.requests as IRequestWithPostDetails[]).forEach(req => {
-      activityFeed.push({ type: 'REQUEST_RECEIVED', title: post.title, user: req.requester.fullName, date: req.createdAt });
+      activityFeed.push({ type: 'SOMEONE_REQUESTED_MY_ITEM', title: post.title, otherUserName: req.requester.fullName, date: req.createdAt });
+      if (req.status !== RequestStatus.PENDING) {
+        activityFeed.push({ type: 'I_UPDATED_A_REQUEST', title: post.title, otherUserName: req.requester.fullName, status: req.status, date: req.updatedAt || req.createdAt });
+      }
     });
   });
-  activityFeed.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // 2. Aktivitas terkait request SAYA (userRequests)
+  userRequests.forEach(req => {
+    if (req.postDetails) {
+      activityFeed.push({ type: 'I_MADE_A_REQUEST', title: req.postDetails.title, otherUserName: req.postDetails.author.fullName, date: req.createdAt });
+      if (req.status !== RequestStatus.PENDING) {
+        activityFeed.push({ type: 'MY_REQUEST_WAS_UPDATED', title: req.postDetails.title, otherUserName: req.postDetails.author.fullName, status: req.status, date: req.updatedAt || req.createdAt });
+      }
+    }
+  });
+
+  const uniqueActivities = Array.from(new Map(activityFeed.map(act => [JSON.stringify(act), act])).values());
+  uniqueActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const { password, ...safeUserProfile } = userProfile;
   return JSON.parse(JSON.stringify({
@@ -109,9 +136,36 @@ export async function getMyProfileData() {
     requests: userRequests,
     stats,
     achievements: unlockedAchievements,
-    activityFeed,
+    activityFeed: uniqueActivities,
   }));
 }
+
+
+
+// 🔥 ACTION BARU UNTUK UPLOAD GAMBAR RESI (MODE IMAGE+MANUAL)
+export async function uploadReceiptImageAction(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  const session = await getSession();
+  if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+  try {
+    const receiptFile = formData.get("receiptImage") as File | null;
+    if (!receiptFile || receiptFile.size === 0) {
+      return { success: false, error: "No image file provided." };
+    }
+
+    const buffer = Buffer.from(await receiptFile.arrayBuffer());
+    const result = await uploadFile(buffer);
+
+    return { success: true, url: result.secure_url };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unknown error occurred during upload.",
+    };
+  }
+}
+
 // ----------------------------------------------
 // CREATE POST (AUTH REQUIRED)
 // ----------------------------------------------
@@ -353,14 +407,15 @@ export async function updateUserProfileAction(formData: FormData): Promise<{
 
 export async function updateRequestStatusAction(
   id: string,
-  data: { status: RequestStatus; trackingCode?: string }
+  data: { status: RequestStatus; trackingCode?: string; trackingCodeUrl?: string }
 ) {
   const session = await getSession();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const { status, trackingCode } = data;
-  await RequestModel.updateRequestStatus(id, status, trackingCode);
+  const { status, trackingCode, trackingCodeUrl } = data;
+  await RequestModel.updateRequestStatus(id, status, { code: trackingCode, url: trackingCodeUrl });
 
+  // logic notifikasi email tetap jalan
   if (status === RequestStatus.SHIPPED && trackingCode) {
     await sendShippingNotificationAction(id, trackingCode);
   }
@@ -368,6 +423,28 @@ export async function updateRequestStatusAction(
   revalidatePath("/profile");
   return { success: true, message: `Request status updated to ${status}` };
 }
+
+// 🔥 ACTION BARU UNTUK HAPUS REQUEST
+export async function deleteRequestAction(
+  requestId: string
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getSession();
+  if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+  try {
+    const result = await RequestModel.deleteRequest(requestId, session.user.id);
+
+    if (result.deletedCount === 0) {
+      return { success: false, error: "Request not found or cannot be deleted." };
+    }
+
+    revalidatePath("/profile");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 
 export async function sendShippingNotificationAction(
   requestId: string,
