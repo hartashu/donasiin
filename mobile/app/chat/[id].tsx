@@ -10,7 +10,7 @@ import { AuthService } from "../../services/auth";
 
 const PUSHER_KEY = "adc5a6ff5ffcda8b52f6"
 const PUSHER_CLUSTER = "ap1"
-const API_BASE = "https://zgldqlms-3000.asse.devtunnels.ms/api";
+const API_BASE = "http://localhost:3000/api";
 
 const formatMessageTime = (date: Date) => {
   if (!date || isNaN(date.getTime())) return "";

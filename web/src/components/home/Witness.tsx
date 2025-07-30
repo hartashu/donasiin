@@ -201,7 +201,6 @@
 // //   );
 // // }
 
-
 // // src/components/home/Witness.tsx
 // "use client";
 
@@ -453,7 +452,6 @@
 //   );
 // }
 
-
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -477,11 +475,19 @@ const KG_CO2_EQUIVALENT_TO_ONE_TREE = 21; // Rata-rata 1 pohon dewasa menyerap ~
 const createOneLittleTree = () => {
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(0.02, 0.03, 0.2, 5),
-    new THREE.MeshStandardMaterial({ color: 0x8B4513, metalness: 0.1, roughness: 0.8 })
+    new THREE.MeshStandardMaterial({
+      color: 0x8b4513,
+      metalness: 0.1,
+      roughness: 0.8,
+    })
   );
   const leaves = new THREE.Mesh(
     new THREE.ConeGeometry(0.1, 0.3, 6),
-    new THREE.MeshStandardMaterial({ color: 0x228B22, metalness: 0.2, roughness: 0.7 })
+    new THREE.MeshStandardMaterial({
+      color: 0x228b22,
+      metalness: 0.2,
+      roughness: 0.7,
+    })
   );
   leaves.position.y = 0.25; // Taruh daun di atas batang
 
@@ -494,7 +500,11 @@ const createOneLittleTree = () => {
 // --- The Component itself ---
 
 export default function TheWitness() {
-  const [stats, setStats] = useState({ totalUsers: 0, totalPosts: 0, totalCarbonSavedKg: "0.00" });
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalPosts: 0,
+    totalCarbonSavedKg: "0.00",
+  });
   const [bonusTreesFromInteraction, setBonusTreesFromInteraction] = useState(0);
   const [quote, setQuote] = useState(QUOTES[0]);
 
@@ -505,11 +515,11 @@ export default function TheWitness() {
 
   // Tempat nyimpen semua "otak" Three.js biar nggak re-render terus
   const threeJsBrain = useRef<{
-    scene?: THREE.Scene,
-    camera?: THREE.PerspectiveCamera,
-    renderer?: THREE.WebGLRenderer,
-    worldSphere?: THREE.Mesh,
-    controls?: OrbitControls
+    scene?: THREE.Scene;
+    camera?: THREE.PerspectiveCamera;
+    renderer?: THREE.WebGLRenderer;
+    worldSphere?: THREE.Mesh;
+    controls?: OrbitControls;
   }>({});
 
   // Kalkulasi jumlah pohon dari data server
@@ -523,21 +533,30 @@ export default function TheWitness() {
   // 1. Ambil data statistik dari API pas komponen pertama kali muncul.
   useEffect(() => {
     fetch("/api/stats/home")
-      .then(res => res.json())
-      .then(({ data }) => { if (data) setStats(data) })
-      .catch(err => console.error("Gagal dapet data stats:", err));
+      .then((res) => res.json())
+      .then(({ data }) => {
+        if (data) setStats(data);
+      })
+      .catch((err) => console.error("Gagal dapet data stats:", err));
   }, []);
 
   // 2. Animasi angka statistik pas elemen masuk ke viewport.
   useEffect(() => {
     if (isInView && stats.totalUsers > 0) {
-      const statValues = [stats.totalUsers, parseFloat(stats.totalCarbonSavedKg), stats.totalPosts];
+      const statValues = [
+        stats.totalUsers,
+        parseFloat(stats.totalCarbonSavedKg),
+        stats.totalPosts,
+      ];
       countRefs.current.forEach((element, i) => {
         if (element) {
           animate(0, statValues[i], {
             duration: 2.5,
             onUpdate: (latestValue) => {
-              element.textContent = i === 1 ? latestValue.toFixed(1) : Math.floor(latestValue).toLocaleString();
+              element.textContent =
+                i === 1
+                  ? latestValue.toFixed(1)
+                  : Math.floor(latestValue).toLocaleString();
             },
           });
         }
@@ -551,7 +570,12 @@ export default function TheWitness() {
 
     const container = globeCanvasContainer.current;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
@@ -565,19 +589,20 @@ export default function TheWitness() {
 
     const geometry = new THREE.SphereGeometry(1.5, 32, 32);
     // Warna hijau laut yang muda dan segar, sesuai permintaan.
-    const material = new THREE.MeshStandardMaterial({ color: 0x8FBC8F });
+    const material = new THREE.MeshStandardMaterial({ color: 0x8fbc8f });
     const worldSphere = new THREE.Mesh(geometry, material);
     scene.add(worldSphere);
 
     const textureLoader = new THREE.TextureLoader();
     textureLoader.load(
-      '/earth-texture.jpg',
+      "/earth-texture.jpg",
       (texture) => {
         material.map = texture;
         material.needsUpdate = true;
       },
       undefined,
-      (error) => console.error('Tekstur bumi gagal dimuat, pake warna fallback.')
+      (error) =>
+        console.error("Tekstur bumi gagal dimuat, pake warna fallback.")
     );
 
     scene.add(new THREE.AmbientLight(0xffffff, 2.5));
@@ -603,10 +628,10 @@ export default function TheWitness() {
         renderer.setSize(container.clientWidth, container.clientHeight);
       }
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animationFrameId);
       if (container && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -629,7 +654,7 @@ export default function TheWitness() {
 
     for (let i = 0; i < maxTreesToShow; i++) {
       const tree = createOneLittleTree();
-      const phi = Math.acos(-1 + (2 * Math.random()));
+      const phi = Math.acos(-1 + 2 * Math.random());
       const theta = Math.sqrt(4 * Math.PI) * Math.random();
       const position = new THREE.Vector3();
       position.setFromSphericalCoords(1.5, phi, theta);
@@ -647,7 +672,7 @@ export default function TheWitness() {
     if (!worldSphere) return; // Kalo Three.js belum siap, jangan lakukan apa-apa.
 
     const tree = createOneLittleTree();
-    const phi = Math.acos(-1 + (2 * (Math.random())));
+    const phi = Math.acos(-1 + 2 * Math.random());
     const theta = Math.random() * Math.PI * 2;
     const position = new THREE.Vector3();
     position.setFromSphericalCoords(1.5, phi, theta);
@@ -663,13 +688,12 @@ export default function TheWitness() {
     animate(0.1, 1, {
       duration: 0.8,
       ease: "elasticOut",
-      onUpdate: v => tree.scale.set(v, v, v)
+      onUpdate: (v) => tree.scale.set(v, v, v),
     });
-
   }, []); // useCallback biar fungsi ini ga dibuat ulang terus-terusan.
 
   const handleGrowButtonClick = () => {
-    setBonusTreesFromInteraction(prev => prev + 1);
+    setBonusTreesFromInteraction((prev) => prev + 1);
     addOneTreeToOurWorld();
   };
 
@@ -687,7 +711,11 @@ export default function TheWitness() {
   // --- The Actual View (JSX) ---
 
   return (
-    <section id="witness-grove" ref={sectionRef} className="bg-gray-50 px-6 py-20 sm:py-24 overflow-hidden">
+    <section
+      id="witness-grove"
+      ref={sectionRef}
+      className="bg-gray-50 px-6 py-20 sm:py-24 overflow-hidden"
+    >
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -699,12 +727,12 @@ export default function TheWitness() {
             Our Collective Grove
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Every share makes our world greener. Watch our community's impact grow, one tree at a time.
+            Every share makes our world greener. Watch our community's impact
+            grow, one tree at a time.
           </p>
         </motion.div>
 
         <div className="mt-16 flex flex-col lg:flex-row items-stretch justify-center gap-8 lg:gap-12">
-
           {/* Column 1: Stats */}
           <div className="w-full lg:w-1/4 space-y-6">
             {statItems.map((item, i) => (
@@ -717,7 +745,13 @@ export default function TheWitness() {
               >
                 <item.icon size={32} className={`mx-auto mb-3 ${item.color}`} />
                 <h3 className="text-3xl font-extrabold text-gray-900">
-                  <span ref={(el) => { countRefs.current[i] = el; }}>0</span>
+                  <span
+                    ref={(el) => {
+                      countRefs.current[i] = el;
+                    }}
+                  >
+                    0
+                  </span>
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">{item.label}</p>
               </motion.div>
@@ -735,14 +769,30 @@ export default function TheWitness() {
               <div className="absolute top-2 inset-x-0 z-10 text-center p-2 space-y-1">
                 {/* Baris 1: Informasi dari data riil */}
                 <p className="text-xs md:text-sm text-gray-800 bg-white/70 backdrop-blur-sm rounded-full inline-block px-3 py-1 shadow">
-                  Community saved <strong className="font-bold">{parseFloat(stats.totalCarbonSavedKg).toLocaleString()} kg CO₂</strong>, equal to <strong className="font-bold">{treesFromCarbonData.toLocaleString()}</strong> trees.
+                  Community saved{" "}
+                  <strong className="font-bold">
+                    {parseFloat(stats.totalCarbonSavedKg).toLocaleString()} kg
+                    CO₂
+                  </strong>
+                  , equal to{" "}
+                  <strong className="font-bold">
+                    {treesFromCarbonData.toLocaleString()}
+                  </strong>{" "}
+                  trees.
                 </p>
                 {/* Baris 2: Informasi simulasi interaktif */}
                 <p className="text-sm md:text-base text-gray-900 font-semibold bg-white/80 backdrop-blur-sm rounded-full inline-block px-4 py-1.5 shadow-md">
-                  Our interactive grove has <strong className="text-emerald-600">{totalTreesOnGlobe.toLocaleString()}</strong> trees now
+                  Our interactive grove has{" "}
+                  <strong className="text-emerald-600">
+                    {totalTreesOnGlobe.toLocaleString()}
+                  </strong>{" "}
+                  trees now
                 </p>
               </div>
-              <div ref={globeCanvasContainer} className="w-full h-full cursor-grab active:cursor-grabbing"></div>
+              <div
+                ref={globeCanvasContainer}
+                className="w-full h-full cursor-grab active:cursor-grabbing"
+              ></div>
             </div>
             <motion.button
               onClick={handleGrowButtonClick}

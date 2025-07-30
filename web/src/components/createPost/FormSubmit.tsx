@@ -51,6 +51,7 @@ export default function FormSubmit({
             onChange={onChange}
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#2a9d8f] focus:outline-none text-gray-800"
             placeholder="e.g., Rak buku bekas"
+            minLength={3}
           />
         </div>
       </div>
@@ -73,6 +74,7 @@ export default function FormSubmit({
             onChange={onChange}
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#2a9d8f] focus:outline-none text-gray-800 h-28 resize-none"
             placeholder="Tulis deskripsi barang secara singkat..."
+            minLength={10}
           />
         </div>
       </div>
@@ -120,6 +122,7 @@ export default function FormSubmit({
             multiple
             onChange={onFileChange}
             className="absolute inset-0 opacity-0 cursor-pointer"
+            required
           />
         </div>
       </div>

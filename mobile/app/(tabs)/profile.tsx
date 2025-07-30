@@ -109,7 +109,7 @@ export default function ProfileScreen() {
       </SafeAreaView>
     );
   }
-  console.log(user);
+  // console.log(user);
 
   if (!user) {
     return (

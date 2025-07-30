@@ -5,7 +5,7 @@ import {
     RequestStatus,
     IRequestWithPostDetails,
 } from "@/types/types";
-import { ObjectId, WithId, InsertOneResult } from "mongodb";
+import { ObjectId, WithId, InsertOneResult, DeleteResult } from "mongodb";
 
 const REQUEST_COLLECTION = "requests";
 const POST_COLLECTION = "posts";
@@ -22,6 +22,7 @@ export class RequestModel {
             userId,
             status: RequestStatus.PENDING,
             trackingCode: "",
+            trackingCodeUrl: "",
             createdAt: new Date(),
             updatedAt: new Date(),
         };
@@ -47,16 +48,12 @@ export class RequestModel {
         const userObjectId = new ObjectId(userId);
 
         const pipeline = [
-            // 1. Cari semua request dari user ini
             { $match: { userId: userObjectId } },
-
-            // 2. Lakukan lookup ke collection 'posts'
             {
                 $lookup: {
                     from: POST_COLLECTION,
                     localField: "postId",
                     foreignField: "_id",
-                    // Lakukan lookup bersarang untuk mengambil author-nya juga
                     pipeline: [
                         {
                             $lookup: {
@@ -66,19 +63,10 @@ export class RequestModel {
                                 as: "authorArr"
                             }
                         },
+                        { $unwind: { path: "$authorArr", preserveNullAndEmptyArrays: true } },
+                        { $addFields: { "author": "$authorArr" } },
                         {
-                            $unwind: {
-                                path: "$authorArr",
-                                preserveNullAndEmptyArrays: true
-                            }
-                        },
-                        {
-                            $addFields: {
-                                "author": "$authorArr"
-                            }
-                        },
-                        {
-                            $project: { // Pilih hanya field yang kita butuhkan dari post dan author
+                            $project: {
                                 title: 1, slug: 1, thumbnailUrl: 1, category: 1,
                                 "author._id": 1, "author.fullName": 1, "author.avatarUrl": 1
                             }
@@ -87,25 +75,8 @@ export class RequestModel {
                     as: "postArr"
                 }
             },
-
-            // 3. Unwind hasil lookup post. Ini penting untuk kasus post yang dihapus.
-            {
-                $unwind: {
-                    path: "$postArr",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-
-            // 4. Rapikan nama field menjadi 'postDetails'
-            {
-                $addFields: {
-                    postDetails: "$postArr"
-                }
-            },
-
-            // 5. Proyeksi akhir. INI PERBAIKANNYA.
-            // Kita hanya melakukan INKLUSI (memilih field yang akan diambil).
-            // Kita tidak mencampur dengan EKSKLUSI (membuang field).
+            { $unwind: { path: "$postArr", preserveNullAndEmptyArrays: true } },
+            { $addFields: { postDetails: "$postArr" } },
             {
                 $project: {
                     _id: 1,
@@ -113,8 +84,10 @@ export class RequestModel {
                     postId: 1,
                     status: 1,
                     createdAt: 1,
+                    updatedAt: 1, // 🔥 FIX DI SINI: Tambahkan field updatedAt
+                    trackingCode: 1,
+                    trackingCodeUrl: 1,
                     postDetails: 1
-                    // Field 'postArr' otomatis tidak akan terbawa karena tidak disebutkan di sini.
                 }
             },
             { $sort: { createdAt: -1 } },
@@ -125,7 +98,6 @@ export class RequestModel {
             .aggregate<IRequestWithPostDetails>(pipeline)
             .toArray();
     }
-
 
     static async getIncomingRequestsForMyPosts(
         userId: string
@@ -146,23 +118,20 @@ export class RequestModel {
             {
                 $lookup: {
                     from: USER_COLLECTION,
-                    localField: "postDetails.userId",
+                    localField: "userId",
                     foreignField: "_id",
-                    as: "authorDetails",
+                    as: "requesterDetails",
                 },
             },
-            {
-                $unwind: {
-                    path: "$authorDetails",
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-            {
-                $addFields: {
-                    "postDetails.author": "$authorDetails",
-                },
-            },
+            { $unwind: { path: "$requesterDetails", preserveNullAndEmptyArrays: true } },
+            { $addFields: { requester: "$requesterDetails" } },
             { $sort: { createdAt: -1 } },
+            {
+                $project: {
+                    postDetails: 0,
+                    requesterDetails: 0,
+                }
+            }
         ];
         return db
             .collection<IRequest>(REQUEST_COLLECTION)
@@ -173,12 +142,16 @@ export class RequestModel {
     static async updateRequestStatus(
         requestId: string,
         status: RequestStatus,
-        trackingCode?: string
+        trackingInfo?: { code?: string; url?: string }
     ): Promise<boolean> {
         const db = await connectToDb();
         const updateData: Partial<IRequest> = { status, updatedAt: new Date() };
-        if (trackingCode) {
-            updateData.trackingCode = trackingCode;
+
+        if (trackingInfo?.code) {
+            updateData.trackingCode = trackingInfo.code;
+        }
+        if (trackingInfo?.url) {
+            updateData.trackingCodeUrl = trackingInfo.url;
         }
 
         const requestCollection = db.collection<IRequest>(REQUEST_COLLECTION);
@@ -188,23 +161,45 @@ export class RequestModel {
             { $set: updateData }
         );
 
-        // Auto set isAvailable: false
-        if (
-            result.modifiedCount > 0 &&
-            (status === RequestStatus.ACCEPTED || status === RequestStatus.COMPLETED)
-        ) {
-            const updatedRequest = await requestCollection.findOne({
+        if (result.modifiedCount > 0 && (status === RequestStatus.ACCEPTED || status === RequestStatus.COMPLETED)) {
+            const theRequestThatWasJustUpdated = await requestCollection.findOne({
                 _id: new ObjectId(requestId),
             });
-            if (updatedRequest) {
+
+            if (theRequestThatWasJustUpdated) {
+                const postId = theRequestThatWasJustUpdated.postId;
+
                 const postCollection = db.collection<IPost>(POST_COLLECTION);
                 await postCollection.updateOne(
-                    { _id: updatedRequest.postId },
+                    { _id: postId },
                     { $set: { isAvailable: false } }
+                );
+
+                await requestCollection.updateMany(
+                    {
+                        postId: postId,
+                        _id: { $ne: new ObjectId(requestId) },
+                        status: RequestStatus.PENDING
+                    },
+                    {
+                        $set: { status: RequestStatus.REJECTED, updatedAt: new Date() }
+                    }
                 );
             }
         }
 
         return result.modifiedCount > 0;
+    }
+
+    static async deleteRequest(
+        requestId: string,
+        userId: string
+    ): Promise<DeleteResult> {
+        const db = await connectToDb();
+        return db.collection<IRequest>(REQUEST_COLLECTION).deleteOne({
+            _id: new ObjectId(requestId),
+            userId: new ObjectId(userId),
+            status: RequestStatus.PENDING,
+        });
     }
 }
