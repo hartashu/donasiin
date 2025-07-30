@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
 import { Chat, User } from "../../types";
 import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../context/NotificationContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
 
@@ -24,11 +25,43 @@ export default function ChatScreen() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { setUnreadMessagesCount } = useNotifications();
 
   const getOtherParticipant = (chat: Chat) => {
     if (!user) return null;
     return chat.participants.find((p) => p.id !== user.id);
   };
+
+  const checkForNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/chat/conversations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return;
+
+      const result = await response.json();
+      const conversations = Array.isArray(result) ? result : result.data;
+      if (!Array.isArray(conversations)) return;
+
+      const unreadCount = conversations.filter(
+        (c: any) =>
+          c.lastMessageId &&
+          !c.lastMessageIsRead &&
+          c.lastMessageSenderId !== user.id
+      ).length;
+      setUnreadMessagesCount(unreadCount);
+    } catch (e) {
+      console.error("Failed to check for chat notifications:", e);
+    }
+  }, [user, setUnreadMessagesCount]);
+
+  useEffect(() => {
+    checkForNotifications();
+  }, [checkForNotifications]);
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -78,7 +111,6 @@ export default function ChatScreen() {
         throw new Error("Current user not found. Please log in again.");
       }
 
-      // Map API response to the Chat type
       const mappedChats: Chat[] = conversations.map((convo: any) => {
         const otherUser: User = {
           id: convo.otherUser._id,
@@ -124,12 +156,13 @@ export default function ChatScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
+      setUnreadMessagesCount(0);
       fetchConversations();
-    }, [fetchConversations])
+    }, [fetchConversations, setUnreadMessagesCount])
   );
 
   const handleChatPress = (chat: Chat) => {

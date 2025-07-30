@@ -14,6 +14,7 @@ import DonationDetailSkeleton from "@/components/donations/DonationDetailSkeleto
 import { getCategoryLabel } from "@/lib/getCategoryLabel";
 import { mainAddress } from "@/lib/address";
 
+
 export default function DonationDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();

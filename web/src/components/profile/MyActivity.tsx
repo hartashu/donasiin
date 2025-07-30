@@ -1,4 +1,3 @@
-// @/components/profile/MyActivity.tsx
 'use client';
 
 import { useState } from 'react';
@@ -14,6 +13,7 @@ interface MyActivityProps {
     refreshData: () => void;
 }
 
+// Komponen kecil buat tombol tab, biar ada animasinya
 const TabButton = ({ label, count, isActive, onClick }: { label: string, count: number, isActive: boolean, onClick: () => void }) => (
     <button onClick={onClick} className="relative px-1 py-2 text-sm sm:text-base font-semibold outline-none transition-colors duration-300">
         <span className={isActive ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}>{label}</span>

@@ -1,4 +1,3 @@
-// @/components/profile/Achievements.tsx
 'use client';
 
 import { Achievement as AchievementType } from '@/types/types';
@@ -12,6 +11,9 @@ const iconMap: { [key: string]: React.ElementType } = {
 };
 
 const AchievementBadge = ({ ach }: { ach: AchievementType & { icon: string } }) => {
+    // Kalau ach-nya null, jangan render apa-apa.
+    if (!ach) return null;
+
     const Icon = iconMap[ach.icon] || Lock;
 
     return (
@@ -29,14 +31,19 @@ const AchievementBadge = ({ ach }: { ach: AchievementType & { icon: string } }) 
 
 export function Achievements({ allAchievements }: { allAchievements: (AchievementType & { icon: string })[] }) {
     const [showAll, setShowAll] = useState(false);
-    const unlockedAchievements = allAchievements.filter(a => a.unlocked);
-    const lockedAchievements = allAchievements.filter(a => !a.unlocked);
 
-    if (allAchievements.length === 0) return null;
+    // 🔥 FIX: Tambahkan pengecekan `a` sebelum akses properti `unlocked`.
+    // Ini mencegah error kalau ada elemen `null` atau `undefined` di dalam array.
+    const validAchievements = allAchievements?.filter(Boolean) || [];
+    const unlockedAchievements = validAchievements.filter(a => a.unlocked);
+    const lockedAchievements = validAchievements.filter(a => !a.unlocked);
+
+    // 🔥 FIX: Cek `validAchievements` biar lebih aman.
+    if (validAchievements.length === 0) return null;
 
     return (
         <div>
-            <h3 className="font-semibold text-gray-800 mb-3">Achievements ({unlockedAchievements.length}/{allAchievements.length})</h3>
+            <h3 className="font-semibold text-gray-800 mb-3">Achievements ({unlockedAchievements.length}/{validAchievements.length})</h3>
             <div className="space-y-2">
                 {unlockedAchievements.slice(0, 3).map(ach => (
                     <AchievementBadge key={ach.id} ach={ach} />
@@ -62,7 +69,7 @@ export function Achievements({ allAchievements }: { allAchievements: (Achievemen
                 )}
             </AnimatePresence>
             <button onClick={() => setShowAll(!showAll)} className="text-sm font-semibold text-gray-500 hover:text-gray-900 mt-3 w-full text-center">
-                {showAll ? 'Show Less' : `Show all ${allAchievements.length} achievements...`}
+                {showAll ? 'Show Less' : `Show all ${validAchievements.length} achievements...`}
             </button>
         </div>
     );

@@ -1,4 +1,3 @@
-// mobile/app/(your-stack)/PostDetailScreen.tsx
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import {
   View,
@@ -319,7 +318,7 @@ export default function PostDetailScreen() {
               {post.owner.address && (
                 <View style={styles.addressRow}>
                   <MapPin size={14} color={Colors.text.secondary} />
-                  <Text style={styles.addressText}>{post.owner.address}</Text>
+                  <Text style={styles.addressText}>{post.owner.address.split(" ").pop()?.replace(/,$/, "")}</Text>
                 </View>
               )}
             </View>

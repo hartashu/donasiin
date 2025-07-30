@@ -89,6 +89,7 @@ export default function CreatePost() {
       if (!recRes.ok) throw new Error("Failed to fetch recommendation");
 
       const { data: recommendations } = await recRes.json();
+      console.log(recommendations);
 
       setRecommendedUsers(recommendations || []);
       setShowModal(true);
