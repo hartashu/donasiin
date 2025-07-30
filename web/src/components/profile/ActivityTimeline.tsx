@@ -1,25 +1,42 @@
 'use client';
 
-import { Activity, RequestStatus } from "@/types/types";
+import { RequestStatus } from "@/types/types";
 import { formatDistanceToNow } from 'date-fns';
-import { Gift, MailPlus, Send, CheckCircle, XCircle, Package, UserCheck } from "lucide-react";
-import { useState } from "react";
+import { Gift, MailPlus, Send, CheckCircle, XCircle, Package, UserCheck, LucideProps } from "lucide-react";
+import { ForwardRefExoticComponent, RefAttributes, useState, ReactNode } from "react";
 
-// Konfigurasi untuk setiap jenis aktivitas, biar rapi
-const activityConfig = {
+// --- Type Definitions ---
+
+interface Activity {
+    type: "I_CREATED_A_POST" | "SOMEONE_REQUESTED_MY_ITEM" | "I_MADE_A_REQUEST" | "MY_REQUEST_WAS_UPDATED" | "I_UPDATED_A_REQUEST";
+    title: string;
+    date: string;
+    status?: RequestStatus;
+    otherUserName?: string;
+}
+
+type ActivityConfigItem = {
+    icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+    color: string;
+    text: (title: string, user?: string) => ReactNode;
+};
+
+// 🔥 FIX: Use 'Partial<Record<...>>' to indicate that not all RequestStatus keys are required.
+type ActivityConfigValue = ActivityConfigItem | Partial<Record<RequestStatus, ActivityConfigItem>>;
+
+
+// --- Component Configuration ---
+
+const activityConfig: Record<string, ActivityConfigValue> = {
     I_CREATED_A_POST: { icon: Gift, color: "text-emerald-500", text: (title: string) => <>You donated <strong>{title}</strong>.</> },
     SOMEONE_REQUESTED_MY_ITEM: { icon: MailPlus, color: "text-sky-500", text: (title: string, user?: string) => <>{user} requested your item: <strong>{title}</strong>.</> },
     I_MADE_A_REQUEST: { icon: Send, color: "text-blue-500", text: (title: string, user?: string) => <>You requested <strong>{title}</strong> from {user}.</> },
-
-    // Updates untuk request yang SAYA BUAT
     MY_REQUEST_WAS_UPDATED: {
         [RequestStatus.ACCEPTED]: { icon: UserCheck, color: "text-green-500", text: (title: string) => <>Your request for <strong>{title}</strong> was accepted!</> },
         [RequestStatus.REJECTED]: { icon: XCircle, color: "text-red-500", text: (title: string) => <>Your request for <strong>{title}</strong> was rejected.</> },
         [RequestStatus.SHIPPED]: { icon: Package, color: "text-purple-500", text: (title: string) => <>Your item <strong>{title}</strong> is on its way!</> },
         [RequestStatus.COMPLETED]: { icon: CheckCircle, color: "text-yellow-500", text: (title: string) => <>You completed the exchange for <strong>{title}</strong>.</> },
     },
-
-    // Updates untuk request yang SAYA TERIMA
     I_UPDATED_A_REQUEST: {
         [RequestStatus.ACCEPTED]: { icon: UserCheck, color: "text-green-500", text: (title: string, user?: string) => <>You accepted the request for <strong>{title}</strong> from {user}.</> },
         [RequestStatus.REJECTED]: { icon: XCircle, color: "text-red-500", text: (title: string, user?: string) => <>You rejected the request for <strong>{title}</strong> from {user}.</> },
@@ -27,6 +44,8 @@ const activityConfig = {
         [RequestStatus.COMPLETED]: { icon: CheckCircle, color: "text-yellow-500", text: (title: string, user?: string) => <>The exchange for <strong>{title}</strong> with {user} is complete.</> },
     }
 };
+
+// --- Component ---
 
 export function ActivityTimeline({ activities }: { activities: (Activity | null)[] }) {
     const [visibleCount, setVisibleCount] = useState(5);
@@ -38,7 +57,7 @@ export function ActivityTimeline({ activities }: { activities: (Activity | null)
         return formatDistanceToNow(date, { addSuffix: true });
     };
 
-    const validActivities = activities?.filter(Boolean) || [];
+    const validActivities: Activity[] = activities?.filter((act): act is Activity => Boolean(act)) || [];
 
     if (validActivities.length === 0) {
         return (
@@ -59,19 +78,19 @@ export function ActivityTimeline({ activities }: { activities: (Activity | null)
             <h3 className="font-semibold text-gray-800 mb-3">Recent Activity</h3>
             <div className="relative border-l-2 border-gray-100 pl-6 space-y-5">
                 {visibleActivities.map((activity, index) => {
-                    let config;
-                    // Logika untuk mencari config yang tepat
+                    let config: ActivityConfigItem | undefined;
+
+                    const topLevelConfig = activityConfig[activity.type];
+
                     if (activity.type === 'MY_REQUEST_WAS_UPDATED' || activity.type === 'I_UPDATED_A_REQUEST') {
                         if (activity.status) {
-                            config = activityConfig[activity.type][activity.status];
+                            config = (topLevelConfig as Partial<Record<RequestStatus, ActivityConfigItem>>)[activity.status];
                         }
                     } else {
-                        // Cast tipe agar TypeScript tidak bingung
-                        config = activityConfig[activity.type as keyof typeof activityConfig];
+                        config = topLevelConfig as ActivityConfigItem;
                     }
 
-                    // Jika tidak ada config yang cocok, jangan render apa-apa
-                    if (!config || typeof config.text !== 'function') return null;
+                    if (!config) return null;
 
                     const { icon: Icon, color, text } = config;
 

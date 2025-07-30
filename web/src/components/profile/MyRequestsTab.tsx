@@ -69,7 +69,8 @@ const DeleteRequestButton = ({ req, refreshData }: { req: IRequestWithPostDetail
         if (window.confirm("Are you sure you want to cancel this request?")) {
             startDeleteTransition(async () => {
                 toast.loading("Cancelling request...");
-                const result = await deleteRequestAction(req._id);
+                // 🔥 FIX: Convert ObjectId to string before passing to server action.
+                const result = await deleteRequestAction(req._id.toString());
                 toast.dismiss();
                 if (result.success) {
                     toast.success("Request cancelled.");
@@ -146,7 +147,7 @@ export function MyRequestsTab({
                 >
                     {requests.map((req) => {
                         if (!req.postDetails) {
-                            return <DeletedPostRequestCard key={req._id as string} req={req} />;
+                            return <DeletedPostRequestCard key={req._id.toString()} req={req} />;
                         }
 
                         const author = req.postDetails.author;
@@ -154,10 +155,10 @@ export function MyRequestsTab({
                         const categoryColor = getCategoryColor(req.postDetails.category);
 
                         return (
-                            <div key={req._id as string} className="bg-white p-4 rounded-lg border border-gray-200 flex flex-col justify-between mb-4 break-inside-avoid">
+                            <div key={req._id.toString()} className="bg-white p-4 rounded-lg border border-gray-200 flex flex-col justify-between mb-4 break-inside-avoid">
                                 <div>
                                     <div className="flex items-start gap-4">
-                                        <Link href={`/posts/${req.postDetails.slug}`} className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 group">
+                                        <Link href={`/donations/${req.postDetails.category}/${req.postDetails.slug}`} className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 group">
                                             <Image
                                                 src={req.postDetails.thumbnailUrl}
                                                 alt={req.postDetails.title}
@@ -178,7 +179,6 @@ export function MyRequestsTab({
                                         <p>Status: <span style={{ backgroundColor: categoryColor.bg, color: categoryColor.text }} className="font-semibold px-2 py-0.5 rounded">{req.status}</span></p>
                                         <p className="flex items-center gap-1.5 text-xs text-gray-400"><Calendar size={12} /> Requested {formatDistanceToNow(new Date(req.createdAt), { addSuffix: true })}</p>
 
-                                        {/* INI BAGIAN BARUNYA */}
                                         {req.trackingCode && (
                                             <div className="bg-gray-100 p-2 rounded-md text-xs space-y-1">
                                                 <p className="font-semibold text-gray-700">Tracking: {req.trackingCode}</p>
@@ -198,7 +198,7 @@ export function MyRequestsTab({
                                     {req.status === RequestStatus.SHIPPED && (
                                         <button
                                             disabled={isPending}
-                                            onClick={() => handleStatusUpdate(req._id as string, RequestStatus.COMPLETED)}
+                                            onClick={() => handleStatusUpdate(req._id.toString(), RequestStatus.COMPLETED)}
                                             className="w-full mt-3 bg-gray-800 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap hover:bg-gray-900 transition disabled:opacity-50"
                                         >
                                             ✔️ Confirm Reception
@@ -208,9 +208,9 @@ export function MyRequestsTab({
 
                                 <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
                                     <div className="flex items-center gap-2">
-                                        <Image src={author?.avatarUrl || '/default-avatar.png'} width={24} height={24} alt={author?.fullName || 'Donator'} className="rounded-full" />
+                                        <Image src={author?.avatarUrl ?? '/default-avatar.png'} width={24} height={24} alt={author?.fullName ?? 'Donator'} className="rounded-full" />
                                         <span className="text-xs text-gray-600">
-                                            By <span className="font-semibold">{author?.fullName || '...'}</span>
+                                            By <span className="font-semibold">{author?.fullName ?? '...'}</span>
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1">
