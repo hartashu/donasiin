@@ -31,7 +31,7 @@ export async function GET(
     // );
 
     // Andy
-      // 🟡 Ambil session user
+    // 🟡 Ambil session user
     const session = await getSession();
     const userId = session?.user?.id;
 
@@ -41,11 +41,18 @@ export async function GET(
     // 🟢 Cek apakah user sudah pernah request post ini
     if (userId) {
       const myRequests = await RequestModel.getMyRequests(new ObjectId(userId));
-      hasRequested = myRequests.some((req) => req.postId.equals(post._id));
+      // hasRequested = myRequests.some((req) => req.postId.equals(post._id));
+      hasRequested = myRequests.some(
+        (req) => req.postId.toString() === post._id.toString()
+      );
     }
 
     // 🟢 Tambahkan properti baru: hasRequested
-    return NextResponse.json<IJsonResponse<any>>(
+    // Definisikan tipe data yang lebih spesifik
+    type PostWithRequestStatus = WithId<IPost> & { hasRequested: boolean };
+
+    // Gunakan tipe baru tersebut, bukan 'any'
+    return NextResponse.json<IJsonResponse<PostWithRequestStatus>>(
       { statusCode: 200, data: { ...post, hasRequested } },
       { status: 200 }
     );

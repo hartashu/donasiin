@@ -1,29 +1,58 @@
-import { NextResponse } from 'next/server';
-import { getSession } from '@/utils/getSession';
-import { ChatModel } from '@/models/chat.model';
-import handleError from '@/errorHandler/errorHandler';
+import { NextResponse } from "next/server";
+import { getSession } from "@/utils/getSession";
+import { ChatModel } from "@/models/chat.model";
+import handleError from "@/errorHandler/errorHandler";
 
+// export async function GET(
+//   request: Request,
+//   { params }: { params: { conversationId: string } }
+// ) {
+//   try {
+//     // console.log(auth());
+//     const session = await getSession();
+//     // console.log('session:', session);
+
+//     if (!session?.user?.id) {
+//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//     }
+
+//     if (!params.conversationId.includes(session.user.id)) {
+//       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+//     }
+
+//     const messages = await ChatModel.getMessagesByConversationId(
+//       params.conversationId
+//     );
+//     return NextResponse.json(messages);
+//   } catch (error) {
+//     return handleError(error);
+//   }
+// }
 
 export async function GET(
-    request: Request,
-    { params }: { params: { conversationId: string } }
+  request: Request,
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
-    try {
-        // console.log(auth());
-        const session = await getSession();
-        // console.log('session:', session);
+  try {
+    // console.log(auth());
+    const session = await getSession();
+    // console.log('session:', session);
 
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    const { conversationId } = await params;
 
-        if (!params.conversationId.includes(session.user.id)) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-
-        const messages = await ChatModel.getMessagesByConversationId(params.conversationId);
-        return NextResponse.json(messages);
-    } catch (error) {
-        return handleError(error);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    if (!conversationId.includes(session.user.id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const messages = await ChatModel.getMessagesByConversationId(
+      conversationId
+    );
+    return NextResponse.json(messages);
+  } catch (error) {
+    return handleError(error);
+  }
 }
