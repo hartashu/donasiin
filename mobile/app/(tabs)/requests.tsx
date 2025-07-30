@@ -12,20 +12,33 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import * as ImagePicker from 'expo-image-picker';
 import { Colors } from "../../constants/Colors";
 import { DonationRequest } from "../../types";
 import { Clock, CheckCircle, XCircle, X, Sparkles } from "lucide-react-native";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
 
+
 const API_BASE_URL = "http://localhost:3000/api";
+
 const MAX_TRACKING_LENGTH = 50;
 
+// This is a local type for this screen to handle the `isOutgoing` flag
+// and the simplified `post` object that comes from the API.
+type DisplayRequest = Omit<DonationRequest, 'post' | 'requester'> & {
+  isOutgoing: boolean;
+  post: {
+    id: string;
+    slug: string;
+    title: string;
+    images: string[];
+  };
+};
+
 export default function RequestsScreen() {
-  const [requests, setRequests] = useState<DonationRequest[]>([]);
+  const [requests, setRequests] = useState<DisplayRequest[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -58,7 +71,7 @@ export default function RequestsScreen() {
       const outJson = await outRes.json();
       const inJson = await inRes.json();
 
-      const mappedOut: DonationRequest[] = (outJson.data || [])
+      const mappedOut: DisplayRequest[] = (outJson.data || [])
         .filter((i: any) => i.postDetails)
         .map((i: any) => ({
           id: i._id,
@@ -77,7 +90,7 @@ export default function RequestsScreen() {
           },
         }));
 
-      const mappedIn: DonationRequest[] = [];
+      const mappedIn: DisplayRequest[] = [];
       (inJson.data || []).forEach((post: any) => {
         (post.requests || []).forEach((req: any) => {
           if (req.requester) {
@@ -114,10 +127,8 @@ export default function RequestsScreen() {
     }
   }, []);
 
-  // run once on mount
-  useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+  // Refetch data every time the screen comes into focus
+  useFocusEffect(useCallback(() => { fetchRequests() }, [fetchRequests]));
 
   const patchRequest = async (id: string, body: any) => {
     const token = await AuthService.getStoredToken();
@@ -156,6 +167,21 @@ export default function RequestsScreen() {
     }
   };
 
+  const handleAction = async (id: string, status: 'ACCEPTED' | 'REJECTED') => {
+    setUpdatingId(id);
+    try {
+      await patchRequest(id, { status });
+      setRequests(rs =>
+        rs.map(r => (r.id === id ? { ...r, status: status.toLowerCase() as DonationRequest['status'] } : r))
+      );
+      Alert.alert('Success', `Request has been ${status.toLowerCase()}.`);
+    } catch (e: any) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleOcrScan = async (requestId: string) => {
     setOcrLoadingId(requestId);
     try {
@@ -167,25 +193,28 @@ export default function RequestsScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.8,
       });
       if (result.canceled || !result.assets.length) return;
 
-      const uri = result.assets[0].uri;
-      const b64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const dataUri = `data:image/jpeg;base64,${b64}`;
+      const image = result.assets[0];
+      const formData = new FormData();
+      const uriParts = image.uri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
 
+      formData.append('receiptImage', {
+        uri: image.uri,
+        name: image.fileName ?? `scan.${fileType}`,
+        type: image.type ?? `image/${fileType}`,
+      } as any);
+      formData.append('requestId', requestId);
+      
       const token = await AuthService.getStoredToken();
       const res = await fetch(`${API_BASE_URL}/ocr-ai`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ imageUrl: dataUri }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "OCR failed.");
@@ -197,6 +226,37 @@ export default function RequestsScreen() {
     } finally {
       setOcrLoadingId(null);
     }
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert(
+      "Delete Request",
+      "Are you sure you want to permanently delete this request? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await AuthService.getStoredToken();
+              if (!token) throw new Error("Authentication required.");
+
+              const response = await fetch(`${API_BASE_URL}/requests/${id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+              });
+
+              if (!response.ok) throw new Error("Failed to delete request.");
+
+              setRequests((prev) => prev.filter((req) => req.id !== id));
+            } catch (error: any) {
+              Alert.alert("Error", error.message);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getStatusIcon = (status: DonationRequest["status"]) => {
@@ -235,7 +295,7 @@ export default function RequestsScreen() {
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-  const renderItem = ({ item }: { item: DonationRequest }) => {
+  const renderItem = ({ item }: { item: DisplayRequest }) => {
     const incoming = !item.isOutgoing;
     return (
       <View style={styles.card}>
@@ -254,9 +314,7 @@ export default function RequestsScreen() {
             </Text>
             {item.isOutgoing && item.status === "pending" && (
               <TouchableOpacity
-                onPress={() => {
-                  /* delete logic */
-                }}
+                onPress={() => handleDelete(item.id)}
               >
                 <X color={Colors.text.tertiary} size={16} />
               </TouchableOpacity>
@@ -271,6 +329,28 @@ export default function RequestsScreen() {
               {capitalize(item.status)}
             </Text>
           </View>
+
+          {incoming && item.status === 'pending' && (
+            <View style={styles.actionRow}>
+              <Button
+                title="Reject"
+                onPress={() => handleAction(item.id, 'REJECTED')}
+                variant="outline"
+                size="sm"
+                style={{ flex: 1, marginRight: 8 }}
+                disabled={!!updatingId}
+                loading={updatingId === item.id}
+              />
+              <Button
+                title="Accept"
+                onPress={() => handleAction(item.id, 'ACCEPTED')}
+                size="sm"
+                style={{ flex: 1 }}
+                disabled={!!updatingId}
+                loading={updatingId === item.id}
+              />
+            </View>
+          )}
 
           {incoming && item.status === "accepted" && (
             <View style={styles.shipRow}>
@@ -432,6 +512,7 @@ const styles = StyleSheet.create({
   },
   status: { fontSize: 14, fontWeight: "600", marginLeft: 6 },
   shipRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
+  actionRow: { flexDirection: "row", alignItems: "center", marginTop: 12 },
   input: {
     flex: 1,
     borderWidth: 1,
