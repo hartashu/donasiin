@@ -93,7 +93,7 @@ export default function DonationCards({ category }: { category?: string }) {
             }
             endMessage={
               <p className="text-center text-sm text-gray-400 mt-8">
-                You've reached the end!
+                You&apos;ve reached the end!
               </p>
             }
           >

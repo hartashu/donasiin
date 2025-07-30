@@ -727,8 +727,8 @@ export default function TheWitness() {
             Our Collective Grove
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Every share makes our world greener. Watch our community's impact
-            grow, one tree at a time.
+            Every share makes our world greener. Watch our community&apos;s
+            impact grow, one tree at a time.
           </p>
         </motion.div>
 
