@@ -11,6 +11,7 @@ import {
   identifyItemFromImage,
   getCarbonFootprintForItem,
 } from "@/utils/carbonCredit/carbonAnalysisService";
+import { UploadApiResponse } from "cloudinary";
 
 export const maxDuration = 60;
 
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// export async function POST(request: Request) {
+// export async function POST(request: NextRequest) {
 //   try {
 //     const session = await getSession();
 //     if (!session?.user?.id) {
@@ -63,31 +64,110 @@ export async function GET(request: NextRequest) {
 //       );
 //     }
 
-//     const body = await request.json();
+//     const formData = await request.formData();
 
-//     const validatedData = postSchema.parse(body);
+//     // 1. Ekstrak data teks dan file
+//     const title = formData.get("title") as string;
+//     const description = formData.get("description") as string;
+//     const category = formData.get("category") as string;
+//     const itemImages = formData.getAll("itemImages") as File[];
+//     console.log("🚀 ~ POST ~ itemImages:", itemImages);
 
-//     const slug = validatedData.title
+//     if (itemImages.length === 0) {
+//       return NextResponse.json(
+//         { error: "At least one image is required." },
+//         { status: 400 }
+//       );
+//     }
+
+//     // 2. Validasi data teks
+//     postSchema.parse({ title, description, category });
+
+//     // 3. Upload semua gambar ke Cloudinary
+//     const uploadPromises = itemImages.map(async (file) => {
+//       const buffer = Buffer.from(await file.arrayBuffer());
+//       return uploadFile(buffer);
+//     });
+//     const uploadResults = await Promise.all(uploadPromises);
+//     const imageUrls = uploadResults.map((result) => result.secure_url);
+
+//     // 4. Lakukan analisis AI pada gambar pertama
+//     const mainImageBuffer = Buffer.from(await itemImages[0].arrayBuffer());
+//     const analysisResult = await identifyItemFromImage(
+//       mainImageBuffer,
+//       itemImages[0].type
+//     );
+
+//     // Validasi hasil identifikasi
+//     if (!analysisResult) {
+//       return NextResponse.json(
+//         {
+//           error:
+//             "AI could not identify the item in the image. Please try another photo.",
+//         },
+//         { status: 400 }
+//       );
+//     }
+//     const { itemName, quantity } = analysisResult;
+
+//     const singleItemCarbon = await getCarbonFootprintForItem(itemName);
+
+//     // Validasi hasil estimasi karbon
+//     if (singleItemCarbon === null) {
+//       return NextResponse.json(
+//         {
+//           error: `AI could not estimate the carbon footprint for: ${itemName}.`,
+//         },
+//         { status: 400 }
+//       );
+//     }
+
+//     const totalCarbonKg = singleItemCarbon * quantity;
+//     const aiAnalysis = `Donating ${quantity} ${itemName}(s) helps save approximately ${totalCarbonKg.toFixed(
+//       1
+//     )} kg of CO2.`;
+
+//     // 5. Siapkan dokumen lengkap untuk disimpan
+
+//     // --- LOGIKA SLUG UNIK DIMULAI DI SINI ---
+//     const baseSlug = title
 //       .toLowerCase()
 //       .replace(/\s+/g, "-")
 //       .replace(/[^\w-]+/g, "");
-
-//     const result = await PostModel.addPost({
-//       ...validatedData,
-//       slug: slug,
-//       imageUrls: validatedData.imageUrls ?? [],
+//     let finalSlug = baseSlug;
+//     let counter = 2;
+//     // Loop ini akan terus berjalan sampai menemukan slug yang belum dipakai
+//     while (await PostModel.isSlugExist(finalSlug)) {
+//       finalSlug = `${baseSlug}-${counter}`;
+//       counter++;
+//     }
+//     // --- LOGIKA SLUG UNIK SELESAI ---
+//     const postToSave = {
+//       title,
+//       slug: finalSlug,
+//       description,
+//       category,
+//       thumbnailUrl: imageUrls[0],
+//       imageUrls,
 //       userId: new ObjectId(session.user.id),
-//     });
+//       isAvailable: true,
+//       carbonKg: totalCarbonKg,
+//       aiAnalysis,
+//       createdAt: new Date(),
+//       updatedAt: new Date(),
+//     };
 
+//     // 6. Simpan ke database
+//     const result = await PostModel.addPost(postToSave);
 //     if (!result.acknowledged) {
-//       throw new Error("Add post failed");
+//       throw new Error("Failed to create post in database.");
 //     }
 
 //     return NextResponse.json(
 //       {
 //         statusCode: 201,
-//         message: "Add post success",
-//         data: { insertedId: result.insertedId },
+//         message: "Post created successfully!",
+//         data: { insertedId: result.insertedId, slug: postToSave.slug },
 //       },
 //       { status: 201 }
 //     );
@@ -95,6 +175,8 @@ export async function GET(request: NextRequest) {
 //     return handleError(error);
 //   }
 // }
+
+import { analyzeItem } from "@/utils/carbonCredit/carbonAnalysisService";
 
 export async function POST(request: NextRequest) {
   try {
@@ -108,12 +190,10 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
 
-    // 1. Ekstrak data teks dan file
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const category = formData.get("category") as string;
     const itemImages = formData.getAll("itemImages") as File[];
-    console.log("🚀 ~ POST ~ itemImages:", itemImages);
 
     if (itemImages.length === 0) {
       return NextResponse.json(
@@ -122,68 +202,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Validasi data teks
     postSchema.parse({ title, description, category });
 
-    // 3. Upload semua gambar ke Cloudinary
-    const uploadPromises = itemImages.map(async (file) => {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      return uploadFile(buffer);
-    });
-    const uploadResults = await Promise.all(uploadPromises);
-    const imageUrls = uploadResults.map((result) => result.secure_url);
+    // --- OPTIMISASI DIMULAI DI SINI ---
 
-    // 4. Lakukan analisis AI pada gambar pertama
-    const mainImageBuffer = Buffer.from(await itemImages[0].arrayBuffer());
-    const analysisResult = await identifyItemFromImage(
-      mainImageBuffer,
-      itemImages[0].type
-    );
+    // Siapkan semua promise untuk dijalankan bersamaan
+    const allPromises = [
+      // Promise untuk meng-upload SEMUA gambar
+      Promise.all(
+        itemImages.map(async (file) => {
+          const buffer = Buffer.from(await file.arrayBuffer());
+          return uploadFile(buffer);
+        })
+      ),
 
-    // Validasi hasil identifikasi
-    if (!analysisResult) {
+      // Promise untuk melakukan analisis AI HANYA pada gambar pertama
+      analyzeItem(
+        Buffer.from(await itemImages[0].arrayBuffer()),
+        itemImages[0].type
+      ),
+    ];
+
+    // Jalankan semua promise secara paralel
+    const [uploadResults, analysisResult] = (await Promise.all(
+      allPromises
+    )) as [
+      UploadApiResponse[], // Elemen pertama adalah array hasil upload
+      { itemName: string; quantity: number; carbonKg: number } | null // Elemen kedua adalah hasil analisis
+    ];
+
+    if (
+      !analysisResult ||
+      typeof analysisResult !== "object" ||
+      !("itemName" in analysisResult)
+    ) {
       return NextResponse.json(
-        {
-          error:
-            "AI could not identify the item in the image. Please try another photo.",
-        },
+        { error: "AI could not analyze the image." },
         { status: 400 }
       );
     }
-    const { itemName, quantity } = analysisResult;
 
-    const singleItemCarbon = await getCarbonFootprintForItem(itemName);
+    // --- OPTIMISASI SELESAI ---
 
-    // Validasi hasil estimasi karbon
-    if (singleItemCarbon === null) {
-      return NextResponse.json(
-        {
-          error: `AI could not estimate the carbon footprint for: ${itemName}.`,
-        },
-        { status: 400 }
-      );
-    }
-
-    const totalCarbonKg = singleItemCarbon * quantity;
+    const { itemName, quantity, carbonKg } = analysisResult;
+    const totalCarbonKg = carbonKg * quantity;
     const aiAnalysis = `Donating ${quantity} ${itemName}(s) helps save approximately ${totalCarbonKg.toFixed(
       1
     )} kg of CO2.`;
 
-    // 5. Siapkan dokumen lengkap untuk disimpan
+    const imageUrls = uploadResults.map((result) => result.secure_url);
 
-    // --- LOGIKA SLUG UNIK DIMULAI DI SINI ---
     const baseSlug = title
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^\w-]+/g, "");
     let finalSlug = baseSlug;
     let counter = 2;
-    // Loop ini akan terus berjalan sampai menemukan slug yang belum dipakai
     while (await PostModel.isSlugExist(finalSlug)) {
       finalSlug = `${baseSlug}-${counter}`;
       counter++;
     }
-    // --- LOGIKA SLUG UNIK SELESAI ---
+
     const postToSave = {
       title,
       slug: finalSlug,
@@ -199,7 +278,6 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     };
 
-    // 6. Simpan ke database
     const result = await PostModel.addPost(postToSave);
     if (!result.acknowledged) {
       throw new Error("Failed to create post in database.");
