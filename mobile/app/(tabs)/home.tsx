@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -49,6 +49,26 @@ export default function HomeScreen() {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // This function will ONLY be used to calculate the initial badge count.
+  const checkForNotifications = useCallback(async () => {
+    try {
+      // Fetch all posts without filters just for the count
+      const res = await fetch(`${API_BASE_URL}/posts`);
+      if (!res.ok) return;
+      const result = await res.json();
+      const posts = result.data.posts || [];
+
+      const twentyFourHoursAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
+      const newPostsCount = posts.filter(
+        (p: any) => new Date(p.createdAt).getTime() > twentyFourHoursAgo
+      ).length;
+      setNewPostsCount(newPostsCount);
+    } catch (e) {
+      // Silently fail on notification check error
+      console.error("Failed to check for post notifications:", e);
+    }
+  }, [setNewPostsCount]);
 
   const fetchPosts = useCallback(async () => {
     setIsLoading(true);
@@ -110,19 +130,12 @@ export default function HomeScreen() {
         isRequested: requestedIds.has(p._id),
       }));
       setRawPosts(mapped);
-
-      // For notification badge: count posts created in the last 24 hours
-      const twentyFourHoursAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
-      const newPostsCount = mapped.filter(
-        (p: DonationPost) => p.createdAt.getTime() > twentyFourHoursAgo
-      ).length;
-      setNewPostsCount(newPostsCount);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedCategory, setNewPostsCount]);
+  }, [searchQuery, selectedCategory]);
 
   const sortedPosts = useMemo(() => {
     return [...rawPosts].sort((a, b) => {
@@ -135,11 +148,19 @@ export default function HomeScreen() {
     });
   }, [rawPosts, sortOrder]);
 
+  // Check for notifications only once when the component mounts
+  useEffect(() => {
+    checkForNotifications();
+  }, [checkForNotifications]);
+
   useFocusEffect(
     useCallback(() => {
+      // When the screen is focused, clear the badge and fetch posts.
+      setNewPostsCount(0);
+
       const handler = setTimeout(fetchPosts, 500);
       return () => clearTimeout(handler);
-    }, [searchQuery, selectedCategory, fetchPosts])
+    }, [searchQuery, selectedCategory, fetchPosts, setNewPostsCount])
   );
 
   const handlePostPress = (post: DonationPost) =>

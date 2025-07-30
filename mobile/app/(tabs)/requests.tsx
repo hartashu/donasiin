@@ -53,6 +53,36 @@ export default function RequestsScreen() {
   const { setNewRequestsCount } = useNotifications();
   const router = useRouter();
 
+  const checkForNotifications = useCallback(async () => {
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) return;
+
+      const inRes = await fetch(`${API_BASE_URL}/users/me/posts`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!inRes.ok) return;
+
+      const inJson = await inRes.json();
+      const mappedIn: DisplayRequest[] = [];
+      (inJson.data || []).forEach((post: any) => {
+        (post.requests || []).forEach((req: any) => {
+          if (req.requester) {
+            mappedIn.push({
+              id: req._id,
+              status: req.status.toLowerCase(),
+            } as DisplayRequest); // simplified for counting
+          }
+        });
+      });
+
+      const pendingIncomingCount = mappedIn.filter(r => r.status === 'pending').length;
+      setNewRequestsCount(pendingIncomingCount);
+    } catch (e) {
+      console.error("Failed to check for request notifications:", e);
+    }
+  }, [setNewRequestsCount]);
+
   const fetchRequests = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -120,10 +150,6 @@ export default function RequestsScreen() {
         });
       });
 
-      // For notification badge: count pending incoming requests
-      const pendingIncomingCount = mappedIn.filter(r => r.status === 'pending').length;
-      setNewRequestsCount(pendingIncomingCount);
-
       // combine & sort
       setRequests(
         [...mappedOut, ...mappedIn].sort(
@@ -135,10 +161,18 @@ export default function RequestsScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [setNewRequestsCount]);
+  }, []);
+
+  // Check for notifications only once when the component mounts
+  useEffect(() => {
+    checkForNotifications();
+  }, [checkForNotifications]);
 
   // Refetch data every time the screen comes into focus
-  useFocusEffect(useCallback(() => { fetchRequests() }, [fetchRequests]));
+  useFocusEffect(useCallback(() => {
+    setNewRequestsCount(0);
+    fetchRequests();
+  }, [fetchRequests, setNewRequestsCount]));
 
   const patchRequest = async (id: string, body: any) => {
     const token = await AuthService.getStoredToken();

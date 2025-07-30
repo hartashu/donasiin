@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -31,6 +31,38 @@ export default function ChatScreen() {
     if (!user) return null;
     return chat.participants.find((p) => p.id !== user.id);
   };
+
+  const checkForNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/chat/conversations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return;
+
+      const result = await response.json();
+      const conversations = Array.isArray(result) ? result : result.data;
+      if (!Array.isArray(conversations)) return;
+
+      const unreadCount = conversations.filter(
+        (c: any) =>
+          c.lastMessageId &&
+          !c.lastMessageIsRead &&
+          c.lastMessageSenderId !== user.id
+      ).length;
+      setUnreadMessagesCount(unreadCount);
+    } catch (e) {
+      console.error("Failed to check for chat notifications:", e);
+    }
+  }, [user, setUnreadMessagesCount]);
+
+  // Check for notifications only once when the component mounts
+  useEffect(() => {
+    checkForNotifications();
+  }, [checkForNotifications]);
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -120,25 +152,20 @@ export default function ChatScreen() {
         };
       });
 
-      // For notification badge: count unread messages from other users
-      const unreadCount = mappedChats.filter(
-        (c) =>
-          c.lastMessage && !c.lastMessage.isRead && c.lastMessage.senderId !== user?.id
-      ).length;
-      setUnreadMessagesCount(unreadCount);
-
       setChats(mappedChats);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setIsLoading(false);
     }
-  }, [user, setUnreadMessagesCount]);
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
+      // When the screen is focused, clear the badge and fetch conversations.
+      setUnreadMessagesCount(0);
       fetchConversations();
-    }, [fetchConversations])
+    }, [fetchConversations, setUnreadMessagesCount])
   );
 
   const handleChatPress = (chat: Chat) => {
