@@ -27,8 +27,6 @@ const API_BASE_URL = "http://localhost:3000/api";
 
 const MAX_TRACKING_LENGTH = 50;
 
-// This is a local type for this screen to handle the `isOutgoing` flag
-// and the simplified `post` object that comes from the API.
 type DisplayRequest = Omit<DonationRequest, 'post' | 'requester'> & {
   isOutgoing: boolean;
   post: {
@@ -89,7 +87,6 @@ export default function RequestsScreen() {
     try {
       const token = await AuthService.getStoredToken();
       if (!token) throw new Error("You must be logged in.");
-      // verify user for auth flow
       await AuthService.getCurrentUser();
 
       const [outRes, inRes] = await Promise.all([
@@ -100,10 +97,13 @@ export default function RequestsScreen() {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
+
       if (!outRes.ok || !inRes.ok) throw new Error("Failed to fetch requests.");
 
       const outJson = await outRes.json();
       const inJson = await inRes.json();
+
+      //  console.log("inGoingRequest!!!",JSON.stringify(inJson,null,2));
 
       const mappedOut: DisplayRequest[] = (outJson.data || [])
         .filter((i: any) => i.postDetails)
@@ -150,7 +150,6 @@ export default function RequestsScreen() {
         });
       });
 
-      // combine & sort
       setRequests(
         [...mappedOut, ...mappedIn].sort(
           (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
@@ -163,12 +162,10 @@ export default function RequestsScreen() {
     }
   }, []);
 
-  // Check for notifications only once when the component mounts
   useEffect(() => {
     checkForNotifications();
   }, [checkForNotifications]);
 
-  // Refetch data every time the screen comes into focus
   useFocusEffect(useCallback(() => {
     setNewRequestsCount(0);
     fetchRequests();
@@ -196,12 +193,19 @@ export default function RequestsScreen() {
       Alert.alert("Validation", "Please enter a tracking code.");
       return;
     }
+    const currentRequest = requests.find(r => r.id === id);
+    const url = currentRequest?.trackingCodeUrl;
+
     setUpdatingId(id);
     try {
-      await patchRequest(id, { status: "SHIPPED", trackingCode: code });
+      await patchRequest(id, {
+        status: "SHIPPED",
+        trackingCode: code,
+        trackingCodeUrl: url,
+      });
       setRequests((rs) =>
         rs.map((r) =>
-          r.id === id ? { ...r, status: "shipped", trackingCode: code } : r
+          r.id === id ? { ...r, status: "shipped", trackingCode: code, trackingCodeUrl: url } : r
         )
       );
     } catch (e: any) {
@@ -446,6 +450,26 @@ export default function RequestsScreen() {
               )}
             </>
           )}
+
+          {(item.status === 'shipped' || item.status === 'completed') && (
+            <View style={styles.shippedInfoContainer}>
+              {item.trackingCode && (
+                <View style={styles.row}>
+                  <Text style={styles.infoLabel}>Tracking Code:</Text>
+                  <Text style={styles.infoValue}>{item.trackingCode}</Text>
+                </View>
+              )}
+              {item.trackingCodeUrl && (
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(item.trackingCodeUrl!).catch(() => {
+                    Alert.alert("Error", "Could not open the receipt URL.");
+                  })}
+                >
+                  <Image source={{ uri: item.trackingCodeUrl }} style={styles.receiptImage} />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </View>
     );
@@ -601,5 +625,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 12,
     resizeMode: 'contain',
+  },
+  shippedInfoContainer: {
+    marginTop: 12,
+    backgroundColor: Colors.gray[50],
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    fontWeight: '500',
+  },
+  infoValue: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    fontWeight: '600',
   },
 });

@@ -35,7 +35,7 @@ export default function CreatePostPreview({
   const image = images?.[0];
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] block max-w-sm w-full border border-teal-600/30 hover:border-teal-600/40">
+    <div className="rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] block w-full max-w-sm border border-teal-600/30 hover:border-teal-600/40 break-words">
       {/* Gambar */}
       <div className="relative h-60">
         {image ? (
@@ -46,7 +46,7 @@ export default function CreatePostPreview({
             className="object-cover object-center rounded-t-2xl"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm">
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm max-w-sm">
             No image selected
           </div>
         )}
@@ -57,12 +57,12 @@ export default function CreatePostPreview({
       </div>
 
       {/* Konten */}
-      <div className="p-4 flex flex-col justify-between h-[180px] space-y-1">
-        <h3 className="text-base font-semibold text-[#1f2d28] line-clamp-1">
+      <div className="p-4 flex flex-col justify-between h-[180px] space-y-1 max-w-xs">
+        <h3 className="text-base font-semibold text-[#1f2d28] line-clamp-1 break-words">
           {toTitleCase(title) || "Your title will appear here"}
         </h3>
 
-        <p className="text-sm text-gray-600 line-clamp-1 mb-2">
+        <p className="text-sm text-gray-600 line-clamp-1 mb-2 break-words">
           {description.charAt(0).toUpperCase() + description.slice(1) ||
             "Description will be shown here."}
         </p>
