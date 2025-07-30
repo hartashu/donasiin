@@ -165,7 +165,6 @@ export class RequestModel {
       status: RequestStatus.PENDING,
       trackingCode: "",
       trackingCodeUrl: "",
-      trackingCodeUrl: "",
       createdAt: new Date(),
       updatedAt: new Date(),
     };

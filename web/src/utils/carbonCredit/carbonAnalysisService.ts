@@ -97,3 +97,43 @@ export async function getCarbonFootprintForItem(
     return null;
   }
 }
+
+export async function analyzeItem(imageBuffer: Buffer, mimeType: string) {
+  try {
+    const { object } = await generateObject({
+      model,
+      // Minta AI mengembalikan objek JSON dengan 3 properti ini
+      schema: z.object({
+        itemName: z
+          .string()
+          .describe("Lowercase name of the item, e.g., 'cotton t-shirt'"),
+        quantity: z
+          .number()
+          .describe("The number of identical items in the image."),
+        carbonKg: z
+          .number()
+          .describe("Estimated carbon footprint in kg CO2 for ONE new item."),
+      }),
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `From the provided image, identify the main object, count it, and estimate the carbon footprint in kg CO2 to produce a single new one.`,
+            },
+            {
+              type: "image",
+              image: imageBuffer,
+              mimeType,
+            },
+          ],
+        },
+      ],
+    });
+    return object;
+  } catch (error) {
+    console.error("AI analysis error:", error);
+    return null;
+  }
+}

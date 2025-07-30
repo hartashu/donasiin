@@ -8,7 +8,6 @@ export enum RequestStatus {
   COMPLETED = "COMPLETED", // Saat penerima sudah mengkonfirmasi penerimaan barang
 }
 
-
 export interface IUser {
   _id?: ObjectId | string; // Unique user identifier.
   avatarUrl: string; // URL for the user's profile picture.
@@ -38,10 +37,10 @@ export interface IPost {
   userId: ObjectId | string; // Reference to the author's user ID.
   aiAnalysis?: string; // AI-generated carbon savings analysis.
   carbonKg?: number;
-  createdAt: string; // Creation timestamp.
-  updatedAt: string; // Last update timestamp.
+  createdAt: Date; // Creation timestamp.
+  updatedAt: Date; // Last update timestamp.
   author?: IAuthor;
-  requests: IRequest[];
+  requests?: IRequest[];
 }
 
 export interface IRequest {
@@ -49,11 +48,11 @@ export interface IRequest {
   userId: ObjectId | string; // ID of the user making the request.
   postId: ObjectId | string; // ID of the related post.
   status: RequestStatus; // Status of the request from the enum.
-<<<<<<< HEAD
   trackingCode?: string; // Shipping tracking code, if applicable.
-  createdAt: string; // Creation timestamp.
-  updatedAt: string; // Last update timestamp.
-  requester: IUser;
+  trackingCodeUrl?: string;
+  createdAt: Date; // Creation timestamp.
+  updatedAt: Date; // Last update timestamp.
+  requester?: IUser;
 }
 
 export interface IAuthor {
@@ -81,16 +80,14 @@ export interface Achievement {
 }
 
 export interface Activity {
-  type: 'POST_CREATED' | 'REQUEST_RECEIVED';
+  type: "POST_CREATED" | "REQUEST_RECEIVED";
   title: string;
   user?: string;
   date: string;
-=======
   trackingCode: string; // Shipping tracking code, if applicable.
   trackingCodeUrl: string;
   createdAt: Date; // Creation timestamp.
   updatedAt: Date; // Last update timestamp.
->>>>>>> 92628b6a41bbaf4d1dd68c57d16f20c663a4253b
 }
 
 export interface IMessage {
