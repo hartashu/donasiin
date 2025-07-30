@@ -13,6 +13,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
 import { Chat, User } from "../../types";
 import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../context/NotificationContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
 
@@ -24,6 +25,7 @@ export default function ChatScreen() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { setUnreadMessagesCount } = useNotifications();
 
   const getOtherParticipant = (chat: Chat) => {
     if (!user) return null;
@@ -118,13 +120,20 @@ export default function ChatScreen() {
         };
       });
 
+      // For notification badge: count unread messages from other users
+      const unreadCount = mappedChats.filter(
+        (c) =>
+          c.lastMessage && !c.lastMessage.isRead && c.lastMessage.senderId !== user?.id
+      ).length;
+      setUnreadMessagesCount(unreadCount);
+
       setChats(mappedChats);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user, setUnreadMessagesCount]);
 
   useFocusEffect(
     useCallback(() => {

@@ -10,6 +10,7 @@ import {
   Alert,
   TextInput,
   Platform,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -17,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Colors } from "../../constants/Colors";
 import { DonationRequest } from "../../types";
 import { Clock, CheckCircle, XCircle, X, Sparkles } from "lucide-react-native";
+import { useNotifications } from "../../context/NotificationContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
 
@@ -35,6 +37,7 @@ type DisplayRequest = Omit<DonationRequest, 'post' | 'requester'> & {
     title: string;
     images: string[];
   };
+  trackingCodeUrl?: string;
 };
 
 export default function RequestsScreen() {
@@ -47,6 +50,7 @@ export default function RequestsScreen() {
     {}
   );
   const [viewMode, setViewMode] = useState<"outgoing" | "incoming">("outgoing");
+  const { setNewRequestsCount } = useNotifications();
   const router = useRouter();
 
   const fetchRequests = useCallback(async () => {
@@ -78,6 +82,7 @@ export default function RequestsScreen() {
           postId: i.postId,
           status: i.status.toLowerCase(),
           trackingCode: i.trackingCode ?? "",
+          trackingCodeUrl: i.trackingCodeUrl,
           createdAt: new Date(i.createdAt),
           updatedAt: new Date(i.updatedAt || i.createdAt),
           requesterId: i.userId,
@@ -99,6 +104,7 @@ export default function RequestsScreen() {
               postId: post._id,
               status: req.status.toLowerCase(),
               trackingCode: req.trackingCode ?? "",
+              trackingCodeUrl: req.trackingCodeUrl,
               createdAt: new Date(req.createdAt),
               updatedAt: new Date(req.updatedAt || req.createdAt),
               requesterId: req.requester._id,
@@ -114,6 +120,10 @@ export default function RequestsScreen() {
         });
       });
 
+      // For notification badge: count pending incoming requests
+      const pendingIncomingCount = mappedIn.filter(r => r.status === 'pending').length;
+      setNewRequestsCount(pendingIncomingCount);
+
       // combine & sort
       setRequests(
         [...mappedOut, ...mappedIn].sort(
@@ -125,7 +135,7 @@ export default function RequestsScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setNewRequestsCount]);
 
   // Refetch data every time the screen comes into focus
   useFocusEffect(useCallback(() => { fetchRequests() }, [fetchRequests]));
@@ -219,8 +229,15 @@ export default function RequestsScreen() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "OCR failed.");
 
+      if (json.trackingCodeUrl) {
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === requestId ? { ...r, trackingCodeUrl: json.trackingCodeUrl } : r
+          )
+        );
+      }
       setTrackingCodes((c) => ({ ...c, [requestId]: json.trackingNumber }));
-      Alert.alert("Success", "Tracking code auto‑filled!");
+      Alert.alert("Success", "Tracking code auto-filled and receipt attached!");
     } catch (e: any) {
       Alert.alert("Scan Error", e.message);
     } finally {
@@ -353,38 +370,47 @@ export default function RequestsScreen() {
           )}
 
           {incoming && item.status === "accepted" && (
-            <View style={styles.shipRow}>
-              <TextInput
-                placeholder="Tracking code"
-                value={trackingCodes[item.id] || ""}
-                onChangeText={(t) =>
-                  setTrackingCodes((c) => ({ ...c, [item.id]: t }))
-                }
-                style={styles.input}
-                maxLength={MAX_TRACKING_LENGTH}
-              />
-
-              <TouchableOpacity
-                style={styles.ocrButton}
-                onPress={() => handleOcrScan(item.id)}
-                disabled={!!ocrLoadingId}
-              >
-                {ocrLoadingId === item.id ? (
-                  <ActivityIndicator size="small" color={Colors.primary[600]} />
-                ) : (
-                  <Sparkles size={20} color={Colors.primary[600]} />
-                )}
-              </TouchableOpacity>
-
-              <Button
-                title="Submit"
-                onPress={() => handleShip(item.id)}
-                loading={updatingId === item.id}
-                disabled={!trackingCodes[item.id]?.trim()}
-                size="sm"
-                style={styles.btnShip}
-              />
-            </View>
+            <>
+              <View style={styles.shipRow}>
+                <TextInput
+                  placeholder="Tracking code"
+                  value={trackingCodes[item.id] || ""}
+                  onChangeText={(t) =>
+                    setTrackingCodes((c) => ({ ...c, [item.id]: t }))
+                  }
+                  style={styles.input}
+                  maxLength={MAX_TRACKING_LENGTH}
+                />
+                <TouchableOpacity
+                  style={styles.ocrButton}
+                  onPress={() => handleOcrScan(item.id)}
+                  disabled={!!ocrLoadingId}
+                >
+                  {ocrLoadingId === item.id ? (
+                    <ActivityIndicator size="small" color={Colors.primary[600]} />
+                  ) : (
+                    <Sparkles size={20} color={Colors.primary[600]} />
+                  )}
+                </TouchableOpacity>
+                <Button
+                  title="Submit"
+                  onPress={() => handleShip(item.id)}
+                  loading={updatingId === item.id}
+                  disabled={!trackingCodes[item.id]?.trim()}
+                  size="sm"
+                  style={styles.btnShip}
+                />
+              </View>
+              {item.trackingCodeUrl && (
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(item.trackingCodeUrl!).catch(() => {
+                    Alert.alert("Error", "Could not open the receipt URL.");
+                  })}
+                >
+                  <Image source={{ uri: item.trackingCodeUrl }} style={styles.receiptImage} />
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       </View>
@@ -535,4 +561,11 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   error: { color: Colors.error[600], marginBottom: 12 },
   empty: { color: Colors.text.secondary },
+  receiptImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    marginTop: 12,
+    resizeMode: 'contain',
+  },
 });

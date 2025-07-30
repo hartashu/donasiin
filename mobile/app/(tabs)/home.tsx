@@ -19,6 +19,7 @@ import { Colors } from "../../constants/Colors";
 import { Input } from "../../components/ui/Input";
 import { DonationCard } from "../../components/DonationCard";
 import { DonationPost } from "../../types";
+import { useNotifications } from "../../context/NotificationContext";
 import { AuthService } from "../../services/auth";
 
 const API_BASE_URL = "http://localhost:3000/api";
@@ -44,6 +45,7 @@ export default function HomeScreen() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { setNewPostsCount } = useNotifications();
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -108,12 +110,19 @@ export default function HomeScreen() {
         isRequested: requestedIds.has(p._id),
       }));
       setRawPosts(mapped);
+
+      // For notification badge: count posts created in the last 24 hours
+      const twentyFourHoursAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
+      const newPostsCount = mapped.filter(
+        (p: DonationPost) => p.createdAt.getTime() > twentyFourHoursAgo
+      ).length;
+      setNewPostsCount(newPostsCount);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, setNewPostsCount]);
 
   const sortedPosts = useMemo(() => {
     return [...rawPosts].sort((a, b) => {
