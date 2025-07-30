@@ -6,3 +6,4 @@ export const mainAddress = (alamat: string) => {
 
   return potong.replace(/\s+/g, " ").trim();
 }
+

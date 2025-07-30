@@ -6,6 +6,7 @@ import { Bell, MapPin, Send, Users, X, Navigation, Mail } from "lucide-react";
 import { mainAddress } from "@/lib/address";
 import { toTitleCase } from "@/lib/titleCase";
 import { motion } from "framer-motion";
+import { getCategoryLabel } from "@/lib/getCategoryLabel";
 
 interface UserRecommendation {
   _id: string;
@@ -29,6 +30,7 @@ export default function RecommendationModal({
   onClose,
   noRecommendations = false,
 }: Props) {
+  const [loadingTo, setLoadingTo] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [sendingAll, setSendingAll] = useState(false);
   const [sentTo, setSentTo] = useState<string[]>([]);
@@ -40,6 +42,7 @@ export default function RecommendationModal({
 
   const sendMessage = async (receiverId: string) => {
     try {
+      setLoadingTo(receiverId);
       const res = await fetch("/api/chat/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,6 +57,8 @@ export default function RecommendationModal({
       setSentTo((prev) => [...prev, receiverId]);
     } catch (err) {
       console.error("Message sending error:", err);
+    } finally {
+      setLoadingTo(null);
     }
   };
 
@@ -175,15 +180,38 @@ export default function RecommendationModal({
 
                 <button
                   onClick={() => sendMessage(user._id)}
-                  disabled={sentTo.includes(user._id)}
+                  disabled={sentTo.includes(user._id) || loadingTo === user._id}
                   className={`p-2 rounded-full shadow-sm transition ${
                     sentTo.includes(user._id)
                       ? "text-teal-600 bg-transparent border border-teal-600"
                       : "bg-teal-600 hover:bg-teal-700 text-white"
-                  }`}
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {sentTo.includes(user._id) ? (
-                    <span className="text-sm font-medium px-2">Sent</span>
+                  {loadingTo === user._id ? (
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8H4z"
+                      ></path>
+                    </svg>
+                  ) : sentTo.includes(user._id) ? (
+                    <span className="text-sm font-medium px-2 text-teal-600">
+                      Sent
+                    </span>
                   ) : (
                     <Bell className="w-5 h-5" />
                   )}
