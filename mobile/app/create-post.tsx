@@ -27,7 +27,6 @@ const API_BASE_URL = "http://localhost:3000/api";
 
 const MAX_IMAGES = 5;
 const categories = [
-  { label: "All", value: "All" },
   { label: "Automotive & Tools", value: "automotive-tools" },
   { label: "Baby & Kids", value: "baby-kids" },
   { label: "Books, Music & Media", value: "books-music-media" },
