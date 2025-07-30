@@ -3,11 +3,11 @@ import {
   IUser,
   IPendingRegistration,
   IPasswordResetToken,
+  IIncompleteProfile,
 } from "@/types/types";
 import { v4 as uuidv4 } from "uuid";
 import { hash, compare } from "bcryptjs";
 import { Collection, ObjectId, WithId } from "mongodb";
-import { IIncompleteProfile } from "@/types/types";
 
 const INCOMPLETE_PROFILES_COLLECTION = "incomplete_profiles";
 const USERS_COLLECTION = "users";
@@ -15,30 +15,41 @@ const PENDING_REGISTRATIONS_COLLECTION = "pending_registrations";
 const PASSWORD_RESET_TOKENS_COLLECTION = "password_reset_tokens";
 
 export class UserModel {
-
   static async getTotalUsers(): Promise<number> {
     const usersCollection = await this.getUsersCollection();
     return usersCollection.countDocuments();
   }
 
-  static async getIncompleteProfilesCollection(): Promise<Collection<IIncompleteProfile>> {
+  static async getIncompleteProfilesCollection(): Promise<
+    Collection<IIncompleteProfile>
+  > {
     const db = await connectToDb();
     return db.collection<IIncompleteProfile>(INCOMPLETE_PROFILES_COLLECTION);
   }
 
-  static async createIncompleteProfile(data: { email: string; fullName?: string | null; avatarUrl?: string | null; }): Promise<string> {
+  static async createIncompleteProfile(data: {
+    email: string;
+    fullName?: string | null;
+    avatarUrl?: string | null;
+  }): Promise<string> {
     const incompleteCollection = await this.getIncompleteProfilesCollection();
     const token = uuidv4();
     const expires = new Date(new Date().getTime() + 15 * 60 * 1000); // Token valid 15 menit
 
     await incompleteCollection.deleteMany({ email: data.email });
 
-    const newProfile: Omit<IIncompleteProfile, '_id'> = { ...data, token, expires };
+    const newProfile: Omit<IIncompleteProfile, "_id"> = {
+      ...data,
+      token,
+      expires,
+    };
     await incompleteCollection.insertOne(newProfile as IIncompleteProfile);
     return token;
   }
 
-  static async getIncompleteProfileByToken(token: string): Promise<WithId<IIncompleteProfile> | null> {
+  static async getIncompleteProfileByToken(
+    token: string
+  ): Promise<WithId<IIncompleteProfile> | null> {
     const incompleteCollection = await this.getIncompleteProfilesCollection();
     return incompleteCollection.findOne({ token, expires: { $gt: new Date() } });
   }
@@ -105,14 +116,18 @@ export class UserModel {
     data: Omit<IUser, "_id" | "createdAt" | "updatedAt">
   ): Promise<ObjectId> {
     const usersCollection = await this.getUsersCollection();
+
+    // 🔥 FIX: Menambahkan URL avatar default jika tidak disediakan saat registrasi
+    const defaultAvatarUrl =
+      "https://res.cloudinary.com/dffbvex6y/image/upload/v1753884919/template_profile_m9rxet.jpg";
+
     const newUser: Omit<IUser, "_id"> = {
       ...data,
-      // 🔥 FIX: Convert Date to ISO string to match 'string' type in IUser
+      avatarUrl: data.avatarUrl || defaultAvatarUrl, // Gunakan avatar yang ada atau set default
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     const result = await usersCollection.insertOne(newUser as IUser);
-    // 🔥 FIX: Cast result to ObjectId to match function's return type
     return result.insertedId as ObjectId;
   }
 
@@ -192,12 +207,14 @@ export class UserModel {
     const hashedPassword = await hash(newPassword, 12);
     await usersCollection.updateOne(
       { email },
-      // 🔥 FIX: Convert Date to ISO string to match 'string' type
       { $set: { password: hashedPassword, updatedAt: new Date().toISOString() } }
     );
   }
 
-  static async updateUserProfile(userId: ObjectId, data: Partial<IUser>): Promise<boolean> {
+  static async updateUserProfile(
+    userId: ObjectId,
+    data: Partial<IUser>
+  ): Promise<boolean> {
     const usersCollection = await this.getUsersCollection();
 
     const updateData: Partial<IUser> = {};
@@ -209,10 +226,12 @@ export class UserModel {
 
     if (Object.keys(updateData).length === 0) return true;
 
-    // 🔥 FIX: Convert Date to ISO string to match 'string' type
     updateData.updatedAt = new Date().toISOString();
 
-    const result = await usersCollection.updateOne({ _id: userId }, { $set: updateData });
+    const result = await usersCollection.updateOne(
+      { _id: userId },
+      { $set: updateData }
+    );
     return result.modifiedCount > 0;
   }
 }

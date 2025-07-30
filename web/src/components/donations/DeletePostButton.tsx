@@ -8,11 +8,13 @@ import { Trash2 } from "lucide-react";
 interface DeletePostButtonProps {
   slug: string;
   title: string;
+  isAvailable: boolean; // Optional prop to check if the post is available
 }
 
 export default function DeletePostButton({
   slug,
   title,
+  isAvailable
 }: DeletePostButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -89,11 +91,10 @@ export default function DeletePostButton({
                 setError("");
               }}
               placeholder="Type post title here"
-              className={`w-full px-4 py-2 rounded-md border text-sm mb-2 focus:outline-none transition-all duration-200 ${
-                error
-                  ? "border-red-500 focus:ring-2 focus:ring-red-400"
-                  : "border-gray-300 focus:ring-2 focus:ring-gray-200"
-              }`}
+              className={`w-full px-4 py-2 rounded-md border text-sm mb-2 focus:outline-none transition-all duration-200 ${error
+                ? "border-red-500 focus:ring-2 focus:ring-red-400"
+                : "border-gray-300 focus:ring-2 focus:ring-gray-200"
+                }`}
             />
 
             {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
@@ -111,15 +112,16 @@ export default function DeletePostButton({
               </button>
               <button
                 onClick={handleDelete}
-                disabled={loading}
+                disabled={!isAvailable || loading}
                 className="px-4 py-2 rounded-md bg-gradient-to-r from-red-600 to-red-500 text-white hover:from-red-700 hover:to-red-600 transition disabled:opacity-50"
               >
                 {loading ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
     </>
   );
 }
