@@ -27,16 +27,17 @@ const API_BASE_URL = "http://localhost:3000/api";
 
 const MAX_IMAGES = 5;
 const categories = [
+  { label: "All", value: "All" },
+  { label: "Automotive & Tools", value: "automotive-tools" },
   { label: "Baby & Kids", value: "baby-kids" },
   { label: "Books, Music & Media", value: "books-music-media" },
   { label: "Electronics", value: "electronics" },
   { label: "Fashion & Apparel", value: "fashion-apparel" },
   { label: "Health & Beauty", value: "health-beauty" },
-  { label: "Sports & Outdoors", value: "sports-outdoors" },
-  { label: "Automotive & Tools", value: "automotive-tools" },
-  { label: "Pet Supplies", value: "pet-supplies" },
-  { label: "Office Supplies & Stationery", value: "office-supplies-stationery" },
   { label: "Home & Kitchen", value: "home-kitchen" },
+  { label: "Office Supplies & Stationery", value: "office-supplies-stationery" },
+  { label: "Pet Supplies", value: "pet-supplies" },
+  { label: "Sports & Outdoors", value: "sports-outdoors" },
 ];
 
 type Asset = { uri: string; fileName?: string; type?: string };
@@ -73,14 +74,12 @@ export default function CreatePostScreen() {
 
       if (!res.ok)
         throw new Error(json.error || "Failed to fetch recommendations.");
-      // The API returns an array of users with `_id`. We need to map it to our `User` type.
       const mappedRecs: User[] = (json.data || []).map((rec: any) => ({
-        id: rec._id, // Map _id to id
+        id: rec._id, 
         username: rec.username,
         fullName: rec.fullName,
         avatarUrl: rec.avatarUrl,
-        address: rec.address, // This might be undefined, which is fine as it's optional
-        // Add other required fields from User type with default values
+        address: rec.address, 
         email: rec.email || "",
         dailyRequestLimit: 0,
         usedRequests: 0,

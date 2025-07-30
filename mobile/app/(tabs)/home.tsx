@@ -26,16 +26,16 @@ const API_BASE_URL = "http://localhost:3000/api";
 
 const categories = [
   { label: "All", value: "All" },
+  { label: "Automotive & Tools", value: "automotive-tools" },
   { label: "Baby & Kids", value: "baby-kids" },
   { label: "Books, Music & Media", value: "books-music-media" },
   { label: "Electronics", value: "electronics" },
   { label: "Fashion & Apparel", value: "fashion-apparel" },
   { label: "Health & Beauty", value: "health-beauty" },
-  { label: "Sports & Outdoors", value: "sports-outdoors" },
-  { label: "Automotive & Tools", value: "automotive-tools" },
-  { label: "Pet Supplies", value: "pet-supplies" },
-  { label: "Office Supplies & Stationery", value: "office-supplies-stationery" },
   { label: "Home & Kitchen", value: "home-kitchen" },
+  { label: "Office Supplies & Stationery", value: "office-supplies-stationery" },
+  { label: "Pet Supplies", value: "pet-supplies" },
+  { label: "Sports & Outdoors", value: "sports-outdoors" },
 ];
 
 export default function HomeScreen() {
@@ -50,22 +50,19 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // This function will ONLY be used to calculate the initial badge count.
   const checkForNotifications = useCallback(async () => {
     try {
-      // Fetch all posts without filters just for the count
       const res = await fetch(`${API_BASE_URL}/posts`);
       if (!res.ok) return;
       const result = await res.json();
       const posts = result.data.posts || [];
 
-      const twentyFourHoursAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
+      const twentyFourHoursAgo = new Date().getTime() - 60 * 1000;
       const newPostsCount = posts.filter(
         (p: any) => new Date(p.createdAt).getTime() > twentyFourHoursAgo
       ).length;
       setNewPostsCount(newPostsCount);
     } catch (e) {
-      // Silently fail on notification check error
       console.error("Failed to check for post notifications:", e);
     }
   }, [setNewPostsCount]);
@@ -119,7 +116,7 @@ export default function HomeScreen() {
           fullName: p.author.fullName,
           email: p.author.email || "",
           address: p.author.address,
-          avatarUrl: p.author.avatarUrl || "https://via.placeholder.com/150",
+          avatarUrl: p.author.avatarUrl,
           dailyRequestLimit: 0,
           usedRequests: 0,
           createdAt: new Date(p.author.createdAt || Date.now()),
@@ -148,14 +145,12 @@ export default function HomeScreen() {
     });
   }, [rawPosts, sortOrder]);
 
-  // Check for notifications only once when the component mounts
   useEffect(() => {
     checkForNotifications();
   }, [checkForNotifications]);
 
   useFocusEffect(
     useCallback(() => {
-      // When the screen is focused, clear the badge and fetch posts.
       setNewPostsCount(0);
 
       const handler = setTimeout(fetchPosts, 500);
@@ -169,7 +164,6 @@ export default function HomeScreen() {
   const handleSortToggle = () =>
     setSortOrder((prev) => (prev === "newest" ? "oldest" : "newest"));
 
-  // Renderers for empty/error/loading
   const renderEmpty = () => (
     <View style={styles.centered}>
       <Text style={styles.emptyText}>No items found.</Text>
@@ -194,7 +188,6 @@ export default function HomeScreen() {
     />
   );
 
-  // Final FlatList for normal state
   const renderList = () => (
     <FlatList
       data={sortedPosts}
@@ -370,8 +363,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   categoryButtonActive: {
-    backgroundColor: Colors.primary[600],
-    borderColor: Colors.primary[600],
+    backgroundColor: Colors.primary[1000],
+    borderColor: Colors.primary[1000],
   },
   categoryText: {
     fontSize: 14,
@@ -379,7 +372,7 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
   },
   categoryTextActive: {
-    color: Colors.white,
+    color: Colors.text.secondary,
   },
   postsList: {
     flex: 1,
