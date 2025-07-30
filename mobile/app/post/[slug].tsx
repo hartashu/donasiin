@@ -28,10 +28,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
-
-// Single local API base URL
 const API_BASE_URL = "http://localhost:3000/api";
-
 const { width } = Dimensions.get("window");
 
 const formatDistanceToNow = (date: Date): string => {
@@ -68,12 +65,28 @@ export default function PostDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/posts/${slug}`);
-      if (!res.ok) {
-        if (res.status === 404) throw new Error("Post not found.");
+      const token = await AuthService.getStoredToken();
+      const [postRes, requestsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/posts/${slug}`),
+        token
+          ? fetch(`${API_BASE_URL}/users/me/requests`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          : Promise.resolve(null),
+      ]);
+
+      if (!postRes.ok) {
+        if (postRes.status === 404) throw new Error("Post not found.");
         throw new Error("Failed to fetch post details.");
       }
-      const { data: apiPost } = await res.json();
+      const { data: apiPost } = await postRes.json();
+
+      let requestedByMe = false;
+      if (requestsRes && requestsRes.ok) {
+        const requestsJson = await requestsRes.json();
+        requestedByMe = (requestsJson.data || []).some((req: any) => req.postId === apiPost._id);
+      }
+
       setPost({
         id: apiPost._id,
         slug: apiPost.slug,
@@ -98,7 +111,7 @@ export default function PostDetailScreen() {
         aiAnalysis: apiPost.aiAnalysis,
         createdAt: new Date(apiPost.createdAt),
         updatedAt: new Date(apiPost.updatedAt),
-        aiAnalysis: apiPost.aiAnalysis,
+        isRequested: requestedByMe,
       });
     } catch (e: any) {
       setError(e.message);
@@ -138,6 +151,7 @@ export default function PostDetailScreen() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Failed to submit request.");
+      setPost(prev => prev ? { ...prev, isRequested: true } : null);
       Alert.alert(
         "Request Sent!",
         "Your request has been sent to the owner. You can check its status in your history.",
@@ -349,11 +363,11 @@ export default function PostDetailScreen() {
                 disabled={isRequesting || isStartingChat || !post.isAvailable}
               />
               <Button
-                title="Request Item"
+                title={post.isRequested ? "Requested" : "Request Item"}
                 onPress={handleRequestItem}
                 loading={isRequesting}
                 style={{ flex: 1 }}
-                disabled={!post.isAvailable || isRequesting || isStartingChat}
+                disabled={!post.isAvailable || isRequesting || isStartingChat || post.isRequested}
               />
             </>
           )}

@@ -22,27 +22,29 @@ import { Button } from "../components/ui/Button";
 import { AuthService } from "../services/auth";
 import { Plus, X, CheckCircle, Send } from "lucide-react-native";
 import { User } from "../types";
+
+const API_BASE_URL = "http://localhost:3000/api";
+
 const MAX_IMAGES = 5;
 const categories = [
-  "Baby & Kids",
-  "Books, Music & Media",
-  "Electronics",
-  "Fashion & Apparel",
-  "Health & Beauty",
-  "Sports & Outdoors",
-  "Automotive & Tools",
-  "Pet Supplies",
-  "Office Supplies & Stationery",
-  "Home & Kitchen",
+  { label: "Baby & Kids", value: "baby-kids" },
+  { label: "Books, Music & Media", value: "books-music-media" },
+  { label: "Electronics", value: "electronics" },
+  { label: "Fashion & Apparel", value: "fashion-apparel" },
+  { label: "Health & Beauty", value: "health-beauty" },
+  { label: "Sports & Outdoors", value: "sports-outdoors" },
+  { label: "Automotive & Tools", value: "automotive-tools" },
+  { label: "Pet Supplies", value: "pet-supplies" },
+  { label: "Office Supplies & Stationery", value: "office-supplies-stationery" },
+  { label: "Home & Kitchen", value: "home-kitchen" },
 ];
 
 type Asset = { uri: string; fileName?: string; type?: string };
-const API_BASE_URL = "http://localhost:3000/api";
 
 export default function CreatePostScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState(categories[0]);
+  const [category, setCategory] = useState(categories[0].value);
   const [itemImages, setItemImages] = useState<Asset[]>([]);
   const [loadingPick, setLoadingPick] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -106,7 +108,7 @@ export default function CreatePostScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ["images"],
         allowsMultipleSelection: true,
         quality: 0.8,
       });
@@ -355,7 +357,11 @@ export default function CreatePostScreen() {
             style={styles.picker}
           >
             {categories.map((cat) => (
-              <Picker.Item key={cat} label={cat} value={cat} />
+              <Picker.Item
+                key={cat.value}
+                label={cat.label}
+                value={cat.value}
+              />
             ))}
           </Picker>
         </View>
