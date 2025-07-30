@@ -49,17 +49,11 @@ export interface IRequest {
   postId: ObjectId | string; // ID of the related post.
   status: RequestStatus; // Status of the request from the enum.
   trackingCode?: string; // Shipping tracking code, if applicable.
-<<<<<<< HEAD
-  trackingCodeUrl: string;
-  createdAt: string; // Creation timestamp.
-  updatedAt: string; // Last update timestamp.
-  requester: IUser;
-=======
+
   trackingCodeUrl?: string;
   createdAt: Date; // Creation timestamp.
   updatedAt: Date; // Last update timestamp.
   requester?: IUser;
->>>>>>> 0c1298bbf0dcbbfc9051c25d88840b0faf50aa8d
 }
 
 export interface IAuthor {
