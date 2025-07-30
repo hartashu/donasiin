@@ -107,23 +107,14 @@ export class UserModel {
     const usersCollection = await this.getUsersCollection();
     const newUser: Omit<IUser, "_id"> = {
       ...data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      // 🔥 FIX: Convert Date to ISO string to match 'string' type in IUser
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     const result = await usersCollection.insertOne(newUser as IUser);
-    return result.insertedId;
+    // 🔥 FIX: Cast result to ObjectId to match function's return type
+    return result.insertedId as ObjectId;
   }
-
-  // static async createPendingRegistration(data: { email: string; password?: string; fullName?: string; username?: string; address?: string; }): Promise<string> {
-  //     const pendingCollection = await this.getPendingRegistrationsCollection();
-  //     const hashedPassword = data.password ? await hash(data.password, 12) : undefined;
-  //     const token = uuidv4();
-  //     const expires = new Date(new Date().getTime() + 24 * 3600 * 1000);
-  //     await pendingCollection.deleteMany({ email: data.email });
-  //     const newPendingUser: Omit<IPendingRegistration, '_id'> = { ...data, password: hashedPassword, token, expires };
-  //     await pendingCollection.insertOne(newPendingUser as IPendingRegistration);
-  //     return token;
-  // }
 
   static async createPendingRegistration(data: {
     email: string;
@@ -201,12 +192,11 @@ export class UserModel {
     const hashedPassword = await hash(newPassword, 12);
     await usersCollection.updateOne(
       { email },
-      { $set: { password: hashedPassword, updatedAt: new Date() } }
+      // 🔥 FIX: Convert Date to ISO string to match 'string' type
+      { $set: { password: hashedPassword, updatedAt: new Date().toISOString() } }
     );
   }
 
-  // Tambahkan di dalam class UserModel
-  // Tambahkan di dalam class UserModel
   static async updateUserProfile(userId: ObjectId, data: Partial<IUser>): Promise<boolean> {
     const usersCollection = await this.getUsersCollection();
 
@@ -219,7 +209,8 @@ export class UserModel {
 
     if (Object.keys(updateData).length === 0) return true;
 
-    updateData.updatedAt = new Date();
+    // 🔥 FIX: Convert Date to ISO string to match 'string' type
+    updateData.updatedAt = new Date().toISOString();
 
     const result = await usersCollection.updateOne({ _id: userId }, { $set: updateData });
     return result.modifiedCount > 0;
