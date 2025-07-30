@@ -59,7 +59,6 @@ export default function ChatScreen() {
     }
   }, [user, setUnreadMessagesCount]);
 
-  // Check for notifications only once when the component mounts
   useEffect(() => {
     checkForNotifications();
   }, [checkForNotifications]);
@@ -112,7 +111,6 @@ export default function ChatScreen() {
         throw new Error("Current user not found. Please log in again.");
       }
 
-      // Map API response to the Chat type
       const mappedChats: Chat[] = conversations.map((convo: any) => {
         const otherUser: User = {
           id: convo.otherUser._id,
@@ -162,7 +160,6 @@ export default function ChatScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      // When the screen is focused, clear the badge and fetch conversations.
       setUnreadMessagesCount(0);
       fetchConversations();
     }, [fetchConversations, setUnreadMessagesCount])

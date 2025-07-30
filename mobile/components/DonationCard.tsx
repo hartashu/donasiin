@@ -23,6 +23,32 @@ interface DonationCardProps {
   onPress: () => void;
 }
 
+const categoryMap: { [key: string]: { label: string; icon: React.ElementType } } = {
+  "baby-kids": { label: "Baby & Kids", icon: Baby },
+  "books-music-media": { label: "Books, Music & Media", icon: BookOpen },
+  electronics: { label: "Electronics", icon: Smartphone },
+  "fashion-apparel": { label: "Fashion & Apparel", icon: Shirt },
+  "health-beauty": { label: "Health & Beauty", icon: HeartPulse },
+  "sports-outdoors": { label: "Sports & Outdoors", icon: Bike },
+  "automotive-tools": { label: "Automotive & Tools", icon: Wrench },
+  "pet-supplies": { label: "Pet Supplies", icon: Dog },
+  "office-supplies-stationery": {
+    label: "Office Supplies & Stationery",
+    icon: PenSquare,
+  },
+  "home-kitchen": { label: "Home & Kitchen", icon: Home },
+};
+
+const getCategoryInfo = (slug: string) => {
+  const normalizedSlug = slug
+    .toLowerCase()
+    .replace(/, | & /g, "-")
+    .replace(/ /g, "-");
+  return (
+    categoryMap[normalizedSlug] || { label: slug, icon: DefaultIcon }
+  );
+};
+
 const formatDistanceToNow = (date: Date): string => {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     return "";
@@ -43,36 +69,6 @@ const formatDistanceToNow = (date: Date): string => {
     if (interval >= 1) return `${interval}${key} ago`;
   }
   return `${Math.floor(seconds)}s ago`;
-};
-
-const getCategoryIcon = (category: string) => {
-  const iconProps = { color: Colors.primary[700], size: 14 };
-  const categoryLower = category.toLowerCase();
-
-  switch (categoryLower) {
-    case "baby & kids":
-      return <Baby {...iconProps} />;
-    case "books, music & media":
-      return <BookOpen {...iconProps} />;
-    case "electronics":
-      return <Smartphone {...iconProps} />;
-    case "fashion & apparel":
-      return <Shirt {...iconProps} />;
-    case "health & beauty":
-      return <HeartPulse {...iconProps} />;
-    case "sports & outdoors":
-      return <Bike {...iconProps} />;
-    case "automotive & tools":
-      return <Wrench {...iconProps} />;
-    case "pet supplies":
-      return <Dog {...iconProps} />;
-    case "office supplies & stationery":
-      return <PenSquare {...iconProps} />;
-    case "home & kitchen":
-      return <Home {...iconProps} />;
-    default:
-      return <DefaultIcon {...iconProps} />;
-  }
 };
 
 export function DonationCard({ post, onPress }: DonationCardProps) {
@@ -115,7 +111,7 @@ export function DonationCard({ post, onPress }: DonationCardProps) {
         <View style={styles.ownerInfo}>
           <View style={styles.ownerDetails}>
             <Image
-              source={{ uri: post.owner.avatarUrl || 'https://via.placeholder.com/150' }}
+              source={{ uri: post.owner.avatarUrl ? post.owner.avatarUrl : 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150' }}
               style={styles.avatar}
             />
             <Text style={styles.ownerName} numberOfLines={1}>
@@ -129,17 +125,21 @@ export function DonationCard({ post, onPress }: DonationCardProps) {
 
         {post.tags.length > 0 && (
           <View style={styles.tagsContainer}>
-            {post.tags.slice(0, 3).map((tag, index) => (
-              <View key={index} style={styles.tag}>
-                {getCategoryIcon(tag)}
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
+            {post.tags.slice(0, 3).map((tag, index) => {
+              const { label, icon: Icon } = getCategoryInfo(tag);
+              const iconProps = { color: Colors.primary[700], size: 14 };
+              return (
+                <View key={index} style={styles.tag}>
+                  <Icon {...iconProps} />
+                  <Text style={styles.tagText}>{label}</Text>
+                </View>
+              );
+            })}
             {post.owner.address && (
               <View style={[styles.tag, styles.locationTag]}>
                 <MapPin size={12} color={Colors.text.secondary} />
                 <Text style={styles.locationText} numberOfLines={1}>
-                  {post.owner.address.split(",")[0]}
+                  {post.owner.address.split(" ").pop()?.replace(/,$/, "")}
                 </Text>
               </View>
             )}
@@ -274,6 +274,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.primary[700],
     fontWeight: "500",
-    textTransform: "capitalize",
   },
 });

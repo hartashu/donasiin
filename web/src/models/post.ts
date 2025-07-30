@@ -594,6 +594,7 @@ export class PostModel {
           carbonKg: 1, // <<<--- PERBAIKAN DI SINI
           "requests._id": 1,
           "requests.status": 1,
+          "requests.trackingCodeUrl": 1, // Tambahan trackingCodeUrl
           "requests.createdAt": 1,
           "requests.requester._id": 1,
           "requests.requester.username": 1,
