@@ -57,10 +57,60 @@ export default async function HomePage() {
         <Banner />
         <WaveSeparator />
       </div>
+
       <About />
-      <WaveSeparatorFlipped />
+      <div className="relative">
+        <svg
+          className="w-full"
+          viewBox="0 0 1440 140"
+          preserveAspectRatio="none"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M0 0 C 360 160 1080 -40 1440 100 L1440 140L0 140Z"
+            fill="#2F5F61"
+            className="drop-shadow-[0_8px_16px_rgba(34,197,94,0.2)]"
+          />
+        </svg>
+      </div>
+      <div className="relative -mt-[1px]">
+        <svg
+          className="w-full scale-x-[-1]"
+          viewBox="0 0 1440 140"
+          preserveAspectRatio="none"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M0 140 C 360 -20 1080 180 1440 40 L1440 0L0 0Z"
+            fill="#2F5F61"
+            className="drop-shadow-[0_-8px_16px_rgba(34,197,94,0.2)]"
+          />
+        </svg>
+      </div>
+
       <Witness />
-      <PostCards data={JSON.parse(JSON.stringify(posts))} />
+      <WaveSeparatorFlipped />
+
+      <div className="relative z-10">
+        <PostCards data={JSON.parse(JSON.stringify(posts))} />
+        <div className="relative">
+          <svg
+            className="absolute left-0 w-full"
+            viewBox="0 0 1440 100"
+            preserveAspectRatio="none"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M0 0C180 100 360 100 540 50C720 0 900 0 1080 50C1260 100 1440 100 1440 100V0H0Z"
+              fill="white"
+            />
+          </svg>
+        </div>
+      </div>
+
       <TalkingSection />
     </main>
   );

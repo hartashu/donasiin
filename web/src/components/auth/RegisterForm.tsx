@@ -1,27 +1,41 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
+import { useEffect, useTransition } from "react"; // FIX: Import useEffect
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterSchema, type RegisterInput } from "@/utils/validations/auth";
 import { signIn } from 'next-auth/react';
 import Link from "next/link";
+import Image from "next/image";
 import { Mail, Lock, UserRound, MapPin } from "lucide-react";
-import Image from "next/image"; // FIX: Import Image component
+import toast from 'react-hot-toast';
+import { useSearchParams, useRouter } from "next/navigation"; // FIX: Import useRouter
 
 export function RegisterForm() {
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  // FIX: Tambahkan searchParams dan router
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
   });
 
-  const onSubmit = (data: RegisterInput) => {
-    setError(null);
-    setSuccess(null);
+  // FIX: useEffect untuk menampilkan toast dari parameter URL
+  useEffect(() => {
+    const toastError = searchParams.get('toast_error');
+    if (toastError) {
+      if (toastError === 'missing_token') {
+        toast.error('Verification token is missing. Please try again.');
+      } else if (toastError === 'invalid_or_expired_token') {
+        toast.error('Your verification token is invalid or has expired.');
+      }
+      // Membersihkan URL dari parameter setelah toast muncul
+      router.replace('/auth/register', { scroll: false });
+    }
+  }, [searchParams, router]);
 
+  const onSubmit = (data: RegisterInput) => {
     startTransition(async () => {
       try {
         const response = await fetch('/api/account/register', {
@@ -35,11 +49,12 @@ export function RegisterForm() {
           throw new Error(result.error || 'Registration failed.');
         }
 
-        setSuccess(result.message);
+        toast.success(result.message || "Registration successful! Please check your email.");
         reset();
+
       } catch (err: unknown) {
         const errorMessage = (err instanceof Error) ? err.message : 'An unknown error occurred.';
-        setError(errorMessage);
+        toast.error(errorMessage);
       }
     });
   };
@@ -52,15 +67,20 @@ export function RegisterForm() {
     <div className="max-w-md w-full animate-subtle-float">
       <div className="bg-white/60 backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl border border-white/20">
         <div className="text-center mb-6">
-          <div className="mb-2 text-3xl sm:text-4xl font-bold text-[#2a9d8f]">[LOGO] Donasiin</div>
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/LogoDonasiinnobg.png"
+              alt="Donasiin Logo"
+              width={180}
+              height={50}
+              priority
+            />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create an Account</h1>
           <p className="text-gray-700 text-sm sm:text-md mt-2">Join us and start making a difference.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-          {error && <div className="bg-red-500/10 text-red-900 p-3 rounded-md text-sm border border-red-500/20">{error}</div>}
-          {success && <div className="bg-green-500/10 text-green-900 p-3 rounded-md text-sm border border-green-500/20">{success}</div>}
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label htmlFor="fullName" className="font-medium text-sm text-gray-600">Full Name</label>
@@ -120,7 +140,6 @@ export function RegisterForm() {
         </div>
 
         <button onClick={handleGoogleSignIn} disabled={isPending} className="w-full flex items-center justify-center gap-3 bg-white/30 text-gray-800 border border-gray-400/50 font-semibold py-2.5 rounded-md hover:bg-white/50 transition disabled:opacity-70 disabled:cursor-not-allowed">
-          {/* FIX: Replaced <img> with <Image> component */}
           <Image src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" width={20} height={20} />
           Sign up with Google
         </button>

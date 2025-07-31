@@ -37,8 +37,14 @@ export default function RequestPostButton({
 
       // optional: redirect atau stay
       router.refresh();
-    } catch (err: any) {
-      setErrorMsg(err.message);
+    } catch (err: unknown) {
+      // Ganti 'any' menjadi 'unknown'
+      if (err instanceof Error) {
+        setErrorMsg(err.message);
+      } else {
+        // Fallback jika error yang ditangkap bukan objek Error standar
+        setErrorMsg("An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }

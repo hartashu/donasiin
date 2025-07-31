@@ -10,6 +10,8 @@ import { NextResponse } from "next/server";
 import { RequestModel } from "@/models/request";
 import { ObjectId } from "mongodb";
 
+type PostWithRequestStatus = WithId<IPost> & { hasRequested: boolean };
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ slug: string }> }
@@ -30,22 +32,20 @@ export async function GET(
     //   { status: 200 }
     // );
 
-    // Andy
-      // 🟡 Ambil session user
+
     const session = await getSession();
     const userId = session?.user?.id;
 
-    // 🟡 Default tidak me-request
     let hasRequested = false;
 
-    // 🟢 Cek apakah user sudah pernah request post ini
     if (userId) {
       const myRequests = await RequestModel.getMyRequests(new ObjectId(userId));
-      hasRequested = myRequests.some((req) => req.postId.equals(post._id));
+      hasRequested = myRequests.some(
+        (req) => req.postId.toString() === post._id.toString()
+      );
     }
 
-    // 🟢 Tambahkan properti baru: hasRequested
-    return NextResponse.json<IJsonResponse<any>>(
+    return NextResponse.json<IJsonResponse<PostWithRequestStatus>>(
       { statusCode: 200, data: { ...post, hasRequested } },
       { status: 200 }
     );

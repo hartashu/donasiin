@@ -14,9 +14,12 @@ import toast from 'react-hot-toast';
 import { getCategoryColor } from '@/utils/colorUtils';
 import { ShipItemModal } from './ShipItemModal';
 
-interface TabProps {
+interface SharedCardProps {
     currentUserId: string;
     refreshData: () => void;
+    isPending: boolean;
+    handleStatusUpdate: (id: string, status: RequestStatus) => void;
+    openShipModal: (req: IRequestWithPostDetails) => void;
 }
 
 const RequestItem = ({ req, isPending, handleStatusUpdate, openShipModal, currentUserId }: {
@@ -32,24 +35,31 @@ const RequestItem = ({ req, isPending, handleStatusUpdate, openShipModal, curren
     return (
         <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md hover:bg-gray-100">
             <div className="flex items-center gap-2 overflow-hidden">
-                <Image src={req.requester.avatarUrl || '/default-avatar.png'} width={32} height={32} alt={req.requester.fullName} className="rounded-full flex-shrink-0" />
+                <Image src={req.requester?.avatarUrl ?? '/default-avatar.png'} width={32} height={32} alt={req.requester?.fullName ?? 'Requester'} className="rounded-full flex-shrink-0" />
                 <div className="overflow-hidden">
-                    <p className="text-sm font-semibold truncate text-gray-800">{req.requester.fullName}</p>
+                    <p className="text-sm font-semibold truncate text-gray-800">{req.requester?.fullName ?? 'A User'}</p>
                     <p className="text-xs text-gray-500">{req.status}</p>
                 </div>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                {/* 🔥 FIX: Added a check to ensure requester ID exists before creating chat. */}
                 <button onClick={() => {
-                    const conversationId = createConversationId(currentUserId, req.requester._id as string);
+                    const requesterId = req.requester?._id?.toString();
+                    if (!requesterId) {
+                        toast.error("Cannot open chat, user information is missing.");
+                        return;
+                    }
+                    const conversationId = createConversationId(currentUserId, requesterId);
                     router.push(`/chat/${conversationId}`);
-                }} className="p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-800 rounded-full">
+                }} className="p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-800 rounded-full"
+                >
                     <MessageSquare size={16} />
                 </button>
                 <div className='flex gap-1'>
                     {req.status === RequestStatus.PENDING && (
                         <>
-                            <button disabled={isPending} onClick={() => handleStatusUpdate(req._id as string, RequestStatus.ACCEPTED)} className="text-xs bg-emerald-500 text-white px-2 py-1 rounded hover:bg-emerald-600 disabled:opacity-50">Accept</button>
-                            <button disabled={isPending} onClick={() => handleStatusUpdate(req._id as string, RequestStatus.REJECTED)} className="text-xs bg-rose-500 text-white px-2 py-1 rounded hover:bg-rose-600 disabled:opacity-50">Reject</button>
+                            <button disabled={isPending} onClick={() => handleStatusUpdate(req._id.toString(), RequestStatus.ACCEPTED)} className="text-xs bg-emerald-500 text-white px-2 py-1 rounded hover:bg-emerald-600 disabled:opacity-50">Accept</button>
+                            <button disabled={isPending} onClick={() => handleStatusUpdate(req._id.toString(), RequestStatus.REJECTED)} className="text-xs bg-rose-500 text-white px-2 py-1 rounded hover:bg-rose-600 disabled:opacity-50">Reject</button>
                         </>
                     )}
                     {req.status === RequestStatus.ACCEPTED && (
@@ -61,7 +71,7 @@ const RequestItem = ({ req, isPending, handleStatusUpdate, openShipModal, curren
     );
 };
 
-const RequestList = ({ requests, ...props }: { requests: IRequestWithPostDetails[] } & Omit<TabProps, 'isPending' | 'handleStatusUpdate'> & { isPending: boolean; handleStatusUpdate: (id: string, status: RequestStatus) => void; openShipModal: (req: IRequestWithPostDetails) => void; }) => {
+const RequestList = ({ requests, ...props }: { requests: IRequestWithPostDetails[] } & SharedCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
     return (
         <div className="mt-auto pt-3 border-t border-gray-100">
@@ -79,7 +89,7 @@ const RequestList = ({ requests, ...props }: { requests: IRequestWithPostDetails
                     >
                         <div className="max-h-[152px] overflow-y-auto space-y-2 pt-3 pr-2">
                             {requests.length > 0 ? requests.map(req => (
-                                <RequestItem key={req._id as string} req={req} {...props} />
+                                <RequestItem key={req._id.toString()} req={req} {...props} />
                             )) : <p className="text-xs text-gray-500 text-center py-2">No requests yet.</p>}
                         </div>
                     </motion.div>
@@ -89,7 +99,7 @@ const RequestList = ({ requests, ...props }: { requests: IRequestWithPostDetails
     );
 };
 
-const FeaturedPostCard = ({ post, ...props }: { post: IPostWithRequests } & TabProps & { openShipModal: (req: IRequestWithPostDetails) => void }) => {
+const FeaturedPostCard = ({ post, ...props }: { post: IPostWithRequests } & SharedCardProps) => {
     const isDeletable = post.isAvailable;
     const categoryColor = getCategoryColor(post.category);
     return (
@@ -116,12 +126,12 @@ const FeaturedPostCard = ({ post, ...props }: { post: IPostWithRequests } & TabP
                     </div>
                 </div>
             </div>
-            <RequestList requests={post.requests} {...props} />
+            <RequestList requests={post.requests as IRequestWithPostDetails[]} {...props} />
         </div>
     );
 };
 
-const StandardPostCard = ({ post, ...props }: { post: IPostWithRequests } & TabProps & { openShipModal: (req: IRequestWithPostDetails) => void }) => {
+const StandardPostCard = ({ post, ...props }: { post: IPostWithRequests } & SharedCardProps) => {
     const isDeletable = post.isAvailable;
     const categoryColor = getCategoryColor(post.category);
     return (
@@ -145,12 +155,12 @@ const StandardPostCard = ({ post, ...props }: { post: IPostWithRequests } & TabP
                     <DeletePostButton slug={post.slug} isDeletable={isDeletable} />
                 </div>
             </div>
-            <RequestList requests={post.requests} {...props} />
+            <RequestList requests={post.requests as IRequestWithPostDetails[]} {...props} />
         </div>
     );
 };
 
-export function MyPostsTab({ posts, currentUserId, refreshData }: { posts: IPostWithRequests[] } & TabProps) {
+export function MyPostsTab({ posts, currentUserId, refreshData }: { posts: IPostWithRequests[], currentUserId: string, refreshData: () => void }) {
     const [isPending, startTransition] = useTransition();
     const [shippingModalTarget, setShippingModalTarget] = useState<IRequestWithPostDetails | null>(null);
 
@@ -158,7 +168,7 @@ export function MyPostsTab({ posts, currentUserId, refreshData }: { posts: IPost
         if (!shippingModalTarget) return;
 
         startTransition(async () => {
-            const result = await updateRequestStatusAction(shippingModalTarget._id, {
+            const result = await updateRequestStatusAction(shippingModalTarget._id.toString(), {
                 status: RequestStatus.SHIPPED,
                 trackingCode: trackingInfo.code,
                 trackingCodeUrl: trackingInfo.url
@@ -191,7 +201,7 @@ export function MyPostsTab({ posts, currentUserId, refreshData }: { posts: IPost
     }
 
     const [latestPost, ...olderPosts] = posts;
-    const commonProps = { isPending, handleStatusUpdate, openShipModal: setShippingModalTarget, currentUserId, refreshData };
+    const commonProps: SharedCardProps = { isPending, handleStatusUpdate, openShipModal: setShippingModalTarget, currentUserId, refreshData };
 
     return (
         <>
@@ -207,7 +217,7 @@ export function MyPostsTab({ posts, currentUserId, refreshData }: { posts: IPost
                         <h3 className="text-sm font-bold uppercase text-gray-500 tracking-wider mb-3">Older Donations</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                             {olderPosts.map(post => (
-                                <StandardPostCard key={post._id as string} post={post} {...commonProps} />
+                                <StandardPostCard key={post._id.toString()} post={post} {...commonProps} />
                             ))}
                         </div>
                     </div>
@@ -217,7 +227,7 @@ export function MyPostsTab({ posts, currentUserId, refreshData }: { posts: IPost
                 isOpen={!!shippingModalTarget}
                 onClose={() => setShippingModalTarget(null)}
                 onSubmit={handleShipSubmit}
-                itemName={shippingModalTarget?.postDetails?.title || ''}
+                itemName={shippingModalTarget?.postDetails?.title ?? ''}
             />
         </>
     );

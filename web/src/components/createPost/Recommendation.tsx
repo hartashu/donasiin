@@ -6,7 +6,6 @@ import { Bell, MapPin, Send, Users, X, Navigation, Mail } from "lucide-react";
 import { mainAddress } from "@/lib/address";
 import { toTitleCase } from "@/lib/titleCase";
 import { motion } from "framer-motion";
-import { getCategoryLabel } from "@/lib/getCategoryLabel";
 
 interface UserRecommendation {
   _id: string;

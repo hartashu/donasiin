@@ -1,18 +1,18 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginSchema, type LoginInput } from '@/utils/validations/auth';
 import { login } from '@/lib/actions/auth.actions';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Mail, Lock } from 'lucide-react';
-import Image from 'next/image'; // FIX: Import Image component
+import toast from 'react-hot-toast'; // FIX: Import toast
 
 export function LoginForm() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/';
     const message = searchParams.get('message');
@@ -28,8 +28,10 @@ export function LoginForm() {
             if (result?.error) {
                 setError(result.error);
             } else {
-                router.push(callbackUrl);
-                router.refresh();
+                // FIX: Tambahkan toast sukses dan reload halaman
+                toast.success('Logged in successfully! Redirecting...');
+                // Menggunakan window.location.href untuk navigasi + reload penuh
+                window.location.href = callbackUrl;
             }
         });
     };
@@ -40,7 +42,16 @@ export function LoginForm() {
         <div className="max-w-md w-full animate-subtle-float">
             <div className="bg-white/60 backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl border border-white/20">
                 <div className="text-center mb-6">
-                    <div className="mb-2 text-3xl sm:text-4xl font-bold text-[#2a9d8f]">[LOGO] Donasiin</div>
+                    {/* FIX: Mengganti teks logo dengan komponen Image */}
+                    <div className="flex justify-center mb-4">
+                        <Image
+                            src="/LogoDonasiinnobg.png"
+                            alt="Donasiin Logo"
+                            width={180}
+                            height={50}
+                            priority
+                        />
+                    </div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Welcome Back</h1>
                     <p className="text-gray-700 text-sm sm:text-md mt-2">Sign in to continue to your account.</p>
                 </div>
@@ -80,7 +91,6 @@ export function LoginForm() {
                 </div>
 
                 <button onClick={handleGoogleSignIn} className="w-full flex items-center justify-center gap-3 bg-white/30 text-gray-800 border border-gray-400/50 font-semibold py-2.5 rounded-md hover:bg-white/50 transition">
-                    {/* FIX: Replaced <img> with <Image> component */}
                     <Image src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" width={20} height={20} />
                     Sign in with Google
                 </button>

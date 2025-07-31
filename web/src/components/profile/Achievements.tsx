@@ -3,10 +3,10 @@
 import { Achievement as AchievementType } from '@/types/types';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Award, GitMerge, PackagePlus, ShieldCheck, Rocket, Zap, Crown, Users, HeartHands, CalendarCheck, Coffee, Star, Feather, Sun, Moon } from "lucide-react";
+import { Lock, Award, GitMerge, PackagePlus, ShieldCheck, Rocket, Zap, Crown, Users, HeartHandshake, CalendarCheck, Coffee, Star, Feather, Sun, Moon } from "lucide-react";
 
 const iconMap: { [key: string]: React.ElementType } = {
-    Award, GitMerge, PackagePlus, ShieldCheck, Rocket, Zap, Crown, Users, HeartHands,
+    Award, GitMerge, PackagePlus, ShieldCheck, Rocket, Zap, Crown, Users, HeartHandshake,
     CalendarCheck, Coffee, Star, Feather, Sun, Moon
 };
 

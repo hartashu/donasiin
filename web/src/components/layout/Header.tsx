@@ -130,41 +130,88 @@ import {
   LoaderCircle,
   Info,
   BookOpen,
+  ChevronDown,
 } from "lucide-react";
+import { useState, useRef } from "react";
+import Image from "next/image";
+import { categoryOptions } from "@/lib/getCategoryLabel";
 
+// Main nav links
 const navLinks = [
   { href: "/", icon: House, label: "Home" },
-  { href: "/donations", icon: Gift, label: "Donations" },
+  { href: "/donations", icon: Gift, label: "Donations", dropdown: true },
   { href: "/#about", icon: Info, label: "About Us" },
   { href: "/#stories", icon: BookOpen, label: "Stories" },
 ];
 
+// Dropdown-aware nav link component
 const NavLink = ({
   href,
   label,
   icon: Icon,
+  dropdown = false,
 }: {
   href: string;
   label: string;
   icon: React.ElementType;
+  dropdown?: boolean;
 }) => {
   const pathname = usePathname();
   const isActive = pathname === href;
+  const [isHovered, setIsHovered] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => setIsHovered(false), 200);
+  };
+
   return (
-    <Link
-      href={href}
-      className={`flex gap-2 items-center transition-colors ${
-        isActive ? "text-gray-900" : "text-gray-500 hover:text-gray-900"
-      }`}
+    <div
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      <Icon className="w-5 h-5" />
-      <span className={`text-md font-medium ${isActive && "font-semibold"}`}>
-        {label}
-      </span>
-    </Link>
+      <Link
+        href={href}
+        className={`group flex gap-2 items-center transition-all duration-200 relative ${
+          isActive ? "text-gray-900" : "text-gray-500 hover:text-teal-600"
+        }`}
+      >
+        <Icon className="w-5 h-5" />
+        <span className="text-md font-medium">{label}</span>
+        {dropdown && <ChevronDown className="w-4 h-4 mt-[2px]" />}
+
+        {/* Underline effect - posisi sedikit lebih bawah */}
+        <span className="absolute left-0 w-0 h-0.5 bg-teal-600 transition-all duration-300 group-hover:w-full bottom-[-2px]" />
+      </Link>
+
+      {/* Dropdown menu */}
+      {dropdown && isHovered && (
+        <div className="absolute left-0 top-full mt-4 w-[420px] rounded-xl shadow-2xl bg-white border border-gray-200 z-50 p-4 transition-all duration-200 ease-in-out transform scale-100 opacity-100">
+          <ul className="grid grid-cols-2 gap-2">
+            {categoryOptions.map((option) => (
+              <li key={option.value}>
+                <Link
+                  href={`/donations/${option.value}`}
+                  className="block px-4 py-2 rounded-md text-sm text-gray-700 hover:bg-teal-600 hover:text-white transition-colors"
+                >
+                  {option.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 };
 
+// Main Header
 export function Header() {
   const { data: session, status } = useSession();
   const user = session?.user;
@@ -173,8 +220,17 @@ export function Header() {
   return (
     <header className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-gray-200">
       <nav className="container mx-auto flex justify-between items-center p-3 px-4">
-        <Link href="/" className="text-2xl font-bold text-gray-900">
-          Donasiin
+        <Link
+          href="/"
+          className="text-2xl font-bold text-gray-900 flex items-center gap-2 pl-4"
+        >
+          <Image
+            src="/LogoDonasiinnobg.png"
+            alt="Donasiin Logo"
+            width={150}
+            height={150}
+            className="object-contain"
+          />
         </Link>
 
         <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">

@@ -106,7 +106,7 @@ export function ConversationList({
                   {format(new Date(convo.lastMessageAt), "hh:mm a")}
                 </p>
               </div>
-              <p className="text-sm text-gray-700 line-clamp-2 pr-14">
+              <p className="text-sm text-gray-700 break-all line-clamp-2 pr-15">
                 {convo.lastMessageText}
               </p>
             </div>

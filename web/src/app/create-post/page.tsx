@@ -89,6 +89,7 @@ export default function CreatePost() {
       if (!recRes.ok) throw new Error("Failed to fetch recommendation");
 
       const { data: recommendations } = await recRes.json();
+      console.log(recommendations);
 
       setRecommendedUsers(recommendations || []);
       setShowModal(true);
@@ -156,7 +157,7 @@ export default function CreatePost() {
                     </h2>
                   </div>
                   <p className="text-sm text-gray-500">
-                    Your post when it's done
+                    Your post when it&apos;s done
                   </p>
                 </div>
 
