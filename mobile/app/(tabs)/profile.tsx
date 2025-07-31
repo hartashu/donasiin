@@ -21,8 +21,8 @@ import { Colors } from "../../constants/Colors";
 import { Button } from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
 import { AuthService } from "../../services/auth";
+import { API_BASE_URL } from "../../constants/api";
 
-const API_BASE_URL = "http://localhost:3000/api";
 
 type MyPostSummary = {
   id: string;

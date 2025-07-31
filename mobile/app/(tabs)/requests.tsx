@@ -21,9 +21,8 @@ import { Clock, CheckCircle, XCircle, X, Sparkles } from "lucide-react-native";
 import { useNotifications } from "../../context/NotificationContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
+import { API_BASE_URL } from "../../constants/api";
 
-
-const API_BASE_URL = "http://localhost:3000/api";
 
 const MAX_TRACKING_LENGTH = 50;
 

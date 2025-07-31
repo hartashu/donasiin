@@ -154,10 +154,10 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    overflow: 'visible', // Ensure shadow isn't clipped
+    shadowColor: Colors.primary[600],
+    shadowOffset: { width: 0, height: 4 }, // Adjusted offset
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
     marginBottom: 16,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: "relative",
-  },
+},
   image: {
     width: "100%",
     height: 200,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   requestedTag: {
-    backgroundColor: Colors.text.secondary,
+    backgroundColor: Colors.warning[500],
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     color: Colors.text.primary,
     marginBottom: 8,
   },
@@ -254,16 +254,14 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.primary[200],
+    backgroundColor: Colors.primary[100],
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   locationTag: {
-    backgroundColor: "transparent",
-    borderColor: Colors.border,
+    backgroundColor: Colors.gray[100],
+    borderColor: Colors.gray[200],
     paddingHorizontal: 10,
   },
   locationText: {
