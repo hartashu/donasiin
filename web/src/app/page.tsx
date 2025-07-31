@@ -100,12 +100,12 @@ export default async function HomePage() {
             className="absolute left-0 w-full"
             viewBox="0 0 1440 100"
             preserveAspectRatio="none"
-            fill="none"
+            fill="#F9FAFB"
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
               d="M0 0C180 100 360 100 540 50C720 0 900 0 1080 50C1260 100 1440 100 1440 100V0H0Z"
-              fill="white"
+              fill="#F9FAFB"
             />
           </svg>
         </div>

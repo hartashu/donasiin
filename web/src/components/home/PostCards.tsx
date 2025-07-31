@@ -24,7 +24,7 @@ export default function PostCards({ data }: { data: IPost[] }) {
   };
 
   return (
-    <section className="py-12 bg-[#f8fdfc] text-black relative">
+    <section className="py-12 bg-gray-50 text-black relative">
       <div className="container mx-auto px-6">
         {/* Header */}
         <motion.div

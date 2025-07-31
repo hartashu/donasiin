@@ -157,6 +157,7 @@ const NavLink = ({
   dropdown?: boolean;
 }) => {
   const pathname = usePathname();
+  const isDonationRoute = pathname.startsWith("/donations");
   const isActive = pathname === href;
   const [isHovered, setIsHovered] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -172,7 +173,7 @@ const NavLink = ({
 
   return (
     <div
-      className="relative"
+      className="relative z-[100]"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -184,15 +185,17 @@ const NavLink = ({
       >
         <Icon className="w-5 h-5" />
         <span className="text-md font-medium">{label}</span>
-        {dropdown && <ChevronDown className="w-4 h-4 mt-[2px]" />}
+        {dropdown && !isDonationRoute && (
+          <ChevronDown className="w-4 h-4 mt-[2px]" />
+        )}
 
         {/* Underline effect - posisi sedikit lebih bawah */}
         <span className="absolute left-0 w-0 h-0.5 bg-teal-600 transition-all duration-300 group-hover:w-full bottom-[-2px]" />
       </Link>
 
       {/* Dropdown menu */}
-      {dropdown && isHovered && (
-        <div className="absolute left-0 top-full mt-4 w-[420px] rounded-xl shadow-2xl bg-white border border-gray-200 z-50 p-4 transition-all duration-200 ease-in-out transform scale-100 opacity-100">
+      {dropdown && isHovered && !isDonationRoute && (
+        <div className="absolute left-0 mt-4 w-[420px] rounded-xl shadow-2xl bg-white border border-gray-200 z-40 top-full p-4 transition-all duration-200 ease-in-out transform scale-100 opacity-100">
           <ul className="grid grid-cols-2 gap-2">
             {categoryOptions.map((option) => (
               <li key={option.value}>
@@ -218,7 +221,7 @@ export function Header() {
   const isLoading = status === "loading";
 
   return (
-    <header className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-gray-200">
+    <header className="sticky top-0 bg-white/80 backdrop-blur-md z-40 border-b border-gray-200">
       <nav className="container mx-auto flex justify-between items-center p-3 px-4">
         <Link
           href="/"
