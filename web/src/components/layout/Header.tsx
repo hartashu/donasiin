@@ -120,6 +120,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
+
   User,
   Plus,
   MessageCircle,
@@ -138,6 +139,7 @@ import { categoryOptions } from "@/lib/getCategoryLabel";
 
 // Main nav links
 const navLinks = [
+
   { href: "/", icon: House, label: "Home" },
   { href: "/donations", icon: Gift, label: "Donations", dropdown: true },
   { href: "/#about", icon: Info, label: "About Us" },
@@ -146,6 +148,7 @@ const navLinks = [
 
 // Dropdown-aware nav link component
 const NavLink = ({
+
   href,
   label,
   icon: Icon,
@@ -216,6 +219,7 @@ const NavLink = ({
 
 // Main Header
 export function Header() {
+
   const { data: session, status } = useSession();
   const user = session?.user;
   const isLoading = status === "loading";
