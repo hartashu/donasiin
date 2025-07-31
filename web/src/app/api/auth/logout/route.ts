@@ -6,6 +6,7 @@ export async function POST() {
     response.cookies.set("authjs.session-token", "", {
         path: "/",
         httpOnly: true,
+        secure: true,
         expires: new Date(0),
     });
 

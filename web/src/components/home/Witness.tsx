@@ -142,7 +142,7 @@ export default function TheWitness() {
 
     const textureLoader = new THREE.TextureLoader();
     textureLoader.load(
-      "/earth-texture.jpg",
+      "/earthtexture.jpg",
       (texture) => {
         material.map = texture;
         material.needsUpdate = true;
@@ -315,9 +315,9 @@ export default function TheWitness() {
             className="w-full lg:w-1/2 flex flex-col items-center justify-center"
           >
             <div className="w-full h-80 lg:h-96 relative">
-              <div className="absolute top-2 inset-x-0 z-10 text-center p-2 space-y-1">
+              <div className="absolute top-2 inset-x-0 z-10 text-center p-2 space-y-1 flex flex-col items-center">
                 {/* Baris 1: Informasi dari data riil */}
-                <p className="text-xs md:text-sm text-gray-800 bg-white/70 backdrop-blur-sm rounded-full inline-block px-3 py-1 shadow">
+                <p className=" text-xs md:text-sm text-gray-800 bg-white/70 backdrop-blur-sm rounded-full inline-block px-3 py-1 shadow">
                   Community saved{" "}
                   <strong className="font-bold">
                     {parseFloat(stats.totalCarbonSavedKg).toLocaleString()} kg

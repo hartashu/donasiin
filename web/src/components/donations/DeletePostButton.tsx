@@ -8,7 +8,7 @@ import { Trash2 } from "lucide-react";
 interface DeletePostButtonProps {
   slug: string;
   title: string;
-  isAvailable: boolean; // Optional prop to check if the post is available
+  isAvailable: boolean;
 }
 
 export default function DeletePostButton({
@@ -52,13 +52,15 @@ export default function DeletePostButton({
     <>
       <button
         onClick={() => setShowConfirm(true)}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition disabled:opacity-50"
+        // FIX: Tambahkan '!isAvailable' di sini
+        disabled={!isAvailable || loading}
+        className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Trash2 size={18} />
         {loading ? "Deleting..." : "Delete Post"}
       </button>
 
+      {/* Pop-up konfirmasi tidak perlu diubah, logikanya sudah benar */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center">
           <div className="bg-white rounded-2xl w-[90%] max-w-md p-6 shadow-2xl animate-fade-in">
@@ -70,19 +72,12 @@ export default function DeletePostButton({
                 Confirm Delete
               </h2>
             </div>
-
             <p className="text-sm text-gray-700 mb-4 leading-relaxed">
               This action{" "}
-              <span className="font-semibold text-red-700">
-                cannot be undone
-              </span>
+              <span className="font-semibold text-red-700">cannot be undone</span>
               . To permanently delete this post, type the exact title:
-              <span className="font-semibold text-red-600">
-                {" "}
-                &quot;{title}&quot;
-              </span>
+              <span className="font-semibold text-red-600"> &quot;{title}&quot;</span>
             </p>
-
             <input
               type="text"
               value={inputTitle}
@@ -92,13 +87,11 @@ export default function DeletePostButton({
               }}
               placeholder="Type post title here"
               className={`w-full px-4 py-2 rounded-md border text-sm mb-2 focus:outline-none transition-all duration-200 ${error
-                ? "border-red-500 focus:ring-2 focus:ring-red-400"
-                : "border-gray-300 focus:ring-2 focus:ring-gray-200"
+                  ? "border-red-500 focus:ring-2 focus:ring-red-400"
+                  : "border-gray-300 focus:ring-2 focus:ring-gray-200"
                 }`}
             />
-
             {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
-
             <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => {
@@ -119,9 +112,8 @@ export default function DeletePostButton({
               </button>
             </div>
           </div>
-        </div >
-      )
-      }
+        </div>
+      )}
     </>
   );
 }
