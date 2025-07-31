@@ -91,7 +91,7 @@ export default function DonationsClientUI({
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {!isDetailPage && (
-        <nav className="sticky top-0 z-40 bg-white border-b px-6 py-4 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
+        <nav className="sticky top-0 z-50 bg-white border-b px-6 py-4 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
           <h1 className="text-2xl font-bold text-[#1c695f]">
             {currentCategory === "All" ? "All Donations" : currentCategory}
           </h1>
