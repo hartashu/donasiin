@@ -16,8 +16,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
+import { API_BASE_URL } from "../../constants/api";
 
-const API_BASE_URL = "http://localhost:3000/api";
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -118,7 +118,7 @@ export default function ChatScreen() {
           fullName: convo.otherUser.fullName,
           email: "",
           avatarUrl:
-            convo.otherUser.avatarUrl || "https://via.placeholder.com/150",
+            convo.otherUser.avatarUrl || "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400",
           dailyRequestLimit: 0,
           usedRequests: 0,
           createdAt: new Date(),

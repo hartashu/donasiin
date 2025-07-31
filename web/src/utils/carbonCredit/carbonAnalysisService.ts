@@ -10,7 +10,7 @@ const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_API_KEY,
 });
 
-const model = google("models/gemini-1.5-flash-latest");
+const model = google("gemini-2.5-flash");
 
 // const openrouter = createOpenAI({
 //   apiKey: process.env.OPENROUTER_API_KEY,

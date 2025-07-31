@@ -27,8 +27,26 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { AuthService } from "../../services/auth";
 import { Button } from "../../components/ui/Button";
-const API_BASE_URL = "http://localhost:3000/api";
+import { API_BASE_URL } from "../../constants/api";
+
 const { width } = Dimensions.get("window");
+
+const categoryMap: { [key: string]: { label: string } } = {
+  "automotive-tools": { label: "Automotive & Tools" },
+  "baby-kids": { label: "Baby & Kids" },
+  "books-music-media": { label: "Books, Music & Media" },
+  electronics: { label: "Electronics" },
+  "fashion-apparel": { label: "Fashion & Apparel" },
+  "health-beauty": { label: "Health & Beauty" },
+  "home-kitchen": { label: "Home & Kitchen" },
+  "office-supplies-stationery": { label: "Office Supplies & Stationery" },
+  "pet-supplies": { label: "Pet Supplies" },
+  "sports-outdoors": { label: "Sports & Outdoors" },
+};
+
+const getCategoryLabel = (slug: string): string => {
+  return categoryMap[slug]?.label || slug;
+};
 
 const formatDistanceToNow = (date: Date): string => {
   const now = new Date();
@@ -98,8 +116,7 @@ export default function PostDetailScreen() {
           id: apiPost.author._id,
           username: apiPost.author.username,
           fullName: apiPost.author.fullName,
-          avatarUrl:
-            apiPost.author.avatarUrl || "https://via.placeholder.com/150",
+          avatarUrl: apiPost.author.avatarUrl,
           address: apiPost.author.address,
           email: "",
           dailyRequestLimit: 0,
@@ -299,7 +316,7 @@ export default function PostDetailScreen() {
           <Text style={styles.title}>{post.title}</Text>
           <View style={styles.metaRow}>
             <View style={styles.tagBox}>
-              <Text style={styles.tag}>{post.tags[0]}</Text>
+              <Text style={styles.tag}>{getCategoryLabel(post.tags[0])}</Text>
             </View>
             <Text style={styles.metaText}>
               • Posted {formatDistanceToNow(post.createdAt)}
@@ -309,7 +326,11 @@ export default function PostDetailScreen() {
 
           <View style={styles.ownerInfo}>
             <Image
-              source={{ uri: post.owner.avatarUrl }}
+              source={{
+                uri:
+                  post.owner.avatarUrl ||
+                  "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150",
+              }}
               style={styles.ownerAvatar}
             />
             <View style={{ flex: 1 }}>

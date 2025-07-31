@@ -22,8 +22,8 @@ import { Button } from "../components/ui/Button";
 import { AuthService } from "../services/auth";
 import { Plus, X, CheckCircle, Send } from "lucide-react-native";
 import { User } from "../types";
+import { API_BASE_URL } from "../constants/api";
 
-const API_BASE_URL = "http://localhost:3000/api";
 
 const MAX_IMAGES = 5;
 const categories = [
@@ -55,6 +55,7 @@ export default function CreatePostScreen() {
   } | null>(null);
   const [recommendations, setRecommendations] = useState<User[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [sendingAll, setSendingAll] = useState(false);
   const router = useRouter();
 
   const fetchRecommendations = async (slug: string) => {
@@ -218,6 +219,45 @@ export default function CreatePostScreen() {
     }
   };
 
+  const handleSendAllRecommendations = async () => {
+    if (!recommendations.length || !postSuccessData) return;
+
+    setSendingAll(true);
+    try {
+      const token = await AuthService.getStoredToken();
+      if (!token) throw new Error("You must be logged in to send messages.");
+
+      const messagePromises = recommendations.map((user) =>
+        fetch(`${API_BASE_URL}/chat/messages`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            receiverId: user.id,
+            text: `Hi! I posted a new donation "${postSuccessData.title}" and you were recommended as a potential recipient. Feel free to check it out!`,
+          }),
+        })
+      );
+
+      const results = await Promise.all(messagePromises);
+      const allOk = results.every((res) => res.ok);
+
+      if (!allOk) {
+        throw new Error("Some notifications failed to send. Please try again.");
+      }
+
+      Alert.alert("Success", "Notifications sent to all recommended users.", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    } catch (err: any) {
+      Alert.alert("Error Sending All", err.message);
+    } finally {
+      setSendingAll(false);
+    }
+  };
+
   const RecommendationCard = ({ user }: { user: User }) => (
     <View style={styles.recCard}>
       <Image source={{ uri: user.avatarUrl }} style={styles.recAvatar} />
@@ -263,24 +303,36 @@ export default function CreatePostScreen() {
               color={Colors.primary[600]}
             />
           ) : (
-            <FlatList
-              data={recommendations}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <RecommendationCard user={item} />}
-              ListEmptyComponent={
-                <View style={styles.emptyRecs}>
-                  <Text style={styles.emptyRecsText}>
-                    No specific recommendations found at this time.
-                  </Text>
-                </View>
-              }
-              contentContainerStyle={{ paddingTop: 16 }}
-            />
+            <>
+              {recommendations.length > 0 && (
+                <Button
+                  title="Send to All & Go Home"
+                  onPress={handleSendAllRecommendations}
+                  loading={sendingAll}
+                  style={{ marginBottom: 16 }}
+                  icon={<Send size={16} color={Colors.white} />}
+                />
+              )}
+              <FlatList
+                data={recommendations}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => <RecommendationCard user={item} />}
+                ListEmptyComponent={
+                  <View style={styles.emptyRecs}>
+                    <Text style={styles.emptyRecsText}>
+                      No specific recommendations found at this time.
+                    </Text>
+                  </View>
+                }
+                contentContainerStyle={{ paddingTop: 16 }}
+              />
+            </>
           )}
           <Button
-            title="Done"
+            title="Skip & Go Home"
             onPress={() => router.back()}
             style={{ marginTop: "auto" }}
+            variant="outline"
           />
         </View>
       </SafeAreaView>

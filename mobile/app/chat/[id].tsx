@@ -7,10 +7,11 @@ import Pusher from "pusher-js/react-native";
 import { Colors } from "../../constants/Colors";
 import { Send, ChevronLeft } from "lucide-react-native";
 import { AuthService } from "../../services/auth";
+import { API_BASE_URL } from "../../constants/api";
 
 const PUSHER_KEY = "adc5a6ff5ffcda8b52f6"
 const PUSHER_CLUSTER = "ap1"
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = API_BASE_URL;
 
 const formatMessageTime = (date: Date) => {
   if (!date || isNaN(date.getTime())) return "";

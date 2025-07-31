@@ -21,7 +21,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,7 +38,21 @@
         {
           "photosPermission": "The app needs to access your photos to let you select images for your donation post."
         }
-      ]
-    ]
+      ],
+      "expo-font"
+    ],
+    "extra": {
+      "apiUrlDev": "http://10.83.45.180:3000/api",
+      "apiUrlProd": "https://final-project-jade-seven.vercel.app/api",
+      "eas": {
+        "projectId": "621d6ca6-99ef-4834-92b2-0717c48797fa"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/621d6ca6-99ef-4834-92b2-0717c48797fa"
+    }
   }
 }

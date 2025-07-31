@@ -7,6 +7,8 @@ import React, {
 } from "react";
 import { AuthService } from "../services/auth";
 import { User, RegisterData, AuthContextType } from "../types";
+import { API_BASE_URL } from "../constants/api";
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -49,7 +51,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
     try {
-      const API_BASE_URL = "http://localhost:3000/api";
       const response = await fetch(`${API_BASE_URL}/account/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
