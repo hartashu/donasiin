@@ -124,7 +124,6 @@ export default function DonationCards({ category }: { category?: string }) {
                   className="group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] block"
                 >
                   <div className="relative h-60">
-                    {/* FIX: Menggunakan Next/Image dengan properti 'fill' */}
                     <Image
                       src={d.thumbnailUrl || "/placeholder.jpg"}
                       alt={d.title}
@@ -159,10 +158,8 @@ export default function DonationCards({ category }: { category?: string }) {
                       </div>
                     )}
                     <div className="flex items-center gap-2 mt-auto pt-2 border-t border-gray-100">
-                      {/* FIX: Menambahkan 'relative' untuk parent dari Image avatar */}
                       <div className="relative w-7 h-7 rounded-full bg-gray-200 overflow-hidden">
                         {d.author?.avatarUrl ? (
-                          // FIX: Menggunakan Next/Image dengan properti 'fill'
                           <Image
                             src={d.author.avatarUrl}
                             alt={d.author?.fullName ?? "Author"}
@@ -183,8 +180,8 @@ export default function DonationCards({ category }: { category?: string }) {
                         <span className="text-[9px] text-gray-400">
                           {d.createdAt
                             ? formatDistanceToNowStrict(new Date(d.createdAt), {
-                                addSuffix: true,
-                              })
+                              addSuffix: true,
+                            })
                             : "Unknown time"}
                         </span>
                       </div>

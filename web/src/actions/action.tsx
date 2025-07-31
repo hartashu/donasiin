@@ -17,15 +17,11 @@ import {
   IRequestWithPostDetails,
   RequestStatus,
   Achievement,
-  IPost, // 🔥 FIX: Menambahkan import IPost
+  IPost,
 } from "@/types/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-// ==profile
-// 🔥 FIX: Menghapus semua import lucide-react yang tidak digunakan
-
-// 🔥 FIX: Tipe dikoreksi dengan menambahkan tanda kurung (...)[]
 const allAchievements: (Omit<Achievement, "unlocked" | "icon"> & {
   icon: string;
 })[] = [
@@ -121,7 +117,6 @@ const allAchievements: (Omit<Achievement, "unlocked" | "icon"> & {
     },
   ];
 
-// 🔥 Tipe Activity baru yang lebih deskriptif
 export interface Activity {
   type:
   | "I_CREATED_A_POST"
@@ -155,7 +150,6 @@ export async function getMyProfileData() {
     (req) => new Date(req.createdAt) >= todayStart
   ).length;
 
-  // 🔥 FIX: Menggunakan 'as unknown as' untuk type casting yang lebih aman
   const totalIncomingRequests = userPosts.reduce(
     (sum, post) => (post.requests as unknown as IRequestWithPostDetails[]).length + sum,
     0
@@ -166,7 +160,6 @@ export async function getMyProfileData() {
     totalPosts: userPosts.length,
     totalIncomingRequests,
     totalOutgoingRequests: userRequests.length,
-    // 🔥 FIX: Menambahkan cast ke IPost untuk mengakses carbonKg
     totalCarbonSavings: userPosts
       .filter((p) => !p.isAvailable)
       .reduce((sum, p) => sum + ((p as IPost).carbonKg || 0), 0),
@@ -242,60 +235,47 @@ export async function getMyProfileData() {
     return { ...ach, unlocked };
   });
 
-  // 🔥 FIX: Tipe 'Activity' sekarang merujuk ke interface lokal
   const activityFeed: Activity[] = [];
 
-  // 1. Aktivitas terkait donasi SAYA (userPosts)
   userPosts.forEach((post) => {
     activityFeed.push({
       type: "I_CREATED_A_POST",
       title: post.title,
-      // 🔥 FIX: Mengonversi Date menjadi string
       date: new Date(post.createdAt).toISOString(),
     });
-    // 🔥 FIX: Menggunakan 'as unknown as' untuk type casting
     (post.requests as unknown as IRequestWithPostDetails[]).forEach((req) => {
       activityFeed.push({
         type: "SOMEONE_REQUESTED_MY_ITEM",
         title: post.title,
-        // 🔥 FIX: Menggunakan non-null assertion (!) karena requester diharapkan ada
         otherUserName: req.requester!.fullName,
-        // 🔥 FIX: Mengonversi Date menjadi string
         date: new Date(req.createdAt).toISOString(),
       });
       if (req.status !== RequestStatus.PENDING) {
         activityFeed.push({
           type: "I_UPDATED_A_REQUEST",
           title: post.title,
-          // 🔥 FIX: Menggunakan non-null assertion (!)
           otherUserName: req.requester!.fullName,
           status: req.status,
-          // 🔥 FIX: Mengonversi Date menjadi string
           date: new Date(req.updatedAt || req.createdAt).toISOString(),
         });
       }
     });
   });
 
-  // 2. Aktivitas terkait request SAYA (userRequests)
   userRequests.forEach((req) => {
     if (req.postDetails) {
       activityFeed.push({
         type: "I_MADE_A_REQUEST",
         title: req.postDetails.title,
-        // 🔥 FIX: Menggunakan non-null assertion (!) karena author diharapkan ada di dalam if block
         otherUserName: req.postDetails.author!.fullName,
-        // 🔥 FIX: Mengonversi Date menjadi string
         date: new Date(req.createdAt).toISOString(),
       });
       if (req.status !== RequestStatus.PENDING) {
         activityFeed.push({
           type: "MY_REQUEST_WAS_UPDATED",
           title: req.postDetails.title,
-          // 🔥 FIX: Menggunakan non-null assertion (!)
           otherUserName: req.postDetails.author!.fullName,
           status: req.status,
-          // 🔥 FIX: Mengonversi Date menjadi string
           date: new Date(req.updatedAt || req.createdAt).toISOString(),
         });
       }
@@ -308,8 +288,6 @@ export async function getMyProfileData() {
   uniqueActivities.sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
-
-  // 🔥 FIX: Menggunakan '_' untuk variabel yang tidak terpakai
   const { password: _, ...safeUserProfile } = userProfile;
   return JSON.parse(
     JSON.stringify({
@@ -323,7 +301,6 @@ export async function getMyProfileData() {
   );
 }
 
-// 🔥 ACTION BARU UNTUK UPLOAD GAMBAR RESI (MODE IMAGE+MANUAL)
 export async function uploadReceiptImageAction(
   formData: FormData
 ): Promise<{ success: boolean; url?: string; error?: string }> {
@@ -351,9 +328,6 @@ export async function uploadReceiptImageAction(
   }
 }
 
-// ----------------------------------------------
-// CREATE POST (AUTH REQUIRED)
-// ----------------------------------------------
 type CreatePostParams = {
   title: string;
   thumbnailUrl: string;
@@ -380,9 +354,6 @@ export async function createPostAction(data: CreatePostParams) {
   return await res.json();
 }
 
-// ----------------------------------------------
-// DELETE POST (AUTH REQUIRED)
-// ----------------------------------------------
 export async function deletePostAction(
   slug: string
 ): Promise<{ success: boolean; error?: string }> {
@@ -416,9 +387,6 @@ export async function deletePostAction(
   }
 }
 
-// ----------------------------------------------
-// UPLOAD IMAGE (AUTH REQUIRED)
-// ----------------------------------------------
 export async function uploadImageAction(formData: FormData): Promise<string[]> {
   const cookie = await cookies();
 
@@ -434,14 +402,12 @@ export async function uploadImageAction(formData: FormData): Promise<string[]> {
   return result?.data?.itemUrls || [];
 }
 
-// (Kode yang dikomentari dipertahankan seperti aslinya)
 
 export const getPosts = async (
   category?: string,
   search?: string,
   page: number = 1,
   limit: number = 10
-  // 🔥 FIX: IPost sekarang dikenali karena sudah diimpor
 ): Promise<{ posts: IPost[]; totalPages: number }> => {
   const { posts, total } = await PostModel.getAllPosts({
     category,
@@ -455,7 +421,6 @@ export const getPosts = async (
   };
 };
 
-// --- MUTATION ACTIONS ---
 
 export async function updateUserProfileAction(formData: FormData): Promise<{
   success: boolean;

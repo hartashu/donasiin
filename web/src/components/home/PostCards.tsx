@@ -102,6 +102,7 @@ export default function PostCards({ data }: { data: IPost[] }) {
               className="w-[240px] shrink-0 snap-start mb-2 "
             >
               <Link
+                scroll={true}
                 href={`/donations/${d.category}/detail?slug=${d.slug}`}
                 className="group relative rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] block"
               >
@@ -162,8 +163,8 @@ export default function PostCards({ data }: { data: IPost[] }) {
                       <span className="text-[9px] text-gray-400">
                         {d.createdAt
                           ? formatDistanceToNowStrict(new Date(d.createdAt), {
-                              addSuffix: true,
-                            })
+                            addSuffix: true,
+                          })
                           : "Unknown"}
                       </span>
                     </div>
