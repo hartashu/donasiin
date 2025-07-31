@@ -3,7 +3,6 @@ import * as bcrypt from 'bcryptjs';
 import { faker } from '@faker-js/faker';
 import 'dotenv/config';
 
-// --- Konfigurasi & Fungsi Bantuan ---
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
     throw new Error('Harap definisikan variabel environment MONGODB_URI di file .env');
@@ -17,7 +16,6 @@ const client = new MongoClient(MONGODB_URI);
 const getRandomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const shuffleArray = <T>(arr: T[]): T[] => [...arr].sort(() => 0.5 - Math.random());
 
-// --- SUMBER DATA (FIXED - JANGAN DIUBAH) ---
 const allDonationItems = [
     { title: "Cozy Knit Shawl", description: "Looking to donate this beautiful knit shawl. It's in excellent condition, very soft and warm. Perfect for someone who wants an elegant accessory for chilly evenings. Clean and ready to be worn.", category: "fashion-apparel", images: { thumbnail: "https://res.cloudinary.com/dffbvex6y/image/upload/v1752824133/shawl_diff_6_1_jswidn.png", imageUrls: ["https://res.cloudinary.com/dffbvex6y/image/upload/v1752824134/shawl_diff_6_3_vksz8k.png", "https://res.cloudinary.com/dffbvex6y/image/upload/v1752824133/shawl_diff_6_2_bu5dwi.png"] } },
     { title: "Stylish Women's Overcoat", description: "Donating this stylish overcoat. It's in great condition and provides good warmth. Ideal for someone looking for a fashionable coat for work or daily wear. Size M.", category: "fashion-apparel", images: { thumbnail: "https://res.cloudinary.com/dffbvex6y/image/upload/v1752824112/coat_diff_7_3_ixovl0.png", imageUrls: ["https://res.cloudinary.com/dffbvex6y/image/upload/v1752824111/coat_diff_7_2_qnooge.png", "https://res.cloudinary.com/dffbvex6y/image/upload/v1752824110/coat_diff_7_1_wgbxvs.png"] } },
