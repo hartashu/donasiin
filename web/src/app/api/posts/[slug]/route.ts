@@ -32,6 +32,7 @@ export async function GET(
     //   { status: 200 }
     // );
 
+
     const session = await getSession();
     const userId = session?.user?.id;
 
