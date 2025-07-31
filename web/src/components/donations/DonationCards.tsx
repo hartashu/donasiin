@@ -74,8 +74,26 @@ export default function DonationCards({ category }: { category?: string }) {
             ))}
           </div>
         ) : data.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">No donations found</p>
+          <div className="flex flex-col items-center justify-center gap-4 py-20">
+            <div>
+              <Image
+                src={"/LogoDonasiinnobg.png"}
+                alt="logoDonasiin"
+                width={180}
+                height={180}
+                className="object-cover"
+              />
+            </div>
+            {/* Teks utama */}
+            <h2 className="text-2xl sm:text-xl font-bold text-gray-800">
+              DONATION NOT FOUND
+            </h2>
+
+            {/* Subteks */}
+            <p className="text-sm sm:text-base text-gray-500 text-center max-w-md">
+              We couldn&apos;t find any matching donations at the moment. Try
+              adjusting your search or filter.
+            </p>
           </div>
         ) : (
           <InfiniteScroll
@@ -125,7 +143,8 @@ export default function DonationCards({ category }: { category?: string }) {
                       {toTitleCase(d.title)}
                     </h3>
                     <p className="text-sm text-gray-600 line-clamp-1 mb-2 ">
-                      {d.description.charAt(0).toUpperCase() + d.description.slice(1)}
+                      {d.description.charAt(0).toUpperCase() +
+                        d.description.slice(1)}
                     </p>
                     <div className="flex items-center gap-1 text-[11px] text-[#1c695f] font-medium mb-1">
                       <Tags className="w-3.5 h-3.5" />
@@ -162,7 +181,11 @@ export default function DonationCards({ category }: { category?: string }) {
                           {toTitleCase(d.author?.fullName ?? "Unknown")}
                         </span>
                         <span className="text-[9px] text-gray-400">
-                          {d.createdAt ? formatDistanceToNowStrict(new Date(d.createdAt), { addSuffix: true }) : "Unknown time"}
+                          {d.createdAt
+                            ? formatDistanceToNowStrict(new Date(d.createdAt), {
+                                addSuffix: true,
+                              })
+                            : "Unknown time"}
                         </span>
                       </div>
                     </div>

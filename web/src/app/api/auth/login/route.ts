@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       username: user.username,
       fullName: user.fullName,
       avatarUrl: user.avatarUrl,
-      address: user.address
+      address: user.address,
     };
 
     const secret = process.env.AUTH_SECRET;
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     // Tambahkan properti 'salt' pada pemanggilan fungsi encode
     const token = await encode({ token: tokenPayload, secret, salt });
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       token: token,
       user: {
         id: user._id.toString(),
@@ -70,17 +70,16 @@ export async function POST(request: NextRequest) {
     });
 
     // Set secure cookie
-    response.cookies.set("authjs.session-token", token, {
-      path: "/",
-      httpOnly: true,
-      secure: true,
-      // process.env.NODE_ENV === "production"
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 hari
-    });
+    // response.cookies.set("authjs.session-token", token, {
+    //   path: "/",
+    //   httpOnly: true,
+    //   secure: true,
+    //   // process.env.NODE_ENV === "production"
+    //   sameSite: "lax",
+    //   maxAge: 60 * 60 * 24 * 7, // 7 hari
+    // });
 
-    return response;
-
+    // return response;
   } catch (error) {
     console.error("Native login error:", error);
     return NextResponse.json(

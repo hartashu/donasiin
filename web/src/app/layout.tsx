@@ -6,11 +6,18 @@ import { SessionProvider } from "next-auth/react";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair", weight: ['700', '900'] });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  weight: ["700", "900"],
+});
 
 export const metadata: Metadata = {
   title: "Donasiin",
   description: "Berbagi kebaikan, ciptakan perubahan.",
+  icons: {
+    icon: "/logo.png", // Path ke ikon baru Anda
+  },
 };
 
 export default function RootLayout({

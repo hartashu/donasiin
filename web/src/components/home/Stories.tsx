@@ -215,7 +215,6 @@ const rightMessages = [
   "Always! Got any recommendations for places to give?",
 ];
 
-
 export default function TalkingSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
@@ -260,12 +259,12 @@ export default function TalkingSection() {
       className="relative py-24 text-black overflow-hidden min-h-screen"
     >
       {/* Background Image */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 scale-105 -translate-y-29">
         <Image
-          src="https://img.freepik.com/premium-photo/cartoon-illustration-park-with-wooden-bench-center-city-skyline-background_14117-893721.jpg"
+          src="https://img.freepik.com/premium-photo/cartoon-illustration-peaceful-park-with-bench-view-city-skyline_14117-893773.jpg"
           alt="background"
           fill
-          className="object-cover brightness-95"
+          className="object-cover brightness-50"
         />
         <div className="absolute inset-0 bg-white/30 backdrop-blur-xs"></div>
       </div>
@@ -288,7 +287,12 @@ export default function TalkingSection() {
           }}
           className="relative inline-block px-4 py-2"
         >
-          <span className="bg-gradient-to-r from-[#2a9d8f] to-[#264653] bg-clip-text text-transparent">
+          <span
+            className="text-white font-extrabold text-3xl md:text-5xl tracking-wide drop-shadow-md"
+            style={{
+              textShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
+            }}
+          >
             Conversations that Matter
           </span>
         </motion.span>
@@ -306,10 +310,10 @@ export default function TalkingSection() {
             animate={
               showLeft
                 ? {
-                  rotate: [0, -2, 2, -2, 0],
-                  scale: [1, 1.03, 1.02, 1.03, 1],
-                  transition: { duration: 1 },
-                }
+                    rotate: [0, -2, 2, -2, 0],
+                    scale: [1, 1.03, 1.02, 1.03, 1],
+                    transition: { duration: 1 },
+                  }
                 : {}
             }
             className="w-full max-w-[260px]"
@@ -347,10 +351,10 @@ export default function TalkingSection() {
             animate={
               showRight
                 ? {
-                  rotate: [0, 2, -2, 2, 0],
-                  scale: [1, 1.03, 1.02, 1.03, 1],
-                  transition: { duration: 1 },
-                }
+                    rotate: [0, 2, -2, 2, 0],
+                    scale: [1, 1.03, 1.02, 1.03, 1],
+                    transition: { duration: 1 },
+                  }
                 : {}
             }
             className="w-full max-w-[260px]"

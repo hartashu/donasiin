@@ -51,7 +51,8 @@ export default function Banner() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          Small actions lead to big changes. Discover and build a more generous world, together.
+          Small actions lead to big changes. Discover and build a more generous
+          world, together.
         </motion.p>
         <motion.div
           className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
@@ -59,10 +60,16 @@ export default function Banner() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.4, duration: 0.8 }}
         >
-          <Link href="/donations" className="px-8 py-3 rounded-full font-semibold text-base bg-brand text-white shadow-lg hover:bg-brand-dark transition-colors">
+          <Link
+            href="/donations"
+            className="bg-teal-600 px-8 py-3 rounded-full font-semibold text-base bg-brand text-white shadow-lg hover:bg-brand-dark transition-colors"
+          >
             Find an Item
           </Link>
-          <Link href="/create-post" className="px-8 py-3 rounded-full font-semibold text-base bg-white/20 text-white border border-white/50 backdrop-blur-sm hover:bg-white/30 transition-colors">
+          <Link
+            href="/create-post"
+            className="bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text px-8 py-3 rounded-full font-semibold text-base bg-white/20 text-transparent border border-white/50 backdrop-blur-sm hover:bg-white/30 transition-colors"
+          >
             Donate an Item
           </Link>
         </motion.div>
