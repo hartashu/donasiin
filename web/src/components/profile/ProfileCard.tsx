@@ -1,5 +1,3 @@
-// @/components/profile/ProfileCard.tsx
-
 'use client';
 
 import { IUser, IPostWithRequests, IRequestWithPostDetails, RequestStatus } from '@/types/types';

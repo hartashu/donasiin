@@ -58,7 +58,6 @@ export async function sendPasswordResetEmail(to: string, token: string, source?:
 };
 
 
-// Tambahkan fungsi ini di dalam file src/lib/utils/email.ts
 
 export const sendShippingNotificationEmail = async (to: string, postTitle: string, trackingCode: string) => {
   const mailOptions = {

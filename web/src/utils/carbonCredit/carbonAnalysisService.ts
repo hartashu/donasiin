@@ -1,6 +1,4 @@
-// lib/carbonAnalysisService.ts
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-// 🔽 'generateObject' dan 'generateText' sama-sama ada di 'ai'
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
@@ -12,22 +10,7 @@ const google = createGoogleGenerativeAI({
 
 const model = google("gemini-2.5-flash");
 
-// const openrouter = createOpenAI({
-//   apiKey: process.env.OPENROUTER_API_KEY,
-//   // Arahkan ke endpoint API OpenRouter
-//   baseURL: "https://openrouter.ai/api/v1",
-//   // Header kustom yang direkomendasikan oleh OpenRouter
-//   headers: {
-//     "HTTP-Referer": "YOUR_SITE_URL", // Ganti dengan URL website Anda
-//     "X-Title": "Donation App", // Ganti dengan nama aplikasi Anda
-//   },
-// });
 
-// const model = openrouter("qwen/qwen2.5-vl-32b-instruct:free");
-
-/**
- * Mengidentifikasi item dan jumlahnya dari gambar.
- */
 export async function identifyItemFromImage(
   imageBuffer: Buffer,
   mimeType: string
@@ -65,26 +48,12 @@ export async function identifyItemFromImage(
   }
 }
 
-/**
- * Mengestimasi jejak karbon: Coba database dulu, jika gagal baru pakai AI.
- */
+
 export async function getCarbonFootprintForItem(
   itemName: string
 ): Promise<number | null> {
-  // 1. Coba cari di database lokal terlebih dahulu
-  // const dbResult = await CarbonFootprintModel.findByItemName(itemName);
 
-  // if (dbResult) {
-  //   console.log(`✅ Carbon data found in local DB for: ${itemName}`);
-  //   return dbResult.carbonKg;
-  // }
-
-  // // 2. JIKA TIDAK DITEMUKAN, baru gunakan AI sebagai cadangan
-  // console.warn(
-  //   `⚠️ Carbon data not in DB for: ${itemName}. Falling back to AI estimation.`
-  // );
   try {
-    // 🔽 Gunakan 'generateText' untuk prompt teks sederhana
     const { text } = await generateText({
       model,
       prompt: `What is the estimated carbon footprint in kg of CO2 to produce one new "${itemName}"? Answer with only a single number.`,
@@ -102,7 +71,6 @@ export async function analyzeItem(imageBuffer: Buffer, mimeType: string) {
   try {
     const { object } = await generateObject({
       model,
-      // Minta AI mengembalikan objek JSON dengan 3 properti ini
       schema: z.object({
         itemName: z
           .string()

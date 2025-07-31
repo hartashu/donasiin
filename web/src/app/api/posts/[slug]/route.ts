@@ -6,7 +6,6 @@ import { updatePostSchema } from "@/utils/validations/post";
 import { WithId } from "mongodb";
 import { NextResponse } from "next/server";
 
-// Andy
 import { RequestModel } from "@/models/request";
 import { ObjectId } from "mongodb";
 
@@ -26,11 +25,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    // return NextResponse.json<IJsonResponse<WithId<IPost>>>(
-    //   { statusCode: 200, data: post },
-    //   { status: 200 }
-    // );
 
 
     const session = await getSession();

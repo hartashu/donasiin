@@ -1,26 +1,3 @@
-// import { NextResponse } from "next/server";
-// import { RequestModel } from "@/models/request";
-// import handleError from "@/errorHandler/errorHandler";
-// import { ObjectId } from "mongodb";
-// import { getSession } from "@/utils/getSession";
-
-// // Melihat permintaan yang saya buat
-// export async function GET() {
-//   try {
-//     const session = await getSession();
-//     if (!session?.user?.id) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const requests = await RequestModel.getMyRequests(
-//       new ObjectId(session.user.id)
-//     );
-//     return NextResponse.json({ data: requests }, { status: 200 });
-//   } catch (error) {
-//     return handleError(error);
-//   }
-// }
-
 import { NextResponse } from "next/server";
 import { RequestModel } from "@/models/request";
 import handleError from "@/errorHandler/errorHandler";

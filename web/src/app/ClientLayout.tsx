@@ -49,7 +49,6 @@ export default function ClientLayout({
   const isAuthRoute = pathname.startsWith("/auth");
   const isChatRoute = pathname.startsWith("/chat");
 
-  // The SessionProvider is crucial for the new Header to work correctly
   if (isAuthRoute) {
     return <SessionProvider>{children}</SessionProvider>;
   }

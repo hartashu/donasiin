@@ -1,4 +1,3 @@
-// /app/api/users/me/posts/route.ts
 import { NextResponse } from "next/server";
 import { PostModel } from "@/models/post";
 import { getSession } from "@/utils/getSession";
@@ -12,7 +11,6 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Panggil fungsi baru yang lebih canggih
     const postsWithRequesters = await PostModel.findUserPostsWithRequesters(
       new ObjectId(session.user.id)
     );

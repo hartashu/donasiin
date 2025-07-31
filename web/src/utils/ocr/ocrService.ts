@@ -1,12 +1,7 @@
-// lib/ocrService.ts
-
-// 🔽 Gunakan library resmi dari Google
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Pastikan GOOGLE_API_KEY Anda ada di .env.local
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 
-// Helper untuk mengubah URL gambar menjadi format yang dibutuhkan Gemini
 async function urlToGenerativePart(url: string) {
   const response = await fetch(url);
   const buffer = await response.arrayBuffer();
@@ -44,8 +39,6 @@ export async function recognizeTextFromImage(
 
 export function extractTrackingNumber(ocrText: string): string | null {
   if (!ocrText) return null;
-
-  // Daftar pola regex untuk berbagai kurir di Indonesia
   const patterns = [
     // J&T (e.g., JP1234567890, JD1234567890)
     { name: "J&T", pattern: /\b(JP|JD)\d{10,12}\b/i },

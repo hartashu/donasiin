@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
 
-    // 1. Ambil file gambar resi dan ID permintaan dari FormData
     const receiptImage = formData.get("receiptImage") as File | null;
     const requestId = formData.get("requestId") as string | null;
 
@@ -24,12 +23,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Upload gambar resi ke Cloudinary
     const buffer = Buffer.from(await receiptImage.arrayBuffer());
     const uploadResult = await uploadFile(buffer);
     const imageUrl = uploadResult.secure_url;
 
-    // 3. Lakukan OCR pada gambar yang sudah di-upload
     const fullText = await recognizeTextFromImage(imageUrl);
     if (!fullText) {
       return NextResponse.json(
@@ -46,10 +43,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Simpan nomor resi dan URL gambar ke database
     await RequestModel.updateTrackingInfo(requestId, trackingNumber, imageUrl);
 
-    // 5. Kirim kembali nomor resi yang berhasil didapat
     return NextResponse.json({
       trackingNumber: trackingNumber,
       trackingCodeUrl: imageUrl,

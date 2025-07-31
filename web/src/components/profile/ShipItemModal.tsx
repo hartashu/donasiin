@@ -49,7 +49,7 @@ export function ShipItemModal({ isOpen, onClose, onSubmit, itemName }: ShipItemM
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
             setFile(selectedFile);
-            setReceiptUrl(null); // Reset preview jika file diganti
+            setReceiptUrl(null);
         }
     };
 

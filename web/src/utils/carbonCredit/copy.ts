@@ -10,9 +10,6 @@ const google = createGoogleGenerativeAI({
 
 const model = google("models/gemini-1.5-flash-latest");
 
-/**
- * Mengidentifikasi item dan jumlahnya dari gambar.
- */
 export async function identifyItemFromImage(
   imageBuffer: Buffer,
   mimeType: string
@@ -24,7 +21,6 @@ export async function identifyItemFromImage(
         itemName: z.string(),
         quantity: z.number(),
       }),
-      // 👇 Gunakan 'messages' untuk input kompleks (teks + gambar)
       messages: [
         {
           role: "user",
@@ -49,9 +45,6 @@ export async function identifyItemFromImage(
   }
 }
 
-/**
- * Mengestimasi jejak karbon dari nama barang.
- */
 export async function getCarbonFootprintForItem(
   itemName: string
 ): Promise<number | null> {
@@ -61,7 +54,6 @@ export async function getCarbonFootprintForItem(
       schema: z.object({
         carbonKg: z.number(),
       }),
-      // 👇 Untuk teks saja, 'prompt' sudah benar
       prompt: `What is the estimated carbon footprint in kg of CO2 to produce one new "${itemName}"?`,
     });
 

@@ -47,17 +47,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (account?.provider === 'google') {
                 const existingUser = await UserModel.getUserByEmail(user.email!);
                 if (existingUser) {
-                    return true; // Izinkan login untuk pengguna yang sudah ada
+                    return true;
                 }
 
-                // Jika pengguna BARU, buat profil sementara dan redirect
                 const token = await UserModel.createIncompleteProfile({
                     email: user.email!,
                     fullName: user.name,
                     avatarUrl: user.image,
                 });
 
-                // Hentikan proses login dan redirect ke halaman lengkapi profil
                 return `/auth/complete-profile?token=${token}`;
             }
             return true;

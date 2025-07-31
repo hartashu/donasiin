@@ -1,6 +1,5 @@
-// models/carbonFootprint.ts
 import { connectToDb } from "@/config/mongo";
-import { ICarbonFootprint } from "@/types/types"; // Asumsi Anda sudah membuat interface ini
+import { ICarbonFootprint } from "@/types/types";
 import { WithId } from "mongodb";
 
 const CARBON_FOOTPRINTS_COLLECTION = "carbon_footprints";
@@ -17,13 +16,11 @@ export class CarbonFootprintModel {
   ): Promise<WithId<ICarbonFootprint> | null> {
     const db = await connectToDb();
 
-    // Buat pencarian case-insensitive
     const searchTerm = new RegExp(`^${itemName.trim()}$`, "i");
 
     const result = await db
       .collection<ICarbonFootprint>(CARBON_FOOTPRINTS_COLLECTION)
       .findOne({
-        // Cari di field 'itemName' ATAU di dalam array 'aliases'
         $or: [{ itemName: searchTerm }, { aliases: searchTerm }],
       });
 

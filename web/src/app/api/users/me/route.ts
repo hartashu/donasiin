@@ -9,12 +9,11 @@ import {
   RequestStatus,
   IRequestWithPostDetails,
   Achievement,
-  IPost, // 🔥 FIX: Menambahkan import IPost
+  IPost,
 } from "@/types/types";
 import { UserModel } from "@/models/user.model";
 import { updateProfileSchema } from "@/utils/validations/user";
 
-// 🔥 FIX: Tipe Activity didefinisikan secara lokal untuk menghindari konflik dan mencocokkan penggunaan
 export interface Activity {
   type:
   | "I_CREATED_A_POST"
@@ -28,7 +27,6 @@ export interface Activity {
   status?: RequestStatus;
 }
 
-// 🔥 FIX: Tipe dikoreksi dengan menambahkan tanda kurung (...)[]
 const allAchievements: (Omit<Achievement, "unlocked" | "icon"> & {
   icon: string;
 })[] = [
@@ -145,11 +143,9 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Kalkulasi Stats
     const dailyRequestsMade = userRequests.filter(
       (req) => new Date(req.createdAt) >= todayStart
     ).length;
-    // 🔥 FIX: Menggunakan 'as unknown as' untuk type casting
     const totalIncomingRequests = userPosts.reduce(
       (sum, post) =>
         (post.requests as unknown as IRequestWithPostDetails[]).length + sum,
@@ -160,7 +156,6 @@ export async function GET(_request: NextRequest) {
       totalPosts: userPosts.length,
       totalIncomingRequests,
       totalOutgoingRequests: userRequests.length,
-      // 🔥 FIX: Menambahkan cast ke IPost untuk mengakses carbonKg
       totalCarbonSavings: userPosts
         .filter((p) => !p.isAvailable)
         .reduce((sum, p) => sum + ((p as IPost).carbonKg || 0), 0),
@@ -168,11 +163,9 @@ export async function GET(_request: NextRequest) {
       dailyRequestsMade,
     };
 
-    // Kalkulasi Achievements
     const unlockedAchievements = allAchievements.map((ach) => {
       let unlocked = false;
       const userJoinedDate = new Date(userProfile.createdAt);
-      // 🔥 FIX: ach.id sekarang dapat diakses karena tipe 'allAchievements' sudah benar
       switch (ach.id) {
         case "FIRST_DONATION":
           unlocked = stats.totalPosts > 0;
@@ -238,33 +231,26 @@ export async function GET(_request: NextRequest) {
       return { ...ach, unlocked };
     });
 
-    // Buat Activity Feed
     const activityFeed: Activity[] = [];
     userPosts.forEach((post) => {
       activityFeed.push({
         type: "I_CREATED_A_POST",
         title: post.title,
-        // 🔥 FIX: Mengonversi Date menjadi string
         date: new Date(post.createdAt).toISOString(),
       });
-      // 🔥 FIX: Menggunakan 'as unknown as' untuk type casting
       (post.requests as unknown as IRequestWithPostDetails[]).forEach((req) => {
         activityFeed.push({
           type: "SOMEONE_REQUESTED_MY_ITEM",
           title: post.title,
-          // 🔥 FIX: Menggunakan non-null assertion (!)
           otherUserName: req.requester!.fullName,
-          // 🔥 FIX: Mengonversi Date menjadi string
           date: new Date(req.createdAt).toISOString(),
         });
         if (req.status !== RequestStatus.PENDING) {
           activityFeed.push({
             type: "I_UPDATED_A_REQUEST",
             title: post.title,
-            // 🔥 FIX: Menggunakan non-null assertion (!)
             otherUserName: req.requester!.fullName,
             status: req.status,
-            // 🔥 FIX: Mengonversi Date menjadi string
             date: new Date(req.updatedAt || req.createdAt).toISOString(),
           });
         }
@@ -275,19 +261,15 @@ export async function GET(_request: NextRequest) {
         activityFeed.push({
           type: "I_MADE_A_REQUEST",
           title: req.postDetails.title,
-          // 🔥 FIX: Menggunakan non-null assertion (!)
           otherUserName: req.postDetails.author!.fullName,
-          // 🔥 FIX: Mengonversi Date menjadi string
           date: new Date(req.createdAt).toISOString(),
         });
         if (req.status !== RequestStatus.PENDING) {
           activityFeed.push({
             type: "MY_REQUEST_WAS_UPDATED",
             title: req.postDetails.title,
-            // 🔥 FIX: Menggunakan non-null assertion (!)
             otherUserName: req.postDetails.author!.fullName,
             status: req.status,
-            // 🔥 FIX: Mengonversi Date menjadi string
             date: new Date(req.updatedAt || req.createdAt).toISOString(),
           });
         }
@@ -300,7 +282,6 @@ export async function GET(_request: NextRequest) {
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...safeUserProfile } = userProfile;
 
     return NextResponse.json({

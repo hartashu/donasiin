@@ -16,11 +16,8 @@ export async function readBarcodeFromUrl(
   try {
     const image = await Jimp.read(imageUrl);
 
-    // --- LANGKAH PRE-PROCESSING GAMBAR ---
-    // 1. Ubah menjadi hitam-putih (greyscale)
-    // 2. Tingkatkan kontras ke level maksimal untuk mempertajam garis
+
     image.greyscale().contrast(1);
-    // ------------------------------------
 
     const rawImageData = {
       data: new Uint8ClampedArray(image.bitmap.data),

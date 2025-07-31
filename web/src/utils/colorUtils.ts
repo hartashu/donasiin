@@ -1,5 +1,3 @@
-// src/utils/colorUtils.ts
-
 const colorPairs = [
     { text: '#1E40AF', bg: '#DBEAFE' }, // Blue
     { text: '#991B1B', bg: '#FEE2E2' }, // Red

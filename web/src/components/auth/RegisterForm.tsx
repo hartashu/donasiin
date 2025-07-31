@@ -9,11 +9,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Mail, Lock, UserRound, MapPin } from "lucide-react";
 import toast from 'react-hot-toast';
-import { useSearchParams, useRouter } from "next/navigation"; // FIX: Import useRouter
+import { useSearchParams, useRouter } from "next/navigation";
 
 export function RegisterForm() {
   const [isPending, startTransition] = useTransition();
-  // FIX: Tambahkan searchParams dan router
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -21,7 +20,6 @@ export function RegisterForm() {
     resolver: zodResolver(RegisterSchema),
   });
 
-  // FIX: useEffect untuk menampilkan toast dari parameter URL
   useEffect(() => {
     const toastError = searchParams.get('toast_error');
     if (toastError) {
@@ -30,7 +28,6 @@ export function RegisterForm() {
       } else if (toastError === 'invalid_or_expired_token') {
         toast.error('Your verification token is invalid or has expired.');
       }
-      // Membersihkan URL dari parameter setelah toast muncul
       router.replace('/auth/register', { scroll: false });
     }
   }, [searchParams, router]);

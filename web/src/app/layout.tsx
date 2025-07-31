@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "Donasiin",
   description: "Berbagi kebaikan, ciptakan perubahan.",
   icons: {
-    icon: "/logo.png", // Path ke ikon baru Anda
+    icon: "/logo.png",
   },
 };
 

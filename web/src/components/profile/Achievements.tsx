@@ -11,7 +11,6 @@ const iconMap: { [key: string]: React.ElementType } = {
 };
 
 const AchievementBadge = ({ ach }: { ach: AchievementType & { icon: string } }) => {
-    // Kalau ach-nya null, jangan render apa-apa.
     if (!ach) return null;
 
     const Icon = iconMap[ach.icon] || Lock;
@@ -32,13 +31,10 @@ const AchievementBadge = ({ ach }: { ach: AchievementType & { icon: string } }) 
 export function Achievements({ allAchievements }: { allAchievements: (AchievementType & { icon: string })[] }) {
     const [showAll, setShowAll] = useState(false);
 
-    // 🔥 FIX: Tambahkan pengecekan `a` sebelum akses properti `unlocked`.
-    // Ini mencegah error kalau ada elemen `null` atau `undefined` di dalam array.
     const validAchievements = allAchievements?.filter(Boolean) || [];
     const unlockedAchievements = validAchievements.filter(a => a.unlocked);
     const lockedAchievements = validAchievements.filter(a => !a.unlocked);
 
-    // 🔥 FIX: Cek `validAchievements` biar lebih aman.
     if (validAchievements.length === 0) return null;
 
     return (

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getUserByEmail,
-  verifyUserPassword,
 } from "@/lib/services/user.service";
 import { encode } from "next-auth/jwt";
 
@@ -15,7 +14,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    // console.log(`⚠️ email password`, email, password)
 
     const user = await getUserByEmail(email);
     if (!user || !user.password) {
@@ -26,15 +24,6 @@ export async function POST(request: NextRequest) {
     }
     console.log(`⚠️ user`, user);
 
-    // const isPasswordValid = await verifyUserPassword(password, user.password);
-    // if (!isPasswordValid) {
-    //   return NextResponse.json(
-    //     { error: "Invalid credentials" },
-    //     { status: 401 }
-    //   );
-    // }
-
-    // console.log(`⚠️ user`, isPasswordValid);
 
     const tokenPayload = {
       sub: user._id.toString(),
@@ -51,10 +40,8 @@ export async function POST(request: NextRequest) {
       throw new Error("AUTH_SECRET is not defined in environment variables");
     }
 
-    // Salt ini digunakan untuk proses enkripsi JWT (JWE)
     const salt = "authjs.session-token";
 
-    // Tambahkan properti 'salt' pada pemanggilan fungsi encode
     const token = await encode({ token: tokenPayload, secret, salt });
 
     return NextResponse.json({
@@ -68,18 +55,6 @@ export async function POST(request: NextRequest) {
         address: user.address,
       },
     });
-
-    // Set secure cookie
-    // response.cookies.set("authjs.session-token", token, {
-    //   path: "/",
-    //   httpOnly: true,
-    //   secure: true,
-    //   // process.env.NODE_ENV === "production"
-    //   sameSite: "lax",
-    //   maxAge: 60 * 60 * 24 * 7, // 7 hari
-    // });
-
-    // return response;
   } catch (error) {
     console.error("Native login error:", error);
     return NextResponse.json(

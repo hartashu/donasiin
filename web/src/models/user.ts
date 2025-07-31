@@ -9,7 +9,7 @@ export interface IRecommendedUser {
   fullName: string;
   avatarUrl: string;
   address: string;
-  distance: number; // Jarak dalam meter
+  distance: number;
 }
 
 export class UserModel {

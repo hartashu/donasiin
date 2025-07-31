@@ -1,4 +1,3 @@
-// @/components/profile/CarbonSummary.tsx
 'use client';
 
 import { Leaf } from "lucide-react";

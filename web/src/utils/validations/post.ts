@@ -12,5 +12,4 @@ export const postSchema = z.object({
   aiAnalysis: z.string().optional(),
 });
 
-// Skema untuk mengedit post
 export const updatePostSchema = postSchema.partial();

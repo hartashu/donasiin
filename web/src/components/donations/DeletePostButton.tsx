@@ -52,7 +52,6 @@ export default function DeletePostButton({
     <>
       <button
         onClick={() => setShowConfirm(true)}
-        // FIX: Tambahkan '!isAvailable' di sini
         disabled={!isAvailable || loading}
         className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
@@ -60,7 +59,6 @@ export default function DeletePostButton({
         {loading ? "Deleting..." : "Delete Post"}
       </button>
 
-      {/* Pop-up konfirmasi tidak perlu diubah, logikanya sudah benar */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center">
           <div className="bg-white rounded-2xl w-[90%] max-w-md p-6 shadow-2xl animate-fade-in">
@@ -87,8 +85,8 @@ export default function DeletePostButton({
               }}
               placeholder="Type post title here"
               className={`w-full px-4 py-2 rounded-md border text-sm mb-2 focus:outline-none transition-all duration-200 ${error
-                  ? "border-red-500 focus:ring-2 focus:ring-red-400"
-                  : "border-gray-300 focus:ring-2 focus:ring-gray-200"
+                ? "border-red-500 focus:ring-2 focus:ring-red-400"
+                : "border-gray-300 focus:ring-2 focus:ring-gray-200"
                 }`}
             />
             {error && <p className="text-sm text-red-500 mb-2">{error}</p>}

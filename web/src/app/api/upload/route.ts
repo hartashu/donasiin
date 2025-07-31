@@ -1,12 +1,10 @@
-// /app/api/upload/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import handleError from "@/errorHandler/errorHandler";
-import { uploadFile } from "@/utils/cloudinary/cloudinaryService"; // Import helper
+import { uploadFile } from "@/utils/cloudinary/cloudinaryService";
 import {
   recognizeTextFromImage,
   extractTrackingNumber,
-} from "@/utils/ocr/ocrService"; // Import helper OCR
+} from "@/utils/ocr/ocrService";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +12,6 @@ export async function POST(request: NextRequest) {
     const itemImages = formData.getAll("itemImages") as File[];
     const receiptImage = formData.get("receiptImage") as File | null;
 
-    // Cek jika tidak ada file sama sekali yang dikirim
     if (itemImages.length === 0 && !receiptImage) {
       return NextResponse.json(
         { error: "No files were provided." },
@@ -28,7 +25,6 @@ export async function POST(request: NextRequest) {
       trackingNumber: null as string | null,
     };
 
-    // Proses upload gambar barang
     if (itemImages.length > 0) {
       const itemUploadPromises = itemImages.map(async (file) => {
         const buffer = Buffer.from(await file.arrayBuffer());
@@ -38,13 +34,11 @@ export async function POST(request: NextRequest) {
       responseData.itemUrls = itemResults.map((r) => r.secure_url);
     }
 
-    // Proses upload dan OCR gambar resi
     if (receiptImage) {
       const buffer = Buffer.from(await receiptImage.arrayBuffer());
       const receiptResult = await uploadFile(buffer);
       responseData.receiptUrl = receiptResult.secure_url;
 
-      // Integrasi OCR
       const ocrText = await recognizeTextFromImage(responseData.receiptUrl);
       if (ocrText) {
         responseData.trackingNumber = extractTrackingNumber(ocrText);

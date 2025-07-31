@@ -1,14 +1,8 @@
-// seed.ts
 import { ObjectId } from 'mongodb';
 import { faker } from '@faker-js/faker/locale/id_ID';
 import bcrypt from 'bcrypt';
 import fs from 'fs/promises';
 
-// =================================================================
-// --- INTERFACES & ENUMS (Tipe Data) ---
-// =================================================================
-
-// Enum dari prompt Anda
 export enum RequestStatus {
   PENDING = "PENDING",
   ACCEPTED = "ACCEPTED",
@@ -17,7 +11,6 @@ export enum RequestStatus {
   COMPLETED = "COMPLETED",
 }
 
-// Interface berdasarkan struktur data Anda
 interface IUser {
   _id: ObjectId;
   fullName: string;
@@ -28,7 +21,7 @@ interface IUser {
   address: string;
   location: {
     type: "Point";
-    coordinates: [number, number]; // [longitude, latitude]
+    coordinates: [number, number];
   };
   dailyLimit: number;
   createdAt: Date;

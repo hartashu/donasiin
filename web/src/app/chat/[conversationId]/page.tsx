@@ -13,10 +13,6 @@ interface ChatRoomPageProps {
 
 export default async function ChatRoomPage({ params }: ChatRoomPageProps) {
   const session = await auth();
-  // console.log(session);
-  // console.log(session);
-  // console.log(session);
-  // console.log(session);
 
   if (!session?.user?.id) {
     redirect("/auth/login");
@@ -36,7 +32,7 @@ export default async function ChatRoomPage({ params }: ChatRoomPageProps) {
 
   let otherUser = null;
   if (otherUserId && ObjectId.isValid(otherUserId)) {
-    otherUser = await UserModel.getUserById(otherUserId); // Asumsi ada fungsi ini
+    otherUser = await UserModel.getUserById(otherUserId);
   }
 
   if (!otherUser) {

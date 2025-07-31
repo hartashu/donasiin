@@ -5,13 +5,11 @@ import { MailCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
-// 1. Create a new child component for the dynamic content
 function VerifyNoticeContent() {
     const searchParams = useSearchParams();
     const success = searchParams.get("success");
     const error = searchParams.get("error");
 
-    // 2. All the JSX that depends on the search params goes here
     return (
         <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
             <div
@@ -47,11 +45,8 @@ function VerifyNoticeContent() {
     );
 }
 
-// 3. The main page component becomes a simple wrapper
 export default function VerifyNoticePage() {
     return (
-        // 4. Wrap the dynamic child component in <Suspense>
-        //    This tells Next.js to load this part on the client-side.
         <Suspense>
             <VerifyNoticeContent />
         </Suspense>

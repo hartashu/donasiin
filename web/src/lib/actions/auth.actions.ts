@@ -7,37 +7,6 @@ import { LoginSchema } from "@/utils/validations/auth";
 import { UserModel } from "@/models/user.model";
 import { redirect } from "next/navigation";
 
-// export async function login(values: z.infer<typeof LoginSchema>) {
-//   const validatedFields = LoginSchema.safeParse(values);
-//   if (!validatedFields.success) {
-//     return { error: "Invalid fields!" };
-//   }
-//   const { email, password } = validatedFields.data;
-
-//   const pendingUser = await UserModel.getPendingRegistrationByEmail(email);
-//   if (pendingUser) {
-//     return { error: "Please check your inbox to verify your account first." };
-//   }
-
-//   try {
-//     await signIn("credentials", {
-//       email,
-//       password,
-//       redirectTo: "/",
-//     });
-//   } catch (error) {
-//     if (error instanceof AuthError) {
-//       switch (error.name) {
-//         case "CredentialsSignin":
-//           return { error: "Invalid email or password!" };
-//         default:
-//           return { error: "Something went wrong." };
-//       }
-//     }
-//     throw error;
-//   }
-// }
-
 export async function login(values: z.infer<typeof LoginSchema>) {
   const validatedFields = LoginSchema.safeParse(values);
   if (!validatedFields.success) {
@@ -61,7 +30,6 @@ export async function login(values: z.infer<typeof LoginSchema>) {
 
   } catch (error) {
     if (error instanceof AuthError) {
-      // FIX: Kembalikan ke `error.name` agar sesuai dengan tipe AuthError Anda
       switch (error.name) {
         case "CredentialsSignin":
           return { error: "Invalid email or password!" };

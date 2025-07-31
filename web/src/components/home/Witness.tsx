@@ -6,7 +6,6 @@ import { Leaf, Users, Gift, Sparkles, Sprout } from "lucide-react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-// --- Static stuff, biar rapi di atas ---
 
 const QUOTES = [
   "A single act of kindness throws out roots in all directions.",

@@ -187,7 +187,6 @@ export default function DonationsClientLayout({
                 </nav>
             )}
 
-            {/* Mobile Sidebar */}
             {isDonationsRoute && (
                 <div className={`md:hidden fixed inset-0 z-50 flex pointer-events-none`}>
                     <div
@@ -223,8 +222,8 @@ export default function DonationsClientLayout({
                                             href={{ pathname: item.path, query: params.toString() }}
                                             onClick={() => setShowSidebar(false)}
                                             className={`block px-3 py-2 rounded-md transition font-medium ${isActive
-                                                    ? "bg-[#e6f7f6] text-[#1c695f] shadow-sm"
-                                                    : "text-gray-700 hover:bg-gray-100"
+                                                ? "bg-[#e6f7f6] text-[#1c695f] shadow-sm"
+                                                : "text-gray-700 hover:bg-gray-100"
                                                 }`}
                                         >
                                             {item.name}
@@ -237,7 +236,6 @@ export default function DonationsClientLayout({
                 </div>
             )}
 
-            {/* Content Area */}
             <div className="flex flex-1">
                 {isDonationsRoute && showSidebar && (
                     <aside

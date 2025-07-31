@@ -6,7 +6,7 @@ import { Send } from 'lucide-react';
 
 interface StartChatFormProps {
     receiverId: string;
-    postTitle: string; // wajib ada biar gak error
+    postTitle: string;
 }
 
 export function StartChatForm({ receiverId, postTitle }: StartChatFormProps) {

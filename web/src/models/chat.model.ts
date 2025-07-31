@@ -91,17 +91,15 @@ export class ChatModel {
 
         const messagesCollection = await this.getMessagesCollection();
 
-        // Cek apakah sudah ada message/conversation yang pakai ID ini
         const existing = await messagesCollection.findOne({ conversationId });
 
         if (!existing) {
-            // Jika belum ada, insert dummy record hanya untuk memastikan conversationId tercatat
             await messagesCollection.insertOne({
-            conversationId,
-            senderId: new ObjectId(senderId),
-            receiverId: new ObjectId(receiverId),
-            text: "", // kosong
-            createdAt: new Date(),
+                conversationId,
+                senderId: new ObjectId(senderId),
+                receiverId: new ObjectId(receiverId),
+                text: "",
+                createdAt: new Date(),
             } as IMessage);
         }
 

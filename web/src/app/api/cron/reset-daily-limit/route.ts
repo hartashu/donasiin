@@ -1,13 +1,9 @@
-// /api/cron/reset-daily-limit/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDb } from "@/config/mongo";
 
 export async function GET(request: NextRequest) {
-  // 🔽 Periksa header 'x-vercel-cron-secret' 🔽
   const cronSecret = request.headers.get("x-vercel-cron-secret");
 
-  // Bandingkan dengan environment variable Anda
   if (cronSecret !== process.env.CRON_SECRET) {
     return new Response("Unauthorized", { status: 401 });
   }

@@ -527,7 +527,6 @@ export async function updateRequestStatusAction(
     url: trackingCodeUrl,
   });
 
-  // logic notifikasi email tetap jalan
   if (status === RequestStatus.SHIPPED && trackingCode) {
     await sendShippingNotificationAction(id, trackingCode);
   }
@@ -536,7 +535,6 @@ export async function updateRequestStatusAction(
   return { success: true, message: `Request status updated to ${status}` };
 }
 
-// 🔥 ACTION BARU UNTUK HAPUS REQUEST
 export async function deleteRequestAction(
   requestId: string
 ): Promise<{ success: boolean; error?: string }> {

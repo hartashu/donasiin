@@ -21,7 +21,6 @@ export default function CreatePost() {
   const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
-  // FIX: Used the specific IRecommendedUser type for state
   const [recommendedUsers, setRecommendedUsers] = useState<IRecommendedUser[]>(
     []
   );
@@ -102,7 +101,6 @@ export default function CreatePost() {
 
   return (
     <>
-      {/* Modal rekomendasi */}
       {showModal && (
         <RecommendationModal
           users={recommendedUsers}
@@ -120,7 +118,6 @@ export default function CreatePost() {
 
         <div className="relative z-10 w-full max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row gap-6">
-            {/* Form kiri */}
             <div className="w-full md:w-2/3">
               <div className="bg-white shadow-lg rounded-xl p-6 md:p-8 border border-gray-100">
                 <div className="text-center mb-6">
@@ -143,10 +140,8 @@ export default function CreatePost() {
               </div>
             </div>
 
-            {/* Garis vertikal pembatas hanya di desktop */}
             <div className="hidden md:block w-px bg-gray-200 mx-4" />
 
-            {/* Preview kanan */}
             <div className="w-full md:w-1/3 flex justify-center md:justify-start my-auto">
               <div className="w-full  md:top-24 flex flex-col items-center">
                 <div className="w-full border-b pb-4 mb-6 border-gray-200 text-center">
@@ -163,14 +158,14 @@ export default function CreatePost() {
 
                 <motion.div
                   animate={{
-                    y: [0, -10, 0], // Naik turun lebih tinggi
-                    scale: [1, 1.03, 1], // Zoom in-out lebih terasa
+                    y: [0, -10, 0],
+                    scale: [1, 1.03, 1],
                   }}
                   transition={{
-                    duration: 3.5, // Gerak sedikit lebih cepat dari sebelumnya
+                    duration: 3.5,
                     repeat: Infinity,
                     repeatType: "mirror",
-                    ease: "easeInOut", // Transisi tetap lembut
+                    ease: "easeInOut",
                   }}
                   className="w-full shadow-lg max-w-sm md:max-w-full rounded-2xl"
                 >

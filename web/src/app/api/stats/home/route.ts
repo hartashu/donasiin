@@ -9,7 +9,6 @@ export async function GET() {
     const [totalUsers, totalPosts, totalCarbonSaved] = await Promise.all([
       StatsModel.getTotalUsers(),
       StatsModel.getTotalPosts(),
-      // StatsModel.getTotalCarbonSaved()
       PostModel.getTotalCarbonSaved(),
     ]);
 

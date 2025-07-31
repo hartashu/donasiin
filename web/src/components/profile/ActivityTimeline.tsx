@@ -21,7 +21,6 @@ type ActivityConfigItem = {
     text: (title: string, user?: string) => ReactNode;
 };
 
-// 🔥 FIX: Use 'Partial<Record<...>>' to indicate that not all RequestStatus keys are required.
 type ActivityConfigValue = ActivityConfigItem | Partial<Record<RequestStatus, ActivityConfigItem>>;
 
 

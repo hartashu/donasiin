@@ -1,14 +1,11 @@
 import { IPost } from "@/types/types";
 import { unstable_noStore as noStore } from 'next/cache';
 
-// Fungsi ini akan dipanggil di server untuk mengambil data post
-// noStore() digunakan untuk memastikan data selalu yang terbaru setiap kali halaman diakses
 export async function getPostBySlug(slug: string): Promise<IPost | null> {
     noStore();
     try {
-        // Ganti URL ini dengan URL production Anda jika perlu
         const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/posts/${slug}`, {
-            cache: 'no-store' // Memastikan data selalu fresh
+            cache: 'no-store'
         });
 
         if (!res.ok) {
