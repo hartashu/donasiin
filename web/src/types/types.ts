@@ -86,15 +86,20 @@ export interface Achievement {
   unlocked: boolean;
 }
 
+// Ganti interface Activity yang lama di types.ts dengan ini
 export interface Activity {
-  type: "POST_CREATED" | "REQUEST_RECEIVED";
+  type:
+  | "I_CREATED_A_POST"
+  | "SOMEONE_REQUESTED_MY_ITEM"
+  | "I_UPDATED_A_REQUEST"
+  | "I_MADE_A_REQUEST"
+  | "MY_REQUEST_WAS_UPDATED";
   title: string;
-  user?: string;
-  date: string;
-  trackingCode?: string; // Shipping tracking code, if applicable.
-  trackingCodeUrl?: string;
-  createdAt: Date; // Creation timestamp.
-  updatedAt: Date; // Last update timestamp.
+  otherUserName?: string;
+  date: string; // Ini adalah ISO string date
+  status?: RequestStatus;
+  // Properti lama seperti createdAt, updatedAt, dll. bisa dihapus jika tidak lagi digunakan
+  // oleh server action saat membuat activityFeed.
 }
 
 export interface IMessage {
