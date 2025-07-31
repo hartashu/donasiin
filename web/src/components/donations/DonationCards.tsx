@@ -100,6 +100,7 @@ export default function DonationCards({ category }: { category?: string }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {data.map((d, idx) => (
                 <Link
+                  scroll={true}
                   key={idx}
                   href={`/donations/${d.category}/detail?slug=${d.slug}`}
                   className="group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] block"
