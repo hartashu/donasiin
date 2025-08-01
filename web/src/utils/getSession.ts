@@ -7,6 +7,8 @@ import { getToken } from "next-auth/jwt";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
 /**
  * @returns {Promise<{ user: { id: string } } | null>}
  */
@@ -27,13 +29,13 @@ export async function getSession(): Promise<{ user: { id: string } } | null> {
     //     }
     // });
 
-    if (!process.env.NEXT_PUBLIC_BASE_URL) {
-      throw new Error(
-        "Base URL is not defined. Please check your .env.local file."
-      );
-    }
+    // if (!process.env.NEXT_PUBLIC_BASE_URL) {
+    //   throw new Error(
+    //     "Base URL is not defined. Please check your .env.local file."
+    //   );
+    // }
 
-    const req = new NextRequest(process.env.NEXT_PUBLIC_BASE_URL, {
+    const req = new NextRequest(BASE_URL, {
       headers: {
         cookie: `${
           process.env.AUTH_COOKIE_NAME || "__Secure-authjs.session-token"
