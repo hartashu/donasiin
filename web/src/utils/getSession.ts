@@ -18,13 +18,13 @@ export async function getSession(): Promise<{ user: { id: string } } | null> {
         const token = authorizationHeader.split(" ")[1];
 
 
-        if (!process.env.NEXT_PUBLIC_BASE_URL) {
-            throw new Error(
-                "Base URL is not defined. Please check your .env.local file."
-            );
-        }
+        // if (!process.env.NEXT_PUBLIC_BASE_URL) {
+        //     throw new Error(
+        //         "Base URL is not defined. Please check your .env.local file."
+        //     );
+        // }
 
-        const req = new NextRequest(process.env.NEXT_PUBLIC_BASE_URL, {
+        const req = new NextRequest(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000/api", {
             headers: {
                 cookie: `${process.env.AUTH_COOKIE_NAME || "authjs.session-token"
                     }=${token}`,
