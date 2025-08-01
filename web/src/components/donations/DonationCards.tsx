@@ -3,11 +3,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image"; // FIX: Import Next/Image
 import { MapPin, Tags } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { getCategoryLabel } from "@/lib/getCategoryLabel";
-
 import { getPosts } from "@/actions/action";
 import { toTitleCase } from "@/lib/titleCase";
 import { IPost } from "@/types/types";
@@ -74,8 +74,26 @@ export default function DonationCards({ category }: { category?: string }) {
             ))}
           </div>
         ) : data.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">No donations found</p>
+          <div className="flex flex-col items-center justify-center gap-4 py-20">
+            <div>
+              <Image
+                src={"/LogoDonasiinnobg.png"}
+                alt="logoDonasiin"
+                width={180}
+                height={180}
+                className="object-cover"
+              />
+            </div>
+            {/* Teks utama */}
+            <h2 className="text-2xl sm:text-xl font-bold text-gray-800">
+              DONATION NOT FOUND
+            </h2>
+
+            {/* Subteks */}
+            <p className="text-sm sm:text-base text-gray-500 text-center max-w-md">
+              We couldn&apos;t find any matching donations at the moment. Try
+              adjusting your search or filter.
+            </p>
           </div>
         ) : (
           <InfiniteScroll
@@ -93,7 +111,7 @@ export default function DonationCards({ category }: { category?: string }) {
             }
             endMessage={
               <p className="text-center text-sm text-gray-400 mt-8">
-                You've reached the end!
+                You&apos;ve reached the end!
               </p>
             }
           >
@@ -105,10 +123,13 @@ export default function DonationCards({ category }: { category?: string }) {
                   className="group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] block"
                 >
                   <div className="relative h-60">
-                    <img
+                    {/* FIX: Menggunakan Next/Image dengan properti 'fill' */}
+                    <Image
                       src={d.thumbnailUrl || "/placeholder.jpg"}
                       alt={d.title}
-                      className="w-full h-full object-cover object-center"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover object-center"
                     />
                     <div className="absolute top-2 right-2 flex items-center gap-1 bg-[#d0f2ee] text-[#1c695f] text-[11px] font-medium px-3 py-1 rounded-full w-fit shadow-sm">
                       <div className="w-2 h-2 rounded-full bg-[#1c695f] animate-pulse" />
@@ -120,17 +141,14 @@ export default function DonationCards({ category }: { category?: string }) {
                     <h3 className="text-base font-semibold text-[#1f2d28] line-clamp-1">
                       {toTitleCase(d.title)}
                     </h3>
-
                     <p className="text-sm text-gray-600 line-clamp-1 mb-2 ">
                       {d.description.charAt(0).toUpperCase() +
                         d.description.slice(1)}
                     </p>
-
                     <div className="flex items-center gap-1 text-[11px] text-[#1c695f] font-medium mb-1">
                       <Tags className="w-3.5 h-3.5" />
                       <span>{getCategoryLabel(d.category)}</span>
                     </div>
-
                     {d.author?.address && (
                       <div className="flex items-center gap-1 text-[11px] text-gray-500 mb-2">
                         <MapPin className="w-3 h-3 text-[#1c695f]" />
@@ -139,14 +157,17 @@ export default function DonationCards({ category }: { category?: string }) {
                         </span>
                       </div>
                     )}
-
                     <div className="flex items-center gap-2 mt-auto pt-2 border-t border-gray-100">
-                      <div className="w-7 h-7 rounded-full bg-gray-200 overflow-hidden">
+                      {/* FIX: Menambahkan 'relative' untuk parent dari Image avatar */}
+                      <div className="relative w-7 h-7 rounded-full bg-gray-200 overflow-hidden">
                         {d.author?.avatarUrl ? (
-                          <img
+                          // FIX: Menggunakan Next/Image dengan properti 'fill'
+                          <Image
                             src={d.author.avatarUrl}
                             alt={d.author?.fullName ?? "Author"}
-                            className="w-full h-full object-cover rounded-full"
+                            fill
+                            sizes="28px"
+                            className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[10px] font-bold bg-[#1c695f] text-white rounded-full">

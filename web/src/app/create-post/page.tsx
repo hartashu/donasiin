@@ -27,6 +27,7 @@ export default function CreatePost() {
   );
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedCategoryLabel, setSelectedCategoryLabel] = useState("");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -65,6 +66,8 @@ export default function CreatePost() {
       form.append("category", formData.category);
       selectedFiles.forEach((file) => form.append("itemImages", file));
 
+      setSelectedCategoryLabel(getCategoryLabel(formData.category));
+
       const res = await fetch("/api/posts", {
         method: "POST",
         body: form,
@@ -88,21 +91,14 @@ export default function CreatePost() {
       const { data: recommendations } = await recRes.json();
       console.log(recommendations);
 
-      if (recommendations && recommendations.length > 0) {
-        setRecommendedUsers(recommendations);
-        setShowModal(true);
-      } else {
-        setRecommendedUsers([]);
-        setShowModal(true);
-      }
+      setRecommendedUsers(recommendations || []);
+      setShowModal(true);
     } catch (err) {
       console.error("Submit failed:", err);
     } finally {
       setLoading(false);
     }
   };
-
-  const selectedCategoryLabel = getCategoryLabel(formData.category);
 
   return (
     <>
@@ -161,7 +157,7 @@ export default function CreatePost() {
                     </h2>
                   </div>
                   <p className="text-sm text-gray-500">
-                    Your post when it's done
+                    Your post when it&apos;s done
                   </p>
                 </div>
 

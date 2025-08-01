@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindScrollbar from 'tailwind-scrollbar'; // 🔥 FIX: Changed to an import statement
 
 const config: Config = {
     content: [
@@ -22,7 +23,7 @@ const config: Config = {
         },
     },
     plugins: [
-        require('tailwind-scrollbar'),
+        tailwindScrollbar, // 🔥 FIX: Use the imported variable here
     ],
 };
 export default config;

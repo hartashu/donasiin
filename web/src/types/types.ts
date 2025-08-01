@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import React from "react"; // Ditambahkan karena digunakan di 'Achievement'
 
 export enum RequestStatus {
   PENDING = "PENDING", // Saat permintaan pertama kali dibuat oleh penerima
@@ -25,6 +26,16 @@ export interface IUser {
   updatedAt: string; // Last update timestamp.
 }
 
+// FIX: Menggabungkan IAuthor menjadi satu definisi yang lengkap.
+export interface IAuthor {
+  _id: ObjectId | string;
+  avatarUrl?: string;
+  fullName?: string;
+  username?: string;
+  email?: string;
+  address?: string; // Dibuat optional agar konsisten dengan IPost.author
+}
+
 export interface IPost {
   _id: ObjectId | string; // Unique post identifier. //ObjectId
   title: string; // The title of the post.
@@ -49,26 +60,21 @@ export interface IRequest {
   postId: ObjectId | string; // ID of the related post.
   status: RequestStatus; // Status of the request from the enum.
   trackingCode?: string; // Shipping tracking code, if applicable.
-
   trackingCodeUrl?: string;
   createdAt: Date; // Creation timestamp.
   updatedAt: Date; // Last update timestamp.
   requester?: IUser;
 }
 
-export interface IAuthor {
-  _id: ObjectId | string;
-  avatarUrl?: string;
-  fullName?: string;
-  username?: string;
-}
-
-export interface IPostWithRequests extends IPost {
-  requests: IRequestWithPostDetails[];
-}
-
+// FIX: Definisi ini sudah benar dan tidak perlu dideklarasikan ulang.
+// Error (ts:2430) hilang karena tidak ada lagi tipe yang konflik (string vs Date).
 export interface IRequestWithPostDetails extends IRequest {
   postDetails: IPost;
+}
+
+// FIX: Definisi ini sudah benar dan tidak perlu dideklarasikan ulang.
+export interface IPostWithRequests extends IPost {
+  requests: IRequestWithPostDetails[];
 }
 
 // TIPE BARU YANG DITAMBAHKAN UNTUK FITUR PROFIL
@@ -80,15 +86,20 @@ export interface Achievement {
   unlocked: boolean;
 }
 
+// Ganti interface Activity yang lama di types.ts dengan ini
 export interface Activity {
-  type: "POST_CREATED" | "REQUEST_RECEIVED";
+  type:
+  | "I_CREATED_A_POST"
+  | "SOMEONE_REQUESTED_MY_ITEM"
+  | "I_UPDATED_A_REQUEST"
+  | "I_MADE_A_REQUEST"
+  | "MY_REQUEST_WAS_UPDATED";
   title: string;
-  user?: string;
-  date: string;
-  trackingCode: string; // Shipping tracking code, if applicable.
-  trackingCodeUrl: string;
-  createdAt: Date; // Creation timestamp.
-  updatedAt: Date; // Last update timestamp.
+  otherUserName?: string;
+  date: string; // Ini adalah ISO string date
+  status?: RequestStatus;
+  // Properti lama seperti createdAt, updatedAt, dll. bisa dihapus jika tidak lagi digunakan
+  // oleh server action saat membuat activityFeed.
 }
 
 export interface IMessage {
@@ -98,7 +109,6 @@ export interface IMessage {
   receiverId: ObjectId; // ID of the message recipient.
   text: string; // The text content of the message.
   createdAt: Date; // Creation timestamp.
-  // updatedAt: Date; // Last update timestamp.
 }
 
 export interface ICarbonFootprint {
@@ -157,49 +167,6 @@ export interface IVerificationToken {
   expires: Date;
 }
 
-export interface IAuthor {
-  _id: ObjectId | string;
-  avatarUrl?: string;
-  fullName?: string;
-  username?: string;
-  email?: string;
-  address: string;
-}
-
-//
-export interface IPostWithRequests {
-  _id: string;
-  title: string;
-  category: string;
-  thumbnailUrl: string;
-  isAvailable: boolean;
-  requests: {
-    _id: string;
-    status: RequestStatus;
-    requester: {
-      _id: string;
-      username: string;
-      fullName: string;
-      avatarUrl?: string;
-    };
-  }[];
-}
-
-export interface IRequestWithPostDetails {
-  _id: string;
-  userId: string;
-  postId: string;
-  status: RequestStatus;
-  createdAt: string;
-  postDetails: {
-    _id: string;
-    title: string;
-    slug: string;
-    thumbnailUrl: string;
-    author: IAuthor; // 🔥 Tambahkan ini
-  };
-}
-
 export interface IIncompleteProfile {
   _id: ObjectId;
   email: string;
@@ -208,3 +175,6 @@ export interface IIncompleteProfile {
   token: string;
   expires: Date;
 }
+
+// FIX: Semua deklarasi duplikat di bawah ini telah dihapus karena menyebabkan
+// error `ts(2717)` dan `ts(2430)`. Definisi yang benar sudah ada di bagian atas file.

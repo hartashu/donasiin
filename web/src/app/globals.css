@@ -85,6 +85,8 @@ body {
  */
 @import "tailwindcss";
 
+
+
 @keyframes gradient-flow {
   0% {
     background-position: 0% 50%;
@@ -131,6 +133,11 @@ body {
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;900&display=swap');
 
+
+html {
+  font-family: var(--font-roboto-mono)!;
+}
+
 body {
-    font-family: 'Inter', sans-serif;
+  font-family: inherit;
 }

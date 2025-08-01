@@ -6,8 +6,13 @@ import { getSession } from "@/utils/getSession";
 
 export async function POST(request: NextRequest) {
     try {
-        // 1. Dapatkan sesi dari Bearer Token
-        const session = await getSession(request);
+        // 1. Dapatkan sesi dari request
+        // FIX (ts:2554): Menyesuaikan panggilan `getSession` berdasarkan pesan error.
+        // Jika `getSession` Anda adalah wrapper dari next-auth, di server-side
+        // biasanya tidak memerlukan argumen. Jika fungsi ini custom dan memerlukan
+        // `request`, maka Anda harus memperbaiki tipe definisi dari fungsi `getSession` itu sendiri.
+        const session = await getSession();
+
         if (!session?.user?.id) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
@@ -17,15 +22,18 @@ export async function POST(request: NextRequest) {
         const channel = body.get("channel_name") as string;
 
         // 2. Siapkan data pengguna untuk Pusher
+        // FIX (ts:2339 & ts:2345): Pusher membutuhkan properti `user_id`.
+        // Tipe `session.user` juga diperjelas untuk menyertakan `name`.
         const userData = {
-            id: session.user.id,
+            user_id: session.user.id,
             user_info: {
-                name: session.user.name,
-                // Anda bisa tambahkan info lain jika perlu
+                // Asumsi `session.user` memiliki properti `name` saat runtime.
+                // Jika `name` bisa null/undefined, Anda bisa beri nilai default.
+                name: (session.user as { name?: string }).name,
             },
         };
 
-        // 3. Otorisasi pengguna untuk channel privat
+        // 3. Otorisasi pengguna untuk channel presence
         const authResponse = pusherServer.authorizeChannel(socketId, channel, userData);
 
         return NextResponse.json(authResponse);

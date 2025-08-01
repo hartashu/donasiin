@@ -3,12 +3,21 @@ import { connectToDb } from "@/config/mongo";
 import { IUser } from "@/types/types";
 import { ObjectId, WithId } from "mongodb";
 
+export interface IRecommendedUser {
+  _id: ObjectId;
+  username: string;
+  fullName: string;
+  avatarUrl: string;
+  address: string;
+  distance: number; // Jarak dalam meter
+}
+
 export class UserModel {
   static async findPotentialRecipients(
     donorCoordinates: [number, number],
     postCategory: string,
     donorId: ObjectId
-  ): Promise<any[]> {
+  ): Promise<IRecommendedUser[]> {
     const db = await connectToDb();
     const pipeline = [
       // 1. Temukan semua pengguna & urutkan berdasarkan jarak dari donatur
@@ -46,7 +55,7 @@ export class UserModel {
       { $match: { "requestedPost.category": postCategory } },
       // 6. Kelompokkan untuk menghindari duplikat pengguna
       {
-         $group: {
+        $group: {
           _id: "$_id",
           username: { $first: "$username" },
           fullName: { $first: "$fullName" },
@@ -60,7 +69,9 @@ export class UserModel {
       { $limit: 5 },
     ];
 
-    return db.collection("users").aggregate(pipeline).toArray();
+    return db.collection("users").aggregate(pipeline).toArray() as Promise<
+      IRecommendedUser[]
+    >;
   }
 
   static async findUserById(
