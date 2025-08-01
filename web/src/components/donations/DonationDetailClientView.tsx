@@ -7,7 +7,14 @@ import Link from "next/link";
 import { IPost } from "@/types/types";
 import DeletePostButton from "@/components/donations/DeletePostButton";
 import RequestPostButton from "@/components/donations/RequestPostButton";
-import { Calendar, Tag, Leaf, CheckCircle, BookImage } from "lucide-react";
+import {
+  Calendar,
+  Tag,
+  Leaf,
+  CheckCircle,
+  BookImage,
+  MapPin,
+} from "lucide-react";
 import ImageGallery from "@/components/donations/ImageGallery";
 import { toTitleCase } from "@/lib/titleCase";
 import { getCategoryLabel } from "@/lib/getCategoryLabel";
@@ -115,9 +122,12 @@ export default function DonationDetailClientView({
               <p className="font-semibold">
                 {toTitleCase(post.author?.fullName || "")}
               </p>
-              <p className="text-sm text-gray-500">
-                {mainAddress(post.author?.address || "")}
-              </p>
+              <div className="flex items-center text-sm text-gray-500">
+                <MapPin className="w-4 h-4 text-[#1c695f] mr-1 mt-0.5" />
+                <span>
+                  {toTitleCase(mainAddress(post.author?.address || ""))}
+                </span>
+              </div>
             </div>
           </div>
           {post.isAvailable && (

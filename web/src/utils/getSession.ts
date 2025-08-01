@@ -36,7 +36,7 @@ export async function getSession(): Promise<{ user: { id: string } } | null> {
     const req = new NextRequest(process.env.NEXT_PUBLIC_BASE_URL, {
       headers: {
         cookie: `${
-          process.env.AUTH_COOKIE_NAME || "authjs.session-token"
+          process.env.AUTH_COOKIE_NAME || "__Secure-authjs.session-token"
         }=${token}`,
       },
     });

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Salt ini digunakan untuk proses enkripsi JWT (JWE)
-    const salt = "authjs.session-token";
+    const salt = "__Secure-authjs.session-token";
 
     // Tambahkan properti 'salt' pada pemanggilan fungsi encode
     const token = await encode({ token: tokenPayload, secret, salt });
