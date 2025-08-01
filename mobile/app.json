@@ -42,7 +42,7 @@
       "expo-font"
     ],
     "extra": {
-      "apiUrlDev": "http://10.83.45.180:3000/api",
+      "apiUrlDev": "http://192.168.22.176:3000/api",
       "apiUrlProd": "https://final-project-jade-seven.vercel.app/api",
       "eas": {
         "projectId": "621d6ca6-99ef-4834-92b2-0717c48797fa"
